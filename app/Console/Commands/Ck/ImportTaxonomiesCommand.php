@@ -32,10 +32,10 @@ class ImportTaxonomiesCommand extends Command
     protected $description = 'Imports a .csv file of Taxonomies';
 
     /**
-     * Rows which have failed to import
+     * Rows which have failed to import.
      *
      * @var array
-     **/
+     */
     protected $failedRows = [];
 
     /**
@@ -84,10 +84,8 @@ class ImportTaxonomiesCommand extends Command
     }
 
     /**
-     * Delete all current taxonomies
-     *
-     * @return null
-     **/
+     * Delete all current taxonomies.
+     */
     public function deleteAllTaxonomies()
     {
         DB::table((new ServiceTaxonomy())->getTable())->truncate();
@@ -100,12 +98,13 @@ class ImportTaxonomiesCommand extends Command
     }
 
     /**
-     * Get all the Caregory Taxonomy IDs
+     * Get all the Caregory Taxonomy IDs.
      *
      * @param array $rootId
      * @param array $taxonomyIds
+     * @param mixed $rootIds
      * @return array
-     **/
+     */
     public function getDescendantTaxonomyIds($rootIds, $taxonomyIds = []): array
     {
         $childIds = DB::table((new Taxonomy())->getTable())->whereIn('parent_id', $rootIds)->pluck('id');
@@ -144,12 +143,12 @@ class ImportTaxonomiesCommand extends Command
     }
 
     /**
-     * Import the Taxonomy records into the database
+     * Import the Taxonomy records into the database.
      *
      * @param array $taxonomyRecords
      * @param bool $refresh
      * @return bool | int
-     **/
+     */
     public function importTaxonomyRecords(array $taxonomyRecords, bool $refresh)
     {
         if (App::environment() != 'testing') {
@@ -161,11 +160,12 @@ class ImportTaxonomiesCommand extends Command
             array_shift($taxonomyRecords);
         }
 
-        $taxonomyImports = $this->mapToIdKeys($taxonomyRecords);
+        $taxonomyImports = $this->prepareImports($taxonomyRecords);
 
         if (count($this->failedRows) && App::environment() != 'testing') {
             $this->info('Rolling back transaction');
             DB::rollBack();
+
             return false;
         }
 
@@ -186,19 +186,19 @@ class ImportTaxonomiesCommand extends Command
     }
 
     /**
-     * Convert the flat array to a collection of associative array with UUID keys
+     * Sanity check the records before converting them to format for import.
      *
      * @param array $records
      * @return array
-     **/
-    public function mapToIdKeys(array $records): array
+     */
+    public function prepareImports(array $records): array
     {
         $parentIds = array_map(function ($record) {
             return $record[2] ?? null;
         }, $records);
 
         /**
-         * Non-UUID cells or incorrect relationships cannot be imported so the import will fail
+         * Non-UUID cells or incorrect relationships cannot be imported so the import will fail.
          */
         foreach ($records as $record) {
             if (!is_uuid($record[0]) || (!empty($record[2]) && !in_array($record[2], $parentIds))) {
@@ -209,7 +209,20 @@ class ImportTaxonomiesCommand extends Command
             }
         }
 
-        $imports = collect($records)->mapWithKeys(function ($record) {
+        $imports = $this->mapToIdKeys($records);
+
+        return $imports;
+    }
+
+    /**
+     * Convert the flat array to a collection of associative array with UUID keys.
+     *
+     * @param array $records
+     * @return array
+     */
+    public function mapToIdKeys(array $records): array
+    {
+        return collect($records)->mapWithKeys(function ($record) {
             return [
                 $record[0] => [
                     'id' => $record[0],
@@ -222,16 +235,14 @@ class ImportTaxonomiesCommand extends Command
                 ],
             ];
         })->all();
-
-        return $imports;
     }
 
     /**
-     * Calculate the depth of each Taxonomy record
+     * Calculate the depth of each Taxonomy record.
      *
      * @param array $records
      * @return array
-     **/
+     */
     public function mapTaxonomyDepth(array $records): array
     {
         $rootRecords = array_filter($records, function ($record) use ($records) {
@@ -242,13 +253,13 @@ class ImportTaxonomiesCommand extends Command
     }
 
     /**
-     * Walk through the levels of child records and record the depth
+     * Walk through the levels of child records and record the depth.
      *
      * @param array $parentIds
      * @param array $records
      * @param int $depth
      * @return array
-     **/
+     */
     public function calculateTaxonomyDepth($parentIds, &$records, $depth = 1): array
     {
         $newParentIds = [];
