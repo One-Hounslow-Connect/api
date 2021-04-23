@@ -61,13 +61,13 @@ class ImportTaxonomiesCommand extends Command
 
         $records = $this->fetchTaxonomyRecords($csvUrl);
 
-        if (is_array($records)) {
+        if (is_array($records) && count($records)) {
             $this->info('Spreadsheet uploaded');
 
             if ($refresh) {
                 $this->warn('You are about to delete all current Taxonomies');
                 $refresh = $this->confirm('Confirm you wish to delete all current Taxonomies?');
-                $this->warn('All current Taxonomies will be deleted');
+                $this->warn($refresh ? 'All current Taxonomies will be deleted' : 'Current Taxonomies will be preserved');
             }
 
             $importCount = $this->importTaxonomyRecords($records, $refresh);
@@ -153,11 +153,8 @@ class ImportTaxonomiesCommand extends Command
     public function importTaxonomyRecords(array $taxonomyRecords, bool $refresh)
     {
         if (App::environment() != 'testing') {
+            $this->info('Starting transaction');
             DB::beginTransaction();
-        }
-
-        if ($refresh) {
-            $this->deleteAllTaxonomies();
         }
 
         if (!is_uuid($taxonomyRecords[0][0])) {
@@ -167,15 +164,21 @@ class ImportTaxonomiesCommand extends Command
         $taxonomyImports = $this->mapToIdKeys($taxonomyRecords);
 
         if (count($this->failedRows) && App::environment() != 'testing') {
+            $this->info('Rolling back transaction');
             DB::rollBack();
             return false;
         }
 
         $taxonomyImports = $this->mapTaxonomyDepth($taxonomyImports);
 
+        if ($refresh) {
+            $this->deleteAllTaxonomies();
+        }
+
         DB::table((new Taxonomy())->getTable())->insert($taxonomyImports);
 
         if (App::environment() != 'testing') {
+            $this->info('Commiting transaction');
             DB::commit();
         }
 
@@ -190,6 +193,22 @@ class ImportTaxonomiesCommand extends Command
      **/
     public function mapToIdKeys(array $records): array
     {
+        $parentIds = array_map(function ($record) {
+            return $record[2] ?? null;
+        }, $records);
+
+        /**
+         * Non-UUID cells or incorrect relationships cannot be imported so the import will fail
+         */
+        foreach ($records as $record) {
+            if (!is_uuid($record[0]) || (!empty($record[2]) && !in_array($record[2], $parentIds))) {
+                $this->failedRows[] = $record;
+            }
+            if (count($this->failedRows)) {
+                return [];
+            }
+        }
+
         $imports = collect($records)->mapWithKeys(function ($record) {
             return [
                 $record[0] => [
@@ -203,15 +222,6 @@ class ImportTaxonomiesCommand extends Command
                 ],
             ];
         })->all();
-
-        /**
-         * Non-UUID cells or incorrect relationships cannot be imported so the import will fail
-         */
-        foreach ($records as $record) {
-            if (!is_uuid($record[0]) || (!empty($record[2]) && !isset($imports[$record[2]]))) {
-                $this->failedRows[] = $record;
-            }
-        }
 
         return $imports;
     }
