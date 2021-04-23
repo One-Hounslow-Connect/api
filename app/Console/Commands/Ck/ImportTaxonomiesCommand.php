@@ -5,6 +5,7 @@ namespace App\Console\Commands\Ck;
 use App\Models\CollectionTaxonomy;
 use App\Models\ServiceTaxonomy;
 use App\Models\Taxonomy;
+use Carbon\Carbon;
 use GuzzleHttp\Client;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\App;
@@ -60,7 +61,7 @@ class ImportTaxonomiesCommand extends Command
 
         $records = $this->fetchTaxonomyRecords($csvUrl);
 
-        if (count($records)) {
+        if (is_array($records)) {
             $this->info('Spreadsheet uploaded');
 
             if ($refresh) {
@@ -69,16 +70,16 @@ class ImportTaxonomiesCommand extends Command
                 $this->warn('All current Taxonomies will be deleted');
             }
 
-            $this->importTaxonomyRecords($records, $refresh);
+            $importCount = $this->importTaxonomyRecords($records, $refresh);
+
+            if (count($this->failedRows)) {
+                $this->warn('Unable to import all records. Failed records:');
+                $this->table(['ID', 'Name', 'Parent ID'], $this->failedRows);
+            } else {
+                $this->info('All records imported. Total records imported: ' . $importCount);
+            }
         } else {
             $this->info('Spreadsheet could not be uploaded');
-        }
-
-        if (count($this->failedRows)) {
-            $this->warn('Unable to import all records. Failed records:');
-            $this->table(['ID', 'Name', 'Parent ID'], $this->failedRows);
-        } else {
-            $this->info('All records imported');
         }
     }
 
@@ -147,9 +148,9 @@ class ImportTaxonomiesCommand extends Command
      *
      * @param array $taxonomyRecords
      * @param bool $refresh
-     * @return bool
+     * @return bool | int
      **/
-    public function importTaxonomyRecords(array $taxonomyRecords, bool $refresh): bool
+    public function importTaxonomyRecords(array $taxonomyRecords, bool $refresh)
     {
         if (App::environment() != 'testing') {
             DB::beginTransaction();
@@ -172,13 +173,13 @@ class ImportTaxonomiesCommand extends Command
 
         $taxonomyImports = $this->mapTaxonomyDepth($taxonomyImports);
 
-        $success = DB::table((new Taxonomy())->getTable())->insert($taxonomyImports);
+        DB::table((new Taxonomy())->getTable())->insert($taxonomyImports);
 
         if (App::environment() != 'testing') {
             DB::commit();
         }
 
-        return $success;
+        return count($taxonomyImports);
     }
 
     /**
@@ -197,6 +198,8 @@ class ImportTaxonomiesCommand extends Command
                     'parent_id' => $record[2] ?: Taxonomy::category()->id,
                     'order' => 0,
                     'depth' => 1,
+                    'created_at' => Carbon::now()->toDateTimeString(),
+                    'updated_at' => Carbon::now()->toDateTimeString(),
                 ],
             ];
         })->all();
@@ -205,7 +208,7 @@ class ImportTaxonomiesCommand extends Command
          * Non-UUID cells or incorrect relationships cannot be imported so the import will fail
          */
         foreach ($records as $record) {
-            if (!is_uuid($record[0]) || ($record[2] != Taxonomy::category()->id && !isset($imports[$record[2]]))) {
+            if (!is_uuid($record[0]) || (!empty($record[2]) && !isset($imports[$record[2]]))) {
                 $this->failedRows[] = $record;
             }
         }
