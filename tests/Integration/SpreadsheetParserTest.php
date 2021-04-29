@@ -36,7 +36,7 @@ class SpreadsheetParserTest extends TestCase
         self::writeSpreadsheetsToDisk($this->spreadsheet, $this->xlsxFilepath, $this->xlsFilepath);
     }
 
-    public static function createSpreadsheets(\Illuminate\Support\Collection $models, array $headers)
+    public static function createSpreadsheets(array $models, array $headers)
     {
         /** Create a new Spreadsheet Object **/
         $spreadsheet = new Spreadsheet();
@@ -56,7 +56,7 @@ class SpreadsheetParserTest extends TestCase
         foreach ($models as $model) {
             $row++;
             foreach ($headers as $i => $header) {
-                $spreadsheet->getActiveSheet()->setCellValue($columns[$i] . $row, $model->getAttribute($header));
+                $spreadsheet->getActiveSheet()->setCellValue($columns[$i] . $row, $model[$header] ?? null);
             }
         }
 
@@ -131,4 +131,3 @@ class SpreadsheetParserTest extends TestCase
         }
     }
 }
-

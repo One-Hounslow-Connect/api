@@ -22,10 +22,10 @@ class OrganisationsTest extends TestCase
     /**
      * Create spreadsheets of organisations
      *
-     * @param Array $organisations
+     * @param Illuminate\Support\Collection $organisations
      * @return null
      **/
-    public function createOrganisationSpreadsheets($organisations)
+    public function createOrganisationSpreadsheets(\Illuminate\Support\Collection $organisations)
     {
         $headers = [
             'name',
@@ -35,7 +35,11 @@ class OrganisationsTest extends TestCase
             'phone',
         ];
 
-        $spreadsheet = \Tests\Integration\SpreadsheetParserTest::createSpreadsheets(collect($organisations), $headers);
+        $organisations = $organisations->map(function ($organisation) {
+            return $organisation->getAttributes();
+        });
+
+        $spreadsheet = \Tests\Integration\SpreadsheetParserTest::createSpreadsheets($organisations->all(), $headers);
         \Tests\Integration\SpreadsheetParserTest::writeSpreadsheetsToDisk($spreadsheet, 'test.xlsx', 'test.xls');
     }
 
