@@ -6,7 +6,6 @@ use App\BatchUpload\SpreadsheetParser;
 use App\BatchUpload\StoresSpreadsheets;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Service\ImportRequest;
-use App\Models\Organisation;
 use App\Models\Role;
 use App\Models\Service;
 use App\Models\UserRole;
@@ -103,8 +102,8 @@ class ImportController extends Controller
             /**
              * Cast Boolean rows to boolean value.
              */
-            $row['is_free'] = null === $row['is_free'] ? null : (bool) $row['is_free'];
-            $row['show_referral_disclaimer'] = null === $row['show_referral_disclaimer'] ? null : (bool) $row['show_referral_disclaimer'];
+            $row['is_free'] = null === $row['is_free'] ? null : (bool)$row['is_free'];
+            $row['show_referral_disclaimer'] = null === $row['show_referral_disclaimer'] ? null : (bool)$row['show_referral_disclaimer'];
 
             $validator = Validator::make($row, [
                 'id' => ['required', 'string', 'uuid'],
@@ -266,8 +265,8 @@ class ImportController extends Controller
                 /**
                  * Cast Boolean rows to boolean value.
                  */
-                $serviceRow['is_free'] = (bool) $serviceRow['is_free'];
-                $serviceRow['show_referral_disclaimer'] = (bool) $serviceRow['show_referral_disclaimer'];
+                $serviceRow['is_free'] = (bool)$serviceRow['is_free'];
+                $serviceRow['show_referral_disclaimer'] = (bool)$serviceRow['show_referral_disclaimer'];
 
                 /**
                  * Check for Criteria fields.
@@ -275,7 +274,7 @@ class ImportController extends Controller
                  * Remove Criteria fields from the Service row.
                  */
                 $criteriaRow = [
-                    'id' => (string) Str::uuid(),
+                    'id' => (string)Str::uuid(),
                     'service_id' => $serviceRow['id'],
                     'created_at' => Date::now(),
                     'updated_at' => Date::now(),

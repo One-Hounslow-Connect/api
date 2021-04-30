@@ -31,7 +31,7 @@ class SpreadsheetParserTest extends TestCase
             'phone',
         ];
 
-        $this->spreadsheet = self::createSpreadsheets($organisations, $headers);
+        $this->spreadsheet = self::createSpreadsheets($organisations->all(), $headers);
 
         self::writeSpreadsheetsToDisk($this->spreadsheet, $this->xlsxFilepath, $this->xlsFilepath);
     }
