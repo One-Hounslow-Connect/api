@@ -10,6 +10,7 @@ use App\Models\Organisation;
 use App\Models\Role;
 use App\Models\Service;
 use App\Models\UserRole;
+use App\Rules\IsOrganisationAdmin;
 use App\Rules\MarkdownMaxLength;
 use App\Rules\MarkdownMinLength;
 use App\Rules\UserHasRole;
@@ -29,13 +30,6 @@ class ImportController extends Controller
      * Number of rows to import at once.
      */
     const ROW_IMPORT_BATCH_SIZE = 100;
-
-    /**
-     * Organisation ID to which Services will be assigned.
-     *
-     * @var string
-     */
-    protected $organisationId = null;
 
     /**
      * User requesting the import.
@@ -62,7 +56,6 @@ class ImportController extends Controller
     public function __invoke(ImportRequest $request)
     {
         $this->user = $request->user('api');
-        $this->organisation = Organisation::findOrFail($request->input('organisation_id'));
 
         $this->processSpreadsheet($request->input('spreadsheet'));
 
@@ -111,10 +104,17 @@ class ImportController extends Controller
              * Cast Boolean rows to boolean value.
              */
             $row['is_free'] = null === $row['is_free'] ? null : (bool) $row['is_free'];
-            $row['is_national'] = null === $row['is_national'] ? null : (bool) $row['is_national'];
             $row['show_referral_disclaimer'] = null === $row['show_referral_disclaimer'] ? null : (bool) $row['show_referral_disclaimer'];
 
             $validator = Validator::make($row, [
+                'id' => ['required', 'string', 'uuid'],
+                'organisation_id' => [
+                    'required',
+                    'string',
+                    'uuid',
+                    'exists:organisations,id',
+                    new IsOrganisationAdmin($this->user),
+                ],
                 'name' => ['required', 'string', 'min:1', 'max:255'],
                 'type' => [
                     'required',
@@ -264,11 +264,6 @@ class ImportController extends Controller
             ];
             foreach ($spreadsheetParser->readRows() as $serviceRow) {
                 /**
-                 * Generate a new Service ID.
-                 */
-                $serviceRow['id'] = (string) Str::uuid();
-
-                /**
                  * Cast Boolean rows to boolean value.
                  */
                 $serviceRow['is_free'] = (bool) $serviceRow['is_free'];
@@ -301,7 +296,6 @@ class ImportController extends Controller
                  * Add the meta fields to the Service row.
                  */
                 $serviceRow['slug'] = Str::slug(uniqid($serviceRow['name'] . '-'));
-                $serviceRow['organisation_id'] = $this->organisation->id;
                 $serviceRow['created_at'] = Date::now();
                 $serviceRow['updated_at'] = Date::now();
                 $serviceRowBatch[] = $serviceRow;

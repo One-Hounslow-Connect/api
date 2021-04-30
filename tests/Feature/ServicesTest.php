@@ -41,6 +41,8 @@ class ServicesTest extends TestCase
         $faker = Faker::create('en_GB');
 
         $headers = [
+            'id',
+            'organisation_id',
             'name',
             'type',
             'status',
@@ -56,11 +58,11 @@ class ServicesTest extends TestCase
             'contact_name',
             'contact_phone',
             'contact_email',
-            'show_referral_disclaimer',
             'referral_method',
-            'referral_button_text',
             'referral_email',
             'referral_url',
+            'show_referral_disclaimer',
+            'referral_button_text',
             'criteria_age_group',
             'criteria_disability',
             'criteria_employment',
@@ -74,6 +76,7 @@ class ServicesTest extends TestCase
 
         $services = $services->map(function ($service) use ($faker) {
             $serviceAttributes = $service->getAttributes();
+            $serviceAttributes['id'] = $service->id ?: uuid();
             $criteria = [
                 'criteria_age_group' => $faker->boolean() ? $faker->sentence() : '',
                 'criteria_disability' => $faker->boolean() ? $faker->sentence() : '',
@@ -2945,7 +2948,9 @@ class ServicesTest extends TestCase
     {
         Storage::fake('local');
 
-        $services = factory(Service::class, 2)->make();
+        $services = factory(Service::class, 2)->make([
+            'status' => Service::STATUS_INACTIVE,
+        ]);
 
         $this->createServiceSpreadsheets($services);
 
@@ -2973,7 +2978,6 @@ class ServicesTest extends TestCase
 
         $data = [
             'spreadsheet' => 'data:application/vnd.ms-excel;base64,' . base64_encode(file_get_contents(Storage::disk('local')->path('test.xls'))),
-            'organisation_id' => $service->organisation_id,
         ];
 
         $response = $this->json('POST', "/core/v1/services/import", $data);
@@ -2990,13 +2994,14 @@ class ServicesTest extends TestCase
 
         Passport::actingAs($user);
 
-        $services = factory(Service::class, 2)->make();
+        $services = factory(Service::class, 2)->make([
+            'status' => Service::STATUS_INACTIVE,
+        ]);
 
         $this->createServiceSpreadsheets($services);
 
         $data = [
             'spreadsheet' => 'data:application/vnd.ms-excel;base64,' . base64_encode(file_get_contents(Storage::disk('local')->path('test.xls'))),
-            'organisation_id' => $service->organisation_id,
         ];
 
         $response = $this->json('POST', "/core/v1/services/import", $data);
@@ -3014,18 +3019,34 @@ class ServicesTest extends TestCase
 
         Passport::actingAs($user);
 
-        $services = factory(Service::class, 2)->make();
+        $services = factory(Service::class, 2)->make([
+            'status' => Service::STATUS_INACTIVE,
+            'organisation_id' => $organisation2->id,
+        ]);
 
         $this->createServiceSpreadsheets($services);
 
         $data = [
             'spreadsheet' => 'data:application/vnd.ms-excel;base64,' . base64_encode(file_get_contents(Storage::disk('local')->path('test.xls'))),
-            'organisation_id' => $organisation2->id,
         ];
 
         $response = $this->json('POST', "/core/v1/services/import", $data);
 
-        $response->assertStatus(Response::HTTP_FORBIDDEN);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJson([
+            'data' => [
+                'errors' => [
+                    'spreadsheet' => [
+                        [
+                            'row' => [],
+                            'errors' => [
+                                'organisation_id' => [],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
     }
 
     public function test_organisation_admin_can_bulk_import()
@@ -3037,13 +3058,15 @@ class ServicesTest extends TestCase
 
         Passport::actingAs($user);
 
-        $services = factory(Service::class, 2)->make();
+        $services = factory(Service::class, 2)->make([
+            'status' => Service::STATUS_INACTIVE,
+            'organisation_id' => $organisation->id,
+        ]);
 
-        $this->createServiceSpreadsheets($services);
+        $this->createServiceSpreadsheets($services, $organisation->id);
 
         $data = [
             'spreadsheet' => 'data:application/vnd.ms-excel;base64,' . base64_encode(file_get_contents(Storage::disk('local')->path('test.xls'))),
-            'organisation_id' => $organisation->id,
         ];
 
         $response = $this->json('POST', "/core/v1/services/import", $data);
@@ -3065,7 +3088,6 @@ class ServicesTest extends TestCase
 
         $data = [
             'spreadsheet' => 'data:application/vnd.ms-excel;base64,' . base64_encode(file_get_contents(Storage::disk('local')->path('test.xls'))),
-            'organisation_id' => factory(Organisation::class)->create()->id,
         ];
 
         $response = $this->json('POST', "/core/v1/services/import", $data);
@@ -3087,7 +3109,6 @@ class ServicesTest extends TestCase
 
         $data = [
             'spreadsheet' => 'data:application/vnd.ms-excel;base64,' . base64_encode(file_get_contents(Storage::disk('local')->path('test.xls'))),
-            'organisation_id' => factory(Organisation::class)->create()->id,
         ];
 
         $response = $this->json('POST', "/core/v1/services/import", $data);
@@ -3121,36 +3142,60 @@ class ServicesTest extends TestCase
             $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        $response = $this->json('POST', "/core/v1/services/import", [
-            'spreadsheet' => 'data:application/vnd.ms-excel;base64,' . base64_encode(file_get_contents(base_path('tests/assets/services_import_1_good.xls'))),
+        $services = factory(Service::class, 2)->make([
             'organisation_id' => $organisation->id,
         ]);
+
+        $this->createServiceSpreadsheets($services);
+
+        $data = [
+            'spreadsheet' => 'data:application/vnd.ms-excel;base64,' . base64_encode(file_get_contents(Storage::disk('local')->path('test.xls'))),
+        ];
+
+        $response = $this->json('POST', "/core/v1/services/import", $data);
+
         $response->assertStatus(Response::HTTP_CREATED);
         $response->assertJson([
             'data' => [
-                'imported_row_count' => 1,
+                'imported_row_count' => 2,
             ],
         ]);
 
-        $response = $this->json('POST', "/core/v1/services/import", [
-            'spreadsheet' => 'data:application/octet-stream;base64,' . base64_encode(file_get_contents(base_path('tests/assets/services_import_1_good.xls'))),
+        $services = factory(Service::class, 2)->make([
             'organisation_id' => $organisation->id,
         ]);
+
+        $this->createServiceSpreadsheets($services);
+
+        $data = [
+            'spreadsheet' => 'data:application/octet-stream;base64,' . base64_encode(file_get_contents(Storage::disk('local')->path('test.xls'))),
+        ];
+
+        $response = $this->json('POST', "/core/v1/services/import", $data);
+
         $response->assertStatus(Response::HTTP_CREATED);
         $response->assertJson([
             'data' => [
-                'imported_row_count' => 1,
+                'imported_row_count' => 2,
             ],
         ]);
 
-        $response = $this->json('POST', "/core/v1/services/import", [
-            'spreadsheet' => 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' . base64_encode(file_get_contents(base_path('tests/assets/services_import_1_good.xlsx'))),
+        $services = factory(Service::class, 2)->make([
             'organisation_id' => $organisation->id,
         ]);
+
+        $this->createServiceSpreadsheets($services);
+
+        $data = [
+            'spreadsheet' => 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' . base64_encode(file_get_contents(Storage::disk('local')->path('test.xlsx'))),
+        ];
+
+        $response = $this->json('POST', "/core/v1/services/import", $data);
+
         $response->assertStatus(Response::HTTP_CREATED);
         $response->assertJson([
             'data' => [
-                'imported_row_count' => 1,
+                'imported_row_count' => 2,
             ],
         ]);
     }
@@ -3158,16 +3203,38 @@ class ServicesTest extends TestCase
     public function test_validate_file_import_service_fields()
     {
         Storage::fake('local');
+        $faker = Faker::create('en_GB');
 
         $organisation = factory(Organisation::class)->create();
         $user = factory(User::class)->create()->makeOrganisationAdmin($organisation);
 
         Passport::actingAs($user);
 
-        $response = $this->json('POST', "/core/v1/services/import", [
-            'spreadsheet' => 'data:application/vnd.ms-excel;base64,' . base64_encode(file_get_contents(base_path('tests/assets/services_import_3_bad.xls'))),
-            'organisation_id' => $organisation->id,
+        $services = factory(Service::class, 2)->make([
+            'organisation_id' => uuid(),
+            'name' => '',
+            'type' => '',
+            'status' => Service::STATUS_ACTIVE,
+            'intro' => '',
+            'description' => '',
+            'is_free' => '',
+            'url' => '',
+            'show_referral_disclaimer' => '',
+            'referral_method' => '',
         ]);
+
+        foreach ($services as &$service) {
+            $service->id = $faker->word;
+        }
+
+        $this->createServiceSpreadsheets($services);
+
+        $data = [
+            'spreadsheet' => 'data:application/vnd.ms-excel;base64,' . base64_encode(file_get_contents(Storage::disk('local')->path('test.xls'))),
+        ];
+
+        $response = $this->json('POST', "/core/v1/services/import", $data);
+
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
         $response->assertJson([
             'data' => [
@@ -3176,6 +3243,8 @@ class ServicesTest extends TestCase
                         [
                             'row' => [],
                             'errors' => [
+                                'id' => [],
+                                'organisation_id' => [],
                                 'name' => [],
                                 'type' => [],
                                 'status' => [],
@@ -3192,10 +3261,33 @@ class ServicesTest extends TestCase
             ],
         ]);
 
-        $response = $this->json('POST', "/core/v1/services/import", [
-            'spreadsheet' => 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' . base64_encode(file_get_contents(base_path('tests/assets/services_import_3_bad.xlsx'))),
-            'organisation_id' => $organisation->id,
+        $services = factory(Service::class, 2)->make([
+            'organisation_id' => uuid(),
+            'name' => '',
+            'type' => '',
+            'status' => Service::STATUS_ACTIVE,
+            'intro' => '',
+            'description' => '',
+            'is_free' => '',
+            'url' => '',
+            'show_referral_disclaimer' => '',
+            'referral_method' => '',
+            'referral_email' => $faker->word,
+            'referral_url' => $faker->word,
         ]);
+
+        foreach ($services as &$service) {
+            $service->id = $faker->word;
+        }
+
+        $this->createServiceSpreadsheets($services);
+
+        $data = [
+            'spreadsheet' => 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' . base64_encode(file_get_contents(Storage::disk('local')->path('test.xlsx'))),
+        ];
+
+        $response = $this->json('POST', "/core/v1/services/import", $data);
+
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
         $response->assertJson([
             'data' => [
@@ -3204,6 +3296,8 @@ class ServicesTest extends TestCase
                         [
                             'row' => [],
                             'errors' => [
+                                'id' => [],
+                                'organisation_id' => [],
                                 'name' => [],
                                 'type' => [],
                                 'status' => [],
@@ -3213,17 +3307,7 @@ class ServicesTest extends TestCase
                                 'url' => [],
                                 'show_referral_disclaimer' => [],
                                 'referral_method' => [],
-                            ],
-                        ],
-                        [
-                            'row' => [],
-                            'errors' => [
                                 'referral_email' => [],
-                            ],
-                        ],
-                        [
-                            'row' => [],
-                            'errors' => [
                                 'referral_url' => [],
                             ],
                         ],
@@ -3236,6 +3320,7 @@ class ServicesTest extends TestCase
     public function test_validate_file_import_service_field_global_admin_permissions()
     {
         Storage::fake('local');
+        $faker = Faker::create('en_GB');
 
         $organisation = factory(Organisation::class)->create();
         $organisationAdminUser = factory(User::class)->create()->makeOrganisationAdmin($organisation);
@@ -3243,10 +3328,23 @@ class ServicesTest extends TestCase
 
         Passport::actingAs($organisationAdminUser);
 
-        $response = $this->json('POST', "/core/v1/services/import", [
-            'spreadsheet' => 'data:application/vnd.ms-excel;base64,' . base64_encode(file_get_contents(base_path('tests/assets/services_import_1_requires_global.xls'))),
-            'organisation_id' => $organisation->id,
+        $services = factory(Service::class, 2)->make([
+            'status' => Service::STATUS_ACTIVE,
+            'referral_method' => Service::REFERRAL_METHOD_EXTERNAL,
+            'referral_button_text' => $faker->word,
+            'referral_email' => $faker->email,
+            'referral_url' => $faker->url,
+            'show_referral_disclaimer' => 1,
         ]);
+
+        $this->createServiceSpreadsheets($services);
+
+        $data = [
+            'spreadsheet' => 'data:application/vnd.ms-excel;base64,' . base64_encode(file_get_contents(Storage::disk('local')->path('test.xls'))),
+        ];
+
+        $response = $this->json('POST', "/core/v1/services/import", $data);
+
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
         $response->assertJson([
             'data' => [
@@ -3267,10 +3365,12 @@ class ServicesTest extends TestCase
             ],
         ]);
 
-        $response = $this->json('POST', "/core/v1/services/import", [
-            'spreadsheet' => 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' . base64_encode(file_get_contents(base_path('tests/assets/services_import_1_requires_global.xlsx'))),
-            'organisation_id' => $organisation->id,
-        ]);
+        $data = [
+            'spreadsheet' => 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' . base64_encode(file_get_contents(Storage::disk('local')->path('test.xlsx'))),
+        ];
+
+        $response = $this->json('POST', "/core/v1/services/import", $data);
+
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
         $response->assertJson([
             'data' => [
@@ -3293,33 +3393,61 @@ class ServicesTest extends TestCase
 
         Passport::actingAs($globalAdminUser);
 
-        $response = $this->json('POST', "/core/v1/services/import", [
-            'spreadsheet' => 'data:application/vnd.ms-excel;base64,' . base64_encode(file_get_contents(base_path('tests/assets/services_import_1_requires_global.xls'))),
-            'organisation_id' => $organisation->id,
-        ]);
+        $data = [
+            'spreadsheet' => 'data:application/vnd.ms-excel;base64,' . base64_encode(file_get_contents(Storage::disk('local')->path('test.xls'))),
+        ];
+
+        $response = $this->json('POST', "/core/v1/services/import", $data);
+
         $response->assertStatus(Response::HTTP_CREATED);
 
-        $response = $this->json('POST', "/core/v1/services/import", [
-            'spreadsheet' => 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' . base64_encode(file_get_contents(base_path('tests/assets/services_import_1_requires_global.xlsx'))),
-            'organisation_id' => $organisation->id,
+        $services = factory(Service::class, 2)->make([
+            'status' => Service::STATUS_ACTIVE,
+            'referral_method' => Service::REFERRAL_METHOD_EXTERNAL,
+            'referral_button_text' => $faker->word,
+            'referral_email' => $faker->email,
+            'referral_url' => $faker->url,
+            'show_referral_disclaimer' => 1,
         ]);
+
+        $this->createServiceSpreadsheets($services);
+
+        $data = [
+            'spreadsheet' => 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' . base64_encode(file_get_contents(Storage::disk('local')->path('test.xlsx'))),
+        ];
+
+        $response = $this->json('POST', "/core/v1/services/import", $data);
+
         $response->assertStatus(Response::HTTP_CREATED);
     }
 
     public function test_validate_file_import_service_field_super_admin_permissions()
     {
         Storage::fake('local');
+        $faker = Faker::create('en_GB');
 
-        $organisation = factory(Organisation::class)->create();
         $globalAdminUser = factory(User::class)->create()->makeGlobalAdmin();
         $superAdminUser = factory(User::class)->create()->makeSuperAdmin();
 
         Passport::actingAs($globalAdminUser);
 
-        $response = $this->json('POST', "/core/v1/services/import", [
-            'spreadsheet' => 'data:application/vnd.ms-excel;base64,' . base64_encode(file_get_contents(base_path('tests/assets/services_import_1_requires_super.xls'))),
-            'organisation_id' => $organisation->id,
+        $services = factory(Service::class, 2)->make([
+            'status' => Service::STATUS_ACTIVE,
+            'referral_method' => Service::REFERRAL_METHOD_EXTERNAL,
+            'referral_button_text' => $faker->word,
+            'referral_email' => $faker->email,
+            'referral_url' => $faker->url,
+            'show_referral_disclaimer' => 0,
         ]);
+
+        $this->createServiceSpreadsheets($services);
+
+        $data = [
+            'spreadsheet' => 'data:application/vnd.ms-excel;base64,' . base64_encode(file_get_contents(Storage::disk('local')->path('test.xls'))),
+        ];
+
+        $response = $this->json('POST', "/core/v1/services/import", $data);
+
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
         $response->assertJson([
             'data' => [
@@ -3336,10 +3464,12 @@ class ServicesTest extends TestCase
             ],
         ]);
 
-        $response = $this->json('POST', "/core/v1/services/import", [
-            'spreadsheet' => 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' . base64_encode(file_get_contents(base_path('tests/assets/services_import_1_requires_super.xlsx'))),
-            'organisation_id' => $organisation->id,
-        ]);
+        $data = [
+            'spreadsheet' => 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' . base64_encode(file_get_contents(Storage::disk('local')->path('test.xlsx'))),
+        ];
+
+        $response = $this->json('POST', "/core/v1/services/import", $data);
+
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
         $response->assertJson([
             'data' => [
@@ -3358,16 +3488,31 @@ class ServicesTest extends TestCase
 
         Passport::actingAs($superAdminUser);
 
-        $response = $this->json('POST', "/core/v1/services/import", [
-            'spreadsheet' => 'data:application/vnd.ms-excel;base64,' . base64_encode(file_get_contents(base_path('tests/assets/services_import_1_requires_super.xls'))),
-            'organisation_id' => $organisation->id,
-        ]);
+        $data = [
+            'spreadsheet' => 'data:application/vnd.ms-excel;base64,' . base64_encode(file_get_contents(Storage::disk('local')->path('test.xls'))),
+        ];
+
+        $response = $this->json('POST', "/core/v1/services/import", $data);
+
         $response->assertStatus(Response::HTTP_CREATED);
 
-        $response = $this->json('POST', "/core/v1/services/import", [
-            'spreadsheet' => 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' . base64_encode(file_get_contents(base_path('tests/assets/services_import_1_requires_super.xlsx'))),
-            'organisation_id' => $organisation->id,
+        $services = factory(Service::class, 2)->make([
+            'status' => Service::STATUS_ACTIVE,
+            'referral_method' => Service::REFERRAL_METHOD_EXTERNAL,
+            'referral_button_text' => $faker->word,
+            'referral_email' => $faker->email,
+            'referral_url' => $faker->url,
+            'show_referral_disclaimer' => 0,
         ]);
+
+        $this->createServiceSpreadsheets($services);
+
+        $data = [
+            'spreadsheet' => 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' . base64_encode(file_get_contents(Storage::disk('local')->path('test.xlsx'))),
+        ];
+
+        $response = $this->json('POST', "/core/v1/services/import", $data);
+
         $response->assertStatus(Response::HTTP_CREATED);
     }
 
@@ -3380,10 +3525,19 @@ class ServicesTest extends TestCase
 
         Passport::actingAs($user);
 
-        $response = $this->json('POST', "/core/v1/services/import", [
-            'spreadsheet' => 'data:application/vnd.ms-excel;base64,' . base64_encode(file_get_contents(base_path('tests/assets/services_import_100_good.xls'))),
+        $services = factory(Service::class, 100)->make([
+            'status' => Service::STATUS_INACTIVE,
             'organisation_id' => $organisation->id,
         ]);
+
+        $this->createServiceSpreadsheets($services);
+
+        $data = [
+            'spreadsheet' => 'data:application/vnd.ms-excel;base64,' . base64_encode(file_get_contents(Storage::disk('local')->path('test.xls'))),
+        ];
+
+        $response = $this->json('POST', "/core/v1/services/import", $data);
+
         $response->assertStatus(Response::HTTP_CREATED);
         $response->assertJson([
             'data' => [
@@ -3391,10 +3545,19 @@ class ServicesTest extends TestCase
             ],
         ]);
 
-        $response = $this->json('POST', "/core/v1/services/import", [
-            'spreadsheet' => 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' . base64_encode(file_get_contents(base_path('tests/assets/services_import_100_good.xlsx'))),
+        $services = factory(Service::class, 100)->make([
+            'status' => Service::STATUS_INACTIVE,
             'organisation_id' => $organisation->id,
         ]);
+
+        $this->createServiceSpreadsheets($services);
+
+        $data = [
+            'spreadsheet' => 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' . base64_encode(file_get_contents(Storage::disk('local')->path('test.xlsx'))),
+        ];
+
+        $response = $this->json('POST', "/core/v1/services/import", $data);
+
         $response->assertStatus(Response::HTTP_CREATED);
         $response->assertJson([
             'data' => [
@@ -3415,9 +3578,19 @@ class ServicesTest extends TestCase
 
         Passport::actingAs($user);
 
-        $response = $this->json('POST', "/core/v1/services/import", [
-            'spreadsheet' => 'data:application/vnd.ms-excel;base64,' . base64_encode(file_get_contents(base_path('tests/assets/services_import_5000_good.xls'))),
-            'organisation_id' => $organisation->id]);
+        $services = factory(Service::class, 5000)->make([
+            'status' => Service::STATUS_INACTIVE,
+            'organisation_id' => $organisation->id,
+        ]);
+
+        $this->createServiceSpreadsheets($services);
+
+        $data = [
+            'spreadsheet' => 'data:application/vnd.ms-excel;base64,' . base64_encode(file_get_contents(Storage::disk('local')->path('test.xls'))),
+        ];
+
+        $response = $this->json('POST', "/core/v1/services/import", $data);
+
         $response->assertStatus(Response::HTTP_CREATED);
         $response->assertJson([
             'data' => [
@@ -3425,10 +3598,19 @@ class ServicesTest extends TestCase
             ],
         ]);
 
-        $response = $this->json('POST', "/core/v1/services/import", [
-            'spreadsheet' => 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' . base64_encode(file_get_contents(base_path('tests/assets/services_import_5000_good.xlsx'))),
+        $services = factory(Service::class, 5000)->make([
+            'status' => Service::STATUS_INACTIVE,
             'organisation_id' => $organisation->id,
         ]);
+
+        $this->createServiceSpreadsheets($services);
+
+        $data = [
+            'spreadsheet' => 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' . base64_encode(file_get_contents(Storage::disk('local')->path('test.xlsx'))),
+        ];
+
+        $response = $this->json('POST', "/core/v1/services/import", $data);
+
         $response->assertStatus(Response::HTTP_CREATED);
         $response->assertJson([
             'data' => [
@@ -3446,14 +3628,22 @@ class ServicesTest extends TestCase
 
         Passport::actingAs($user);
 
-        $response = $this->json('POST', "/core/v1/services/import", [
-            'spreadsheet' => 'data:application/vnd.ms-excel;base64,' . base64_encode(file_get_contents(base_path('tests/assets/services_import_1_good.xls'))),
+        $services = factory(Service::class, 2)->make([
+            'status' => Service::STATUS_INACTIVE,
             'organisation_id' => $organisation->id,
         ]);
+
+        $this->createServiceSpreadsheets($services);
+
+        $data = [
+            'spreadsheet' => 'data:application/vnd.ms-excel;base64,' . base64_encode(file_get_contents(Storage::disk('local')->path('test.xls'))),
+        ];
+
+        $response = $this->json('POST', "/core/v1/services/import", $data);
         $response->assertStatus(Response::HTTP_CREATED);
         $response->assertJson([
             'data' => [
-                'imported_row_count' => 1,
+                'imported_row_count' => 2,
             ],
         ]);
 

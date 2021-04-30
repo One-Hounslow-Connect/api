@@ -36,11 +36,15 @@ class SpreadsheetParserTest extends TestCase
         self::writeSpreadsheetsToDisk($this->spreadsheet, $this->xlsxFilepath, $this->xlsFilepath);
     }
 
-    public static function createSpreadsheets(array $models, array $headers)
+    public static function createSpreadsheets(array $rows, array $headers)
     {
         /** Create a new Spreadsheet Object **/
         $spreadsheet = new Spreadsheet();
-        $columns = range('A', chr(count($headers) + 64));
+        $columns = [];
+
+        foreach ($headers as $key => $value) {
+            $columns[] = $key < 26 ? chr($key + 65) : 'A' . chr(($key % 26) + 65);
+        }
 
         /**
          * Create the headers in row 1
@@ -50,13 +54,13 @@ class SpreadsheetParserTest extends TestCase
         }
 
         /**
-         * Populate all the other rows with data from the models
+         * Populate all the other rows with data
          */
-        $row = 1;
-        foreach ($models as $model) {
-            $row++;
+        $rowCount = 1;
+        foreach ($rows as $row) {
+            $rowCount++;
             foreach ($headers as $i => $header) {
-                $spreadsheet->getActiveSheet()->setCellValue($columns[$i] . $row, $model[$header] ?? null);
+                $spreadsheet->getActiveSheet()->setCellValue($columns[$i] . $rowCount, $row[$header] ?? null);
             }
         }
 

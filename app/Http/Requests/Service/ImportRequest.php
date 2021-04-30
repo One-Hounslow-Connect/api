@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\Service;
 
-use App\Models\Organisation;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ImportRequest extends FormRequest
@@ -15,7 +14,7 @@ class ImportRequest extends FormRequest
     public function authorize()
     {
         if ($this->user()) {
-            return $this->user()->isOrganisationAdmin(Organisation::findOrFail($this->organisation_id));
+            return $this->user()->isOrganisationAdmin();
         }
 
         return false;
@@ -32,10 +31,6 @@ class ImportRequest extends FormRequest
             'spreadsheet' => [
                 'required',
                 'regex:/^data:application\/[a-z\-\.]+;base64,/',
-            ],
-            'organisation_id' => [
-                'required',
-                'exists:organisations,id',
             ],
         ];
     }
