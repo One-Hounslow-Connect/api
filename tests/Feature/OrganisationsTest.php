@@ -28,6 +28,7 @@ class OrganisationsTest extends TestCase
     public function createOrganisationSpreadsheets(\Illuminate\Support\Collection $organisations)
     {
         $headers = [
+            'id',
             'name',
             'description',
             'url',
@@ -36,7 +37,8 @@ class OrganisationsTest extends TestCase
         ];
 
         $organisations = $organisations->map(function ($organisation) {
-            return $organisation->getAttributes();
+            $organisationAttributes = $organisation->getAttributes();
+            $organisationAttributes['id'] = $organisation->id ?: uuid();
         });
 
         $spreadsheet = \Tests\Integration\SpreadsheetParserTest::createSpreadsheets($organisations->all(), $headers);
@@ -902,6 +904,7 @@ class OrganisationsTest extends TestCase
         $this->createOrganisationSpreadsheets($organisations);
 
         $response = $this->json('POST', "/core/v1/organisations/import", ['spreadsheet' => 'data:application/vnd.ms-excel;base64,' . base64_encode(file_get_contents(Storage::disk('local')->path('test.xls')))]);
+        dump($response->json());
         $response->assertStatus(Response::HTTP_CREATED);
         $response->assertJson([
             'data' => [

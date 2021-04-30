@@ -84,6 +84,7 @@ class ImportController extends Controller
 
         foreach ($spreadsheetParser->readRows() as $i => $row) {
             $validator = Validator::make($row, [
+                'id' => ['required', 'string', 'uuid'],
                 'name' => ['required', 'string', 'min:1', 'max:255'],
                 'description' => ['required', 'string', 'min:1', 'max:10000'],
                 'url' => ['present', 'url', 'max:255'],
@@ -268,7 +269,6 @@ class ImportController extends Controller
                  * Generate a new Organisation ID, normalise the Organistion name
                  * and add the meta fields to the Organisation row.
                  */
-                $organisationRow['id'] = (string)Str::uuid();
                 $organisationRow['name'] = preg_replace('/[^a-zA-Z0-9,\.\'\&" ]/', '', $organisationRow['name']);
                 $organisationRow['slug'] = Str::slug($organisationRow['name'] . ' ' . uniqid(), '-');
                 $organisationRow['created_at'] = Date::now();
