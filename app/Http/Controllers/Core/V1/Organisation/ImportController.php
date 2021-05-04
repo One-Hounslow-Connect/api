@@ -80,11 +80,11 @@ class ImportController extends Controller
 
         $spreadsheetParser->readHeaders();
 
-        $rejectedRows = $acceptedRows = [];
+        $rejectedRows = [];
 
         foreach ($spreadsheetParser->readRows() as $i => $row) {
             $validator = Validator::make($row, [
-                'id' => ['required', 'string', 'uuid'],
+                'id' => ['required', 'string', 'uuid', 'unique:organisations,id'],
                 'name' => ['required', 'string', 'min:1', 'max:255'],
                 'description' => ['required', 'string', 'min:1', 'max:10000'],
                 'url' => ['present', 'url', 'max:255'],
@@ -275,9 +275,9 @@ class ImportController extends Controller
                 $organisationRow['updated_at'] = Date::now();
 
                 /**
-                 * Build the name index in case of name clashes.
+                 * Build the row index in case of clashes.
                  */
-                $nameIndex[$i + 2] = [
+                $rowIndex[$i + 2] = [
                     'id' => $organisationRow['id'],
                     'name' => $organisationRow['name'],
                     'normalisedName' => str_replace(mb_str_split($this->normalisedCharacters), '', mb_strtolower(trim($organisationRow['name']))),
@@ -312,7 +312,7 @@ class ImportController extends Controller
              */
             $normalisedNames = array_map(function ($row) {
                 return $row['normalisedName'];
-            }, $nameIndex);
+            }, $rowIndex);
             $duplicates = $this->rowsExist($normalisedNames);
 
             if (count($duplicates)) {
@@ -327,7 +327,7 @@ class ImportController extends Controller
                 /**
                  * Throws an exception which will be caught in self::processSpreadsheet.
                  */
-                $this->formatDuplicates($duplicates, $spreadsheetParser->headers, $nameIndex);
+                $this->formatDuplicates($duplicates, $spreadsheetParser->headers, $rowIndex);
             }
         }, 5);
 
