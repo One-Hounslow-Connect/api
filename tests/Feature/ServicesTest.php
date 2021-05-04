@@ -3315,6 +3315,58 @@ class ServicesTest extends TestCase
                 ],
             ],
         ]);
+
+        $service = factory(Service::class)->make([
+            'id' => factory(Service::class)->create()->id,
+            'status' => Service::STATUS_INACTIVE,
+            'organisation_id' => $organisation->id,
+        ]);
+
+        $this->createServiceSpreadsheets(collect([$service]));
+
+        $data = [
+            'spreadsheet' => 'data:application/vnd.ms-excel;base64,' . base64_encode(file_get_contents(Storage::disk('local')->path('test.xls'))),
+        ];
+
+        $response = $this->json('POST', "/core/v1/services/import", $data);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJson([
+            'data' => [
+                'errors' => [
+                    'spreadsheet' => [
+                        [
+                            'row' => [],
+                            'errors' => [
+                                'id' => [],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $data = [
+            'spreadsheet' => 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' . base64_encode(file_get_contents(Storage::disk('local')->path('test.xlsx'))),
+        ];
+
+        $response = $this->json('POST', "/core/v1/services/import", $data);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJson([
+            'data' => [
+                'errors' => [
+                    'spreadsheet' => [
+                        [
+                            'row' => [],
+                            'errors' => [
+                                'id' => [],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
     }
 
     public function test_validate_file_import_service_field_global_admin_permissions()
