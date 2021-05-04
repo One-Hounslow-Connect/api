@@ -2941,7 +2941,7 @@ class ServicesTest extends TestCase
     }
 
     /**
-     * Bulk import organisations
+     * Bulk import services
      */
 
     public function test_guest_cannot_bulk_import()
