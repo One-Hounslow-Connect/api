@@ -103,7 +103,8 @@ class ImportController extends Controller
                 ],
                 [
                     'uuid' => 'The :attribute is not a valid UUID',
-                ]);
+                ]
+            );
 
             $row['index'] = $i + 2;
             if ($validator->fails()) {
@@ -111,7 +112,7 @@ class ImportController extends Controller
             }
 
             /**
-             * Check for duplicate IDs in the spreadsheet
+             * Check for duplicate IDs in the spreadsheet.
              */
             if (false !== array_search($row['id'], $rowIds)) {
                 if ($rejectedRow) {
