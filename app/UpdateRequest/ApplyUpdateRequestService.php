@@ -11,16 +11,14 @@ class ApplyUpdateRequestService
      * @param Request $request
      * @param AppliesUpdateRequests $entity
      * @param UpdateRequest $updateRequest
-     * @return bool
+     * @return UpdateRequest
      */
-    public function applyUpdateRequestIfAdmin(Request $request, AppliesUpdateRequests $entity, UpdateRequest $updateRequest)
+    public function applyUpdateRequestIfAdmin(Request $request, AppliesUpdateRequests $entity, UpdateRequest $updateRequest): UpdateRequest
     {
         if ($request->user()->isGlobalAdmin()) {
-            $entity->applyUpdateRequest($updateRequest);
-
-            return true;
+            return $entity->applyUpdateRequest($updateRequest);
         }
 
-        return false;
+        return $updateRequest;
     }
 }
