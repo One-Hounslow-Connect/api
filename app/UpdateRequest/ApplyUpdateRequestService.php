@@ -15,8 +15,10 @@ class ApplyUpdateRequestService
      */
     public function applyUpdateRequestIfAdmin(Request $request, AppliesUpdateRequests $entity, UpdateRequest $updateRequest): UpdateRequest
     {
-        if ($request->user()->isGlobalAdmin()) {
-            return $entity->applyUpdateRequest($updateRequest);
+        $user = $request->user('api');
+
+        if ($user->isGlobalAdmin()) {
+            return $updateRequest->apply($user);
         }
 
         return $updateRequest;
