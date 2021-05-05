@@ -18,6 +18,7 @@ use App\Models\Organisation;
 use Illuminate\Support\Facades\DB;
 use Spatie\QueryBuilder\Filter;
 use Spatie\QueryBuilder\QueryBuilder;
+use App\UpdateRequest\ApplyUpdateRequestService;
 
 class OrganisationController extends Controller
 {
@@ -117,9 +118,9 @@ class OrganisationController extends Controller
      * @param \App\Models\Organisation $organisation
      * @return \Illuminate\Http\Response
      */
-    public function update(UpdateRequest $request, Organisation $organisation)
+    public function update(UpdateRequest $request, Organisation $organisation, ApplyUpdateRequestService $updateRequestService)
     {
-        return DB::transaction(function () use ($request, $organisation) {
+        return DB::transaction(function () use ($request, $organisation, $updateRequestService) {
             /** @var \App\Models\UpdateRequest $updateRequest */
             $updateRequest = $organisation->updateRequests()->create([
                 'user_id' => $request->user()->id,
@@ -148,6 +149,7 @@ class OrganisationController extends Controller
 
             event(EndpointHit::onUpdate($request, "Updated organisation [{$organisation->id}]", $organisation));
 
+            $updateRequestService->applyUpdateRequestIfAdmin($request, $organisation, $updateRequest);
             return new UpdateRequestReceived($updateRequest);
         });
     }
