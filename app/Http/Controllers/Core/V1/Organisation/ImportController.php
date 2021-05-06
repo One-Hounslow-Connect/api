@@ -80,28 +80,54 @@ class ImportController extends Controller
 
         $spreadsheetParser->readHeaders();
 
-        $rejectedRows = $acceptedRows = [];
+        $rejectedRows = $rowIds = [];
 
         foreach ($spreadsheetParser->readRows() as $i => $row) {
-            $validator = Validator::make($row, [
-                'name' => ['required', 'string', 'min:1', 'max:255'],
-                'description' => ['required', 'string', 'min:1', 'max:10000'],
-                'url' => ['present', 'url', 'max:255'],
-                'email' => ['present', 'nullable', 'required_without:phone', 'email', 'max:255'],
-                'phone' => [
-                    'present',
-                    'nullable',
-                    'required_without:email',
-                    'string',
-                    'min:1',
-                    'max:255',
+            $rejectedRow = null;
+            $validator = Validator::make(
+                $row,
+                [
+                    'id' => ['required', 'string', 'uuid', 'unique:organisations,id'],
+                    'name' => ['required', 'string', 'min:1', 'max:255'],
+                    'description' => ['required', 'string', 'min:1', 'max:10000'],
+                    'url' => ['present', 'url', 'max:255'],
+                    'email' => ['present', 'nullable', 'required_without:phone', 'email', 'max:255'],
+                    'phone' => [
+                        'present',
+                        'nullable',
+                        'required_without:email',
+                        'string',
+                        'min:1',
+                        'max:255',
+                    ],
                 ],
-            ]);
+                [
+                    'uuid' => 'The :attribute is not a valid UUID',
+                ]
+            );
 
             $row['index'] = $i + 2;
             if ($validator->fails()) {
-                $rejectedRows[] = ['row' => $row, 'errors' => $validator->errors()];
+                $rejectedRow = ['row' => $row, 'errors' => $validator->errors()];
             }
+
+            /**
+             * Check for duplicate IDs in the spreadsheet.
+             */
+            if (false !== array_search($row['id'], $rowIds)) {
+                if ($rejectedRow) {
+                    $rejectedRow['errors']['id'] = array_merge(($rejectedRow['errors']['id'] ?: []), ['The ID is used elsewhere in the spreadsheet.']);
+                } else {
+                    $rejectedRow = [
+                        'row' => $row,
+                        'errors' => ['id' => ['The ID is used elsewhere in the spreadsheet.']],
+                    ];
+                }
+            }
+            if ($rejectedRow) {
+                $rejectedRows[] = $rejectedRow;
+            }
+            $rowIds[] = $row['id'];
         }
 
         return $rejectedRows;
@@ -110,13 +136,17 @@ class ImportController extends Controller
     /**
      * Find exisiting Orgaisations that match rows in the spreadsheet.
      *
-     * @param array $importNormlisedNames
+     * @param array $rowIndex
      *
      * @return array
      */
-    public function rowsExist(array $importNormalisedNames)
+    public function rowsExist(array $rowIndex)
     {
         $normaliseCharacters = mb_str_split($this->normalisedCharacters);
+
+        $normalisedNames = array_map(function ($row) {
+            return $row['normalisedName'];
+        }, $rowIndex);
 
         /**
          * Concatenate with ';' ids and name columns and count grouped rows.
@@ -143,7 +173,7 @@ class ImportController extends Controller
         /**
          * Filter to only take organisations that match with imported rows, or all existing duplicate named organisations are included.
          */
-        $sql[] = 'having normalised_col IN ("' . implode('","', $importNormalisedNames) . '")';
+        $sql[] = 'having normalised_col IN ("' . implode('","', $normalisedNames) . '")';
         $sql[] = 'and row_count > 1';
 
         return DB::select(implode(' ', $sql));
@@ -262,22 +292,21 @@ class ImportController extends Controller
         $importedRows = 0;
 
         DB::transaction(function () use ($spreadsheetParser, &$importedRows) {
-            $organisationRowBatch = $nameIndex = [];
+            $organisationRowBatch = $rowIndex = [];
             foreach ($spreadsheetParser->readRows() as $i => $organisationRow) {
                 /**
-                 * Generate a new Organisation ID, normalise the Organistion name
+                 * Normalise the Organistion name
                  * and add the meta fields to the Organisation row.
                  */
-                $organisationRow['id'] = (string)Str::uuid();
                 $organisationRow['name'] = preg_replace('/[^a-zA-Z0-9,\.\'\&" ]/', '', $organisationRow['name']);
                 $organisationRow['slug'] = Str::slug($organisationRow['name'] . ' ' . uniqid(), '-');
                 $organisationRow['created_at'] = Date::now();
                 $organisationRow['updated_at'] = Date::now();
 
                 /**
-                 * Build the name index in case of name clashes.
+                 * Build the row index in case of clashes.
                  */
-                $nameIndex[$i + 2] = [
+                $rowIndex[$i + 2] = [
                     'id' => $organisationRow['id'],
                     'name' => $organisationRow['name'],
                     'normalisedName' => str_replace(mb_str_split($this->normalisedCharacters), '', mb_strtolower(trim($organisationRow['name']))),
@@ -310,10 +339,7 @@ class ImportController extends Controller
             /**
              * Look for duplicates in the database.
              */
-            $normalisedNames = array_map(function ($row) {
-                return $row['normalisedName'];
-            }, $nameIndex);
-            $duplicates = $this->rowsExist($normalisedNames);
+            $duplicates = $this->rowsExist($rowIndex);
 
             if (count($duplicates)) {
                 /**
@@ -322,12 +348,12 @@ class ImportController extends Controller
                  */
                 if (count($this->ignoreDuplicateIds)) {
                     $this->ignoreDuplicateIds = [];
-                    $duplicates = $this->rowsExist($normalisedNames);
+                    $duplicates = $this->rowsExist($rowIndex);
                 }
                 /**
                  * Throws an exception which will be caught in self::processSpreadsheet.
                  */
-                $this->formatDuplicates($duplicates, $spreadsheetParser->headers, $nameIndex);
+                $this->formatDuplicates($duplicates, $spreadsheetParser->headers, $rowIndex);
             }
         }, 5);
 
