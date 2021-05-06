@@ -92,6 +92,10 @@ class UpdateRequestObserver
      */
     protected function sendCreatedNotificationsForExisting(UpdateRequest $updateRequest)
     {
+        if ($updateRequest->user->isGlobalAdmin()) {
+            return;
+        }
+
         $resourceName = 'N/A';
         $resourceType = 'N/A';
         if ($updateRequest->getUpdateable() instanceof Location) {
@@ -140,6 +144,10 @@ class UpdateRequestObserver
      */
     protected function sendCreatedNotificationsForNew(UpdateRequest $updateRequest)
     {
+        if ($updateRequest->user->isGlobalAdmin()) {
+            return;
+        }
+
         if ($updateRequest->getUpdateable() instanceof OrganisationSignUpForm) {
             // Send notification to the submitter.
             Notification::sendEmail(
