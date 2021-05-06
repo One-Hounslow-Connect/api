@@ -177,6 +177,7 @@ class LocationController extends Controller
 
             event(EndpointHit::onUpdate($request, "Updated location [{$location->id}]", $location));
             $updateRequest = $updateRequestService->applyUpdateRequestIfAdmin($request, $location, $updateRequest);
+
             return new UpdateRequestReceived($updateRequest);
         });
     }

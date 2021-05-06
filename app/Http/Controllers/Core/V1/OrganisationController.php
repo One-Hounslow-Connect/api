@@ -15,10 +15,10 @@ use App\Http\Responses\ResourceDeleted;
 use App\Http\Responses\UpdateRequestReceived;
 use App\Models\File;
 use App\Models\Organisation;
+use App\UpdateRequest\ApplyUpdateRequestService;
 use Illuminate\Support\Facades\DB;
 use Spatie\QueryBuilder\Filter;
 use Spatie\QueryBuilder\QueryBuilder;
-use App\UpdateRequest\ApplyUpdateRequestService;
 
 class OrganisationController extends Controller
 {
@@ -150,6 +150,7 @@ class OrganisationController extends Controller
             event(EndpointHit::onUpdate($request, "Updated organisation [{$organisation->id}]", $organisation));
 
             $updateRequestService->applyUpdateRequestIfAdmin($request, $organisation, $updateRequest);
+
             return new UpdateRequestReceived($updateRequest);
         });
     }

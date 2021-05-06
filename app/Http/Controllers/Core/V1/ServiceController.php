@@ -357,7 +357,6 @@ class ServiceController extends Controller
                 event(EndpointHit::onUpdate($request, "Updated service [{$service->id}]", $service));
             }
 
-
             $updateRequest = $updateRequestService->applyUpdateRequestIfAdmin($request, $service, $updateRequest);
 
             return new UpdateRequestReceived($updateRequest);

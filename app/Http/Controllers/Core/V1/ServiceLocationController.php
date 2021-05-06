@@ -210,6 +210,7 @@ class ServiceLocationController extends Controller
 
             event(EndpointHit::onUpdate($request, "Updated service location [{$serviceLocation->id}]", $serviceLocation));
             $updateRequest = $updateRequestService->applyUpdateRequestIfAdmin($request, $serviceLocation, $updateRequest);
+
             return new UpdateRequestReceived($updateRequest);
         });
     }
