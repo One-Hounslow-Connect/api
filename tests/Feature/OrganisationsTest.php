@@ -549,7 +549,7 @@ class OrganisationsTest extends TestCase
     public function test_fields_removed_for_existing_update_requests()
     {
         $organisation = factory(Organisation::class)->create();
-        $user = factory(User::class)->create()->makeSuperAdmin();
+        $user = factory(User::class)->create()->makeOrganisationAdmin($organisation);
 
         Passport::actingAs($user);
 

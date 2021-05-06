@@ -2249,7 +2249,7 @@ class ServicesTest extends TestCase
         ]);
         $taxonomy = Taxonomy::category()->children()->firstOrFail();
         $service->syncServiceTaxonomies(new Collection([$taxonomy]));
-        $user = factory(User::class)->create()->makeGlobalAdmin();
+        $user = factory(User::class)->create()->makeServiceAdmin($service);
 
         Passport::actingAs($user);
 
