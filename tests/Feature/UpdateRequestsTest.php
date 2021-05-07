@@ -206,12 +206,15 @@ class UpdateRequestsTest extends TestCase
 
     public function test_can_sort_by_entry()
     {
-        $user = factory(User::class)->create()->makeGlobalAdmin();
         $location = factory(Location::class)->create([
             'address_line_1' => 'Entry A',
         ]);
+        $organisation = factory(Organisation::class)->create([
+            'name' => 'Entry B',
+        ]);
+        $creatingUser = factory(User::class)->create()->makeOrganisationAdmin($organisation);
         $locationUpdateRequest = $location->updateRequests()->create([
-            'user_id' => $user->id,
+            'user_id' => $creatingUser->id,
             'data' => [
                 'address_line_1' => 'Entry A',
                 'address_line_2' => null,
@@ -223,11 +226,9 @@ class UpdateRequestsTest extends TestCase
                 'accessibility_info' => null,
             ],
         ]);
-        $organisation = factory(Organisation::class)->create([
-            'name' => 'Entry B',
-        ]);
+
         $organisationUpdateRequest = $organisation->updateRequests()->create([
-            'user_id' => $user->id,
+            'user_id' => $creatingUser->id,
             'data' => [
                 'name' => 'Entry B',
                 'description' => 'Lorem ipsum',
@@ -237,7 +238,7 @@ class UpdateRequestsTest extends TestCase
             ],
         ]);
 
-        Passport::actingAs($user);
+        Passport::actingAs(factory(User::class)->create()->makeGlobalAdmin());
         $response = $this->json('GET', '/core/v1/update-requests?sort=-entry');
         $data = $this->getResponseContent($response);
 
