@@ -14,7 +14,6 @@ use App\Http\Responses\ResourceDeleted;
 use App\Http\Responses\UpdateRequestReceived;
 use App\Models\File;
 use App\Models\Location;
-use App\UpdateRequest\ApplyUpdateRequestService;
 use Illuminate\Support\Facades\DB;
 use Spatie\QueryBuilder\Filter;
 use Spatie\QueryBuilder\QueryBuilder;
@@ -145,9 +144,9 @@ class LocationController extends Controller
      * @param \App\Models\Location $location
      * @return \Illuminate\Http\Response
      */
-    public function update(UpdateRequest $request, Location $location, ApplyUpdateRequestService $updateRequestService)
+    public function update(UpdateRequest $request, Location $location)
     {
-        return DB::transaction(function () use ($request, $location, $updateRequestService) {
+        return DB::transaction(function () use ($request, $location) {
             $updateRequest = $location->updateRequests()->create([
                 'user_id' => $request->user()->id,
                 'data' => array_filter_missing([
@@ -176,7 +175,6 @@ class LocationController extends Controller
             }
 
             event(EndpointHit::onUpdate($request, "Updated location [{$location->id}]", $location));
-            $updateRequest = $updateRequestService->applyUpdateRequestIfAdmin($request, $location, $updateRequest);
 
             return new UpdateRequestReceived($updateRequest);
         });

@@ -15,7 +15,6 @@ use App\Http\Responses\ResourceDeleted;
 use App\Http\Responses\UpdateRequestReceived;
 use App\Models\File;
 use App\Models\Organisation;
-use App\UpdateRequest\ApplyUpdateRequestService;
 use Illuminate\Support\Facades\DB;
 use Spatie\QueryBuilder\Filter;
 use Spatie\QueryBuilder\QueryBuilder;
@@ -118,9 +117,9 @@ class OrganisationController extends Controller
      * @param \App\Models\Organisation $organisation
      * @return \Illuminate\Http\Response
      */
-    public function update(UpdateRequest $request, Organisation $organisation, ApplyUpdateRequestService $updateRequestService)
+    public function update(UpdateRequest $request, Organisation $organisation)
     {
-        return DB::transaction(function () use ($request, $organisation, $updateRequestService) {
+        return DB::transaction(function () use ($request, $organisation) {
             /** @var \App\Models\UpdateRequest $updateRequest */
             $updateRequest = $organisation->updateRequests()->create([
                 'user_id' => $request->user()->id,
@@ -148,8 +147,6 @@ class OrganisationController extends Controller
             }
 
             event(EndpointHit::onUpdate($request, "Updated organisation [{$organisation->id}]", $organisation));
-
-            $updateRequestService->applyUpdateRequestIfAdmin($request, $organisation, $updateRequest);
 
             return new UpdateRequestReceived($updateRequest);
         });

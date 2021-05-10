@@ -16,7 +16,6 @@ use App\Models\File;
 use App\Models\RegularOpeningHour;
 use App\Models\ServiceLocation;
 use App\Support\MissingValue;
-use App\UpdateRequest\ApplyUpdateRequestService;
 use Illuminate\Support\Facades\DB;
 use Spatie\QueryBuilder\Filter;
 use Spatie\QueryBuilder\QueryBuilder;
@@ -147,12 +146,11 @@ class ServiceLocationController extends Controller
      *
      * @param \App\Http\Requests\ServiceLocation\UpdateRequest $request
      * @param \App\Models\ServiceLocation $serviceLocation
-     * @param ApplyUpdateRequestService $applyUpdateRequestService
      * @return \Illuminate\Http\Response
      */
-    public function update(UpdateRequest $request, ServiceLocation $serviceLocation, ApplyUpdateRequestService $updateRequestService)
+    public function update(UpdateRequest $request, ServiceLocation $serviceLocation)
     {
-        return DB::transaction(function () use ($request, $serviceLocation, $updateRequestService) {
+        return DB::transaction(function () use ($request, $serviceLocation) {
             // Initialise the data array.
             $data = array_filter_missing([
                 'name' => $request->missing('name'),
@@ -209,7 +207,6 @@ class ServiceLocationController extends Controller
             }
 
             event(EndpointHit::onUpdate($request, "Updated service location [{$serviceLocation->id}]", $serviceLocation));
-            $updateRequest = $updateRequestService->applyUpdateRequestIfAdmin($request, $serviceLocation, $updateRequest);
 
             return new UpdateRequestReceived($updateRequest);
         });

@@ -20,7 +20,6 @@ use App\Models\Service;
 use App\Models\Taxonomy;
 use App\Models\UpdateRequest as UpdateRequestModel;
 use App\Support\MissingValue;
-use App\UpdateRequest\ApplyUpdateRequestService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -238,12 +237,11 @@ class ServiceController extends Controller
      *
      * @param \App\Http\Requests\Service\UpdateRequest $request
      * @param \App\Models\Service $service
-     * @param ApplyUpdateRequestService $updateRequestService
      * @return \Illuminate\Http\Response
      */
-    public function update(UpdateRequest $request, Service $service, ApplyUpdateRequestService $updateRequestService)
+    public function update(UpdateRequest $request, Service $service)
     {
-        return DB::transaction(function () use ($request, $service, $updateRequestService) {
+        return DB::transaction(function () use ($request, $service) {
             // Initialise the data array.
             $data = array_filter_missing([
                 'organisation_id' => $request->missing('organisation_id'),
@@ -356,8 +354,6 @@ class ServiceController extends Controller
                 $updateRequest->save();
                 event(EndpointHit::onUpdate($request, "Updated service [{$service->id}]", $service));
             }
-
-            $updateRequest = $updateRequestService->applyUpdateRequestIfAdmin($request, $service, $updateRequest);
 
             return new UpdateRequestReceived($updateRequest);
         });
