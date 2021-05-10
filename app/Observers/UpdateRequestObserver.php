@@ -33,6 +33,11 @@ class UpdateRequestObserver
         }
     }
 
+    private function ownerIsGlobalAdmin(UpdateRequest $updateRequest)
+    {
+        return $updateRequest->user()->exists() ? $updateRequest->user->isGlobalAdmin() : false;
+    }
+
     /**
      * Removes the field present in the new update request from any
      * pending ones, for the same resource.
@@ -92,10 +97,6 @@ class UpdateRequestObserver
      */
     protected function sendCreatedNotificationsForExisting(UpdateRequest $updateRequest)
     {
-        if ($updateRequest->user->isGlobalAdmin()) {
-            return;
-        }
-
         $resourceName = 'N/A';
         $resourceType = 'N/A';
         if ($updateRequest->getUpdateable() instanceof Location) {
@@ -144,10 +145,6 @@ class UpdateRequestObserver
      */
     protected function sendCreatedNotificationsForNew(UpdateRequest $updateRequest)
     {
-        if ($updateRequest->user->isGlobalAdmin()) {
-            return;
-        }
-
         if ($updateRequest->getUpdateable() instanceof OrganisationSignUpForm) {
             // Send notification to the submitter.
             Notification::sendEmail(
