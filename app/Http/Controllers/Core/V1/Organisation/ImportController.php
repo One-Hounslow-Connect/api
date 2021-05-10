@@ -330,6 +330,8 @@ class ImportController extends Controller
                         'role_id' => $organisationAdminId,
                         'service_id' => null,
                         'organisation_id' => $organisationRow['id'],
+                        'created_at' => Date::now(),
+                        'updated_at' => Date::now(),
                     ];
                 }
 
