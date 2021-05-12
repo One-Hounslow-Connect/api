@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Service;
 
+use App\Http\Requests\HasMissingValues;
 use App\Models\File;
 use App\Models\Role;
 use App\Models\Service;
@@ -23,6 +24,8 @@ use Illuminate\Validation\Rule;
 
 class StoreRequest extends FormRequest
 {
+    use HasMissingValues;
+
     /**
      * Determine if the user is authorized to make this request.
      *
@@ -257,5 +260,10 @@ class StoreRequest extends FormRequest
             'useful_infos.*.description.required_with' => 'Good to know tab - Please enter a description.',
             'social_medias.*.url.url' => 'Additional info tab - Please enter a valid social media web address (eg. https://www.youtube.com/watch?v=h-2sgpokvGI).',
         ];
+    }
+
+    public function isPreview(): bool
+    {
+        return $this->preview === true;
     }
 }
