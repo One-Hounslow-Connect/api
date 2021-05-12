@@ -2,23 +2,23 @@
 
 namespace App\Http\Controllers\Core\V1;
 
-use App\Models\File;
 use App\Events\EndpointHit;
-use App\Models\Organisation;
-use App\Support\MissingValue;
-use Spatie\QueryBuilder\Filter;
-use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
-use Spatie\QueryBuilder\QueryBuilder;
-use App\Http\Responses\ResourceDeleted;
-use App\Http\Resources\OrganisationResource;
-use App\Http\Responses\UpdateRequestReceived;
-use App\Http\Requests\Organisation\ShowRequest;
+use App\Http\Filters\Organisation\HasPermissionFilter;
+use App\Http\Requests\Organisation\DestroyRequest;
 use App\Http\Requests\Organisation\IndexRequest;
+use App\Http\Requests\Organisation\ShowRequest;
 use App\Http\Requests\Organisation\StoreRequest;
 use App\Http\Requests\Organisation\UpdateRequest;
-use App\Http\Requests\Organisation\DestroyRequest;
-use App\Http\Filters\Organisation\HasPermissionFilter;
+use App\Http\Resources\OrganisationResource;
+use App\Http\Responses\ResourceDeleted;
+use App\Http\Responses\UpdateRequestReceived;
+use App\Models\File;
+use App\Models\Organisation;
+use App\Support\MissingValue;
+use Illuminate\Support\Facades\DB;
+use Spatie\QueryBuilder\Filter;
+use Spatie\QueryBuilder\QueryBuilder;
 
 class OrganisationController extends Controller
 {
@@ -87,13 +87,13 @@ class OrganisationController extends Controller
 
             // Create the social media records.
             if ($request->filled('social_medias')) {
-            foreach ($request->social_medias as $socialMedia) {
-                $organisation->socialMedias()->create([
-                    'type' => $socialMedia['type'],
-                    'url' => $socialMedia['url'],
-                ]);
+                foreach ($request->social_medias as $socialMedia) {
+                    $organisation->socialMedias()->create([
+                        'type' => $socialMedia['type'],
+                        'url' => $socialMedia['url'],
+                    ]);
+                }
             }
-        }
 
             event(EndpointHit::onCreate($request, "Created organisation [{$organisation->id}]", $organisation));
 

@@ -79,7 +79,7 @@ class Organisation extends Model implements AppliesUpdateRequests
     }
 
     /**
-     * Delete polymorphic relationships when deleting
+     * Delete polymorphic relationships when deleting.
      *
      * @return bool|null
      */
