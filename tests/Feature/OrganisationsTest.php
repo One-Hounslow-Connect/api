@@ -6,6 +6,7 @@ use App\Events\EndpointHit;
 use App\Models\Audit;
 use App\Models\File;
 use App\Models\Organisation;
+use App\Models\OrganisationTaxonomy;
 use App\Models\Role;
 use App\Models\Service;
 use App\Models\SocialMedia;

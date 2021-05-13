@@ -190,7 +190,7 @@ class ServiceController extends Controller
 
             // Create the category taxonomy records.
             $taxonomies = Taxonomy::whereIn('id', $request->category_taxonomies)->get();
-            $service->syncServiceTaxonomies($taxonomies);
+            $service->syncTaxonomyRelationships($taxonomies);
 
             // Ensure conditional fields are reset if needed.
             $service->resetConditionalFields();
