@@ -2,23 +2,24 @@
 
 namespace App\Http\Controllers\Core\V1;
 
-use App\Events\EndpointHit;
-use App\Http\Controllers\Controller;
-use App\Http\Filters\Organisation\HasPermissionFilter;
-use App\Http\Requests\Organisation\DestroyRequest;
-use App\Http\Requests\Organisation\IndexRequest;
-use App\Http\Requests\Organisation\ShowRequest;
-use App\Http\Requests\Organisation\StoreRequest;
-use App\Http\Requests\Organisation\UpdateRequest;
-use App\Http\Resources\OrganisationResource;
-use App\Http\Responses\ResourceDeleted;
-use App\Http\Responses\UpdateRequestReceived;
 use App\Models\File;
+use App\Models\Taxonomy;
+use App\Events\EndpointHit;
 use App\Models\Organisation;
 use App\Support\MissingValue;
-use Illuminate\Support\Facades\DB;
 use Spatie\QueryBuilder\Filter;
+use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Controller;
 use Spatie\QueryBuilder\QueryBuilder;
+use App\Http\Responses\ResourceDeleted;
+use App\Http\Resources\OrganisationResource;
+use App\Http\Responses\UpdateRequestReceived;
+use App\Http\Requests\Organisation\ShowRequest;
+use App\Http\Requests\Organisation\IndexRequest;
+use App\Http\Requests\Organisation\StoreRequest;
+use App\Http\Requests\Organisation\UpdateRequest;
+use App\Http\Requests\Organisation\DestroyRequest;
+use App\Http\Filters\Organisation\HasPermissionFilter;
 
 class OrganisationController extends Controller
 {
@@ -95,6 +96,10 @@ class OrganisationController extends Controller
                 }
             }
 
+            // Create the category taxonomy records.
+            $taxonomies = Taxonomy::whereIn('id', $request->category_taxonomies)->get();
+            $organisation->syncTaxonomyRelationships($taxonomies);
+
             event(EndpointHit::onCreate($request, "Created organisation [{$organisation->id}]", $organisation));
 
             return new OrganisationResource($organisation);
@@ -142,6 +147,7 @@ class OrganisationController extends Controller
                 'phone' => $request->missing('phone'),
                 'logo_file_id' => $request->missing('logo_file_id'),
                 'social_medias' => $request->has('social_medias') ? [] : new MissingValue(),
+                'category_taxonomies' => $request->missing('category_taxonomies'),
             ]);
 
             if ($request->filled('logo_file_id')) {

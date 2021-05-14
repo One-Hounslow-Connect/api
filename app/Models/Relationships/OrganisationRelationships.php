@@ -7,9 +7,11 @@ use App\Models\OrganisationTaxonomy;
 use App\Models\Role;
 use App\Models\Service;
 use App\Models\SocialMedia;
+use App\Models\Taxonomy;
 use App\Models\User;
 use App\Models\UserRole;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 trait OrganisationRelationships
 {
@@ -76,7 +78,7 @@ trait OrganisationRelationships
     /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */
-    public function taxonomies()
+    public function taxonomies(): BelongsToMany
     {
         return $this->belongsToMany(Taxonomy::class, (new OrganisationTaxonomy())->getTable());
     }

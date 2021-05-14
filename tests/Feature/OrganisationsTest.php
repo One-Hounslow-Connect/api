@@ -74,6 +74,7 @@ class OrganisationsTest extends TestCase
                 'email' => $organisation->email,
                 'phone' => $organisation->phone,
                 'social_medias' => [],
+                'category_taxonomies' => [],
                 'created_at' => $organisation->created_at->format(CarbonImmutable::ISO8601),
                 'updated_at' => $organisation->updated_at->format(CarbonImmutable::ISO8601),
             ],
@@ -190,6 +191,7 @@ class OrganisationsTest extends TestCase
                     'url' => 'https://www.instagram.com/ayupdigital',
                 ],
             ],
+            'category_taxonomies' => [],
         ];
 
         Passport::actingAs($user);
@@ -211,6 +213,7 @@ class OrganisationsTest extends TestCase
             'url' => 'http://test-org.example.com',
             'email' => 'info@test-org.example.com',
             'phone' => '07700000000',
+            'category_taxonomies' => [],
         ];
 
         Passport::actingAs($user);
@@ -262,6 +265,7 @@ class OrganisationsTest extends TestCase
             'url' => 'http://test-org.example.com',
             'email' => 'info@test-org.example.com',
             'phone' => null,
+            'category_taxonomies' => [],
         ];
 
         Passport::actingAs($user);
@@ -286,6 +290,7 @@ class OrganisationsTest extends TestCase
             'url' => 'http://test-org.example.com',
             'email' => null,
             'phone' => null,
+            'category_taxonomies' => [],
         ];
 
         Passport::actingAs($user);
@@ -334,6 +339,13 @@ class OrganisationsTest extends TestCase
         $responsePayload = $payload;
         $responsePayload['category_taxonomies'] = [
             [
+                'id' => $taxonomy->parent->id,
+                'parent_id' => $taxonomy->parent->parent_id,
+                'name' => $taxonomy->parent->name,
+                'created_at' => $taxonomy->parent->created_at->format(CarbonImmutable::ISO8601),
+                'updated_at' => $taxonomy->parent->updated_at->format(CarbonImmutable::ISO8601),
+            ],
+            [
                 'id' => $taxonomy->id,
                 'parent_id' => $taxonomy->parent_id,
                 'name' => $taxonomy->name,
@@ -369,6 +381,7 @@ class OrganisationsTest extends TestCase
                     'url' => 'https://www.instagram.com/ayupdigital',
                 ],
             ],
+            'category_taxonomies' => [],
         ]);
 
         Event::assertDispatched(EndpointHit::class, function (EndpointHit $event) use ($user, $response) {
@@ -410,6 +423,7 @@ class OrganisationsTest extends TestCase
                         'url' => 'https://www.instagram.com/ayupdigital',
                     ],
                 ],
+                'category_taxonomies' => [],
                 'created_at' => $organisation->created_at->format(CarbonImmutable::ISO8601),
                 'updated_at' => $organisation->updated_at->format(CarbonImmutable::ISO8601),
             ],
@@ -434,6 +448,7 @@ class OrganisationsTest extends TestCase
                 'email' => $organisation->email,
                 'phone' => $organisation->phone,
                 'social_medias' => [],
+                'category_taxonomies' => [],
                 'created_at' => $organisation->created_at->format(CarbonImmutable::ISO8601),
                 'updated_at' => $organisation->updated_at->format(CarbonImmutable::ISO8601),
             ],
@@ -688,9 +703,9 @@ class OrganisationsTest extends TestCase
     public function test_organisation_admin_can_update_organisation_taxonomies()
     {
         $organisation = factory(Organisation::class)->create();
-        $taxonomy1 = Taxonomy::category()->children()->firstOrFail()->children()->get(0);
-        $taxonomy2 = Taxonomy::category()->children()->firstOrFail()->children()->get(1);
-        $organisation->syncOrganisationTaxonomies(collect([$taxonomy1]));
+        $taxonomy1 = Taxonomy::category()->children()->firstOrFail()->children->get(0);
+        $taxonomy2 = Taxonomy::category()->children()->firstOrFail()->children->get(1);
+        $organisation->syncTaxonomyRelationships(collect([$taxonomy1]));
         $user = factory(User::class)->create()->makeOrganisationAdmin($organisation);
         $payload = [
             'slug' => 'test-org',
@@ -724,10 +739,10 @@ class OrganisationsTest extends TestCase
     public function test_global_admin_can_update_organisation_taxonomies()
     {
         $organisation = factory(Organisation::class)->create();
-        $taxonomy1 = Taxonomy::category()->children()->firstOrFail()->children()->get(0);
-        $taxonomy2 = Taxonomy::category()->children()->firstOrFail()->children()->get(1);
-        $taxonomy3 = Taxonomy::category()->children()->firstOrFail()->children()->get(1);
-        $organisation->syncOrganisationTaxonomies(collect([$taxonomy1]));
+        $taxonomy1 = Taxonomy::category()->children()->firstOrFail()->children->get(0);
+        $taxonomy2 = Taxonomy::category()->children()->firstOrFail()->children->get(1);
+        $taxonomy3 = Taxonomy::category()->children()->firstOrFail()->children->get(2);
+        $organisation->syncTaxonomyRelationships(collect([$taxonomy1]));
 
         $this->assertDatabaseHas(table(OrganisationTaxonomy::class), [
             'organisation_id' => $organisation->id,
@@ -751,7 +766,8 @@ class OrganisationsTest extends TestCase
 
         $response->assertStatus(Response::HTTP_OK);
 
-        $organisation = Organisation::findOrFail($response->json('data.id'));
+        dump($response->json());
+
         $this->assertDatabaseHas(table(OrganisationTaxonomy::class), [
             'organisation_id' => $organisation->id,
             'taxonomy_id' => $taxonomy2->id,

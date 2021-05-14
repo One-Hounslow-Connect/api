@@ -4,15 +4,15 @@ namespace App\TaxonomyRelationships;
 
 use App\Models\Model;
 use App\Models\Taxonomy;
-use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Support\Collection;
 
 trait UpdateTaxonomyRelationships
 {
     /**
-     * @param \Illuminate\Database\Eloquent\Collection $taxonomies
+     * @param \Illuminate\Support\Collection $taxonomies
      * @return \App\Models\Model
      */
-    public function syncTaxonomyRelationships(EloquentCollection $taxonomies): Model
+    public function syncTaxonomyRelationships(Collection $taxonomies): Model
     {
         // Delete all existing taxonomy relationships
         $this->taxonomyRelationship()->delete();
