@@ -89,6 +89,12 @@ class Organisation extends Model implements AppliesUpdateRequests, HasTaxonomyRe
             }
         }
 
+        // Update the category taxonomy records.
+        if (array_key_exists('category_taxonomies', $data)) {
+            $taxonomies = Taxonomy::whereIn('id', $data['category_taxonomies'])->get();
+            $this->syncTaxonomyRelationships($taxonomies);
+        }
+
         return $updateRequest;
     }
 

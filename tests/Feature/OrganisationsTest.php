@@ -767,7 +767,8 @@ class OrganisationsTest extends TestCase
 
         $response->assertStatus(Response::HTTP_OK);
 
-        dump($response->json());
+        $response->assertJsonFragment(['data' => $payload]);
+        $response->assertJsonFragment(['message' => __('updates.pre-approved')]);
 
         $this->assertDatabaseHas(table(OrganisationTaxonomy::class), [
             'organisation_id' => $organisation->id,
@@ -789,6 +790,13 @@ class OrganisationsTest extends TestCase
         $responsePayload = $payload;
         $responsePayload['category_taxonomies'] = [
             [
+                'id' => $taxonomy2->parent->id,
+                'parent_id' => $taxonomy2->parent->parent_id,
+                'name' => $taxonomy2->parent->name,
+                'created_at' => $taxonomy2->parent->created_at->format(CarbonImmutable::ISO8601),
+                'updated_at' => $taxonomy2->parent->updated_at->format(CarbonImmutable::ISO8601),
+            ],
+            [
                 'id' => $taxonomy2->id,
                 'parent_id' => $taxonomy2->parent_id,
                 'name' => $taxonomy2->name,
@@ -803,6 +811,7 @@ class OrganisationsTest extends TestCase
                 'updated_at' => $taxonomy3->updated_at->format(CarbonImmutable::ISO8601),
             ],
         ];
+        $response = $this->json('GET', "/core/v1/organisations/{$organisation->id}");
         $response->assertJsonFragment($responsePayload);
     }
 
