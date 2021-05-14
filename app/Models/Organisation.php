@@ -27,10 +27,10 @@ class Organisation extends Model implements AppliesUpdateRequests, HasTaxonomyRe
     use UpdateTaxonomyRelationships;
 
     /**
-     * Return the OrganisationTaxonomy relationship
+     * Return the OrganisationTaxonomy relationship.
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     **/
+     */
     public function taxonomyRelationship(): HasMany
     {
         return $this->organisationTaxonomies();

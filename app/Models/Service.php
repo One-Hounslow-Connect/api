@@ -162,10 +162,10 @@ class Service extends Model implements AppliesUpdateRequests, Notifiable, HasTax
     }
 
     /**
-     * Return the ServiceTaxonomy relationship
+     * Return the ServiceTaxonomy relationship.
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     **/
+     */
     public function taxonomyRelationship(): HasMany
     {
         return $this->serviceTaxonomies();
