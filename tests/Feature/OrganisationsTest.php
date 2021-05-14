@@ -724,6 +724,7 @@ class OrganisationsTest extends TestCase
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonFragment(['data' => $payload]);
+        $response->assertJsonFragment(['message' => __('updates.pending')]);
         $this->assertDatabaseHas((new UpdateRequest())->getTable(), [
             'user_id' => $user->id,
             'updateable_type' => UpdateRequest::EXISTING_TYPE_ORGANISATION,
@@ -735,6 +736,15 @@ class OrganisationsTest extends TestCase
             ->where('updateable_id', $organisation->id)
             ->firstOrFail()->data;
         $this->assertEquals($data, $payload);
+
+        $this->assertDatabaseHas(table(OrganisationTaxonomy::class), [
+            'organisation_id' => $organisation->id,
+            'taxonomy_id' => $taxonomy1->id,
+        ]);
+        $this->assertDatabaseMissing(table(OrganisationTaxonomy::class), [
+            'organisation_id' => $organisation->id,
+            'taxonomy_id' => $taxonomy2->id,
+        ]);
     }
 
     public function test_global_admin_can_update_organisation_taxonomies()
@@ -1060,6 +1070,7 @@ class OrganisationsTest extends TestCase
             'url' => 'http://test-org.example.com',
             'email' => 'info@test-org.example.com',
             'phone' => '07700000000',
+            'category_taxonomies' => [],
             'logo_file_id' => $this->getResponseContent($imageResponse, 'data.id'),
         ]);
         $organisationId = $this->getResponseContent($response, 'data.id');

@@ -147,7 +147,6 @@ class UpdateRequestsTest extends TestCase
             ],
         ]);
 
-
         $globalAdminUser = factory(User::class)->create()->makeGlobalAdmin();
         Passport::actingAs($globalAdminUser);
 

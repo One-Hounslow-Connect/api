@@ -45,6 +45,9 @@ class Organisation extends Model implements AppliesUpdateRequests, HasTaxonomyRe
     public function validateUpdateRequest(UpdateRequest $updateRequest): Validator
     {
         $rules = (new UpdateOrganisationRequest())
+            ->setUserResolver(function () use ($updateRequest) {
+                return $updateRequest->user;
+            })
             ->merge(['organisation' => $this])
             ->rules();
 
