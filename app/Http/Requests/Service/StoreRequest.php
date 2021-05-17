@@ -48,7 +48,7 @@ class StoreRequest extends FormRequest
     public function rules()
     {
         return [
-            'organisation_id' => ['required', 'exists:organisations,id', new IsOrganisationAdmin($this->user())],
+            'organisation_id' => ['required', 'exists:organisations,id', new IsOrganisationAdmin($this->user('api'))],
             'slug' => ['required', 'string', 'min:1', 'max:255', 'unique:' . table(Service::class) . ',slug', new Slug()],
             'name' => ['required', 'string', 'min:1', 'max:255'],
             'type' => [
