@@ -146,7 +146,7 @@ class ServiceController extends Controller
     public function update(UpdateRequest $request, Service $service, ServicePersistenceService $persistenceService)
     {
         $updateRequest = $persistenceService->update($request, $service);
-        event(EndpointHit::onUpdate($request, "Created update request for service service [{$service->id}]", $service));
+        event(EndpointHit::onUpdate($request, "Created update request for service [{$service->id}]", $service));
 
         return new UpdateRequestReceived($updateRequest);
     }
