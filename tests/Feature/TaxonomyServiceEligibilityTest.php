@@ -38,26 +38,35 @@ class TaxonomyServiceEligibilityTest extends TestCase
     private function  createService()
     {
         $service = factory(Service::class)->create();
+
+        // @FIXME: move to factory states for improved code reuse
         $service->usefulInfos()->create([
             'title' => 'Did You Know?',
             'description' => 'This is a test description',
             'order' => 1,
         ]);
+        
         $service->offerings()->create([
             'offering' => 'Weekly club',
             'order' => 1,
         ]);
+        
         $service->socialMedias()->create([
             'type' => SocialMedia::TYPE_INSTAGRAM,
             'url' => 'https://www.instagram.com/ayupdigital/',
         ]);
 
-        Taxonomy::serviceEligibility()->children->each(function($taxonomy) use ($service) {
-            $service->serviceEligibilities()->create([
-                'id' => (string) Str::uuid(),
-                'taxonomy_id' => $taxonomy->id,
-            ]);
-        });
+        // Loop through each top level child of service eligibility taxonomy
+        Taxonomy::serviceEligibility()->children->each((function($topLevelChild) use ($service) {
+            // And for each top level child, attach one of its children to the service
+            $topLevelChild->children->each(function($serviceEligibilityTaxonomyParent) use ($service) {
+                $service->serviceEligibilities()->create([
+                    'id' => (string) Str::uuid(),
+                    'taxonomy_id' => $serviceEligibilityTaxonomyParent->id,
+                ]);
+            });
+        }));
+
         $service->eligibility_age_group_custom = 'custom age group';
         $service->eligibility_disability_custom = 'custom disability';
         $service->eligibility_employment_custom = 'custom employment';
@@ -73,64 +82,65 @@ class TaxonomyServiceEligibilityTest extends TestCase
 
     private function generateServiceEligibilityTaxonomy(): void
     {
-        $parents = [
+        $firstLevelChildren = [
             [
-                'id' => (string) Str::uuid(),
                 'name' => 'Age Group',
                 'order' => 0,
-                'depth' => 0,
+                'depth' => 1,
             ],
             [
-                'id' => (string) Str::uuid(),
                 'name' => 'Disability',
-                'order' => 0,
-                'depth' => 0,
+                'order' => 1,
+                'depth' => 1,
             ],
             [
-                'id' => (string) Str::uuid(),
                 'name' => 'Employment',
-                'order' => 0,
-                'depth' => 0,
+                'order' => 2,
+                'depth' => 1,
             ],
             [
-                'id' => (string) Str::uuid(),
                 'name' => 'Gender',
-                'order' => 0,
-                'depth' => 0,
+                'order' => 3,
+                'depth' => 1,
             ],
             [
-                'id' => (string) Str::uuid(),
                 'name' => 'Housing',
-                'order' => 0,
-                'depth' => 0,
+                'order' => 4,
+                'depth' => 1,
             ],
             [
-                'id' => (string) Str::uuid(),
                 'name' => 'Income',
-                'order' => 0,
-                'depth' => 0,
+                'order' => 5,
+                'depth' => 1,
             ],
             [
-                'id' => (string) Str::uuid(),
                 'name' => 'Language',
-                'order' => 0,
-                'depth' => 0,
+                'order' => 6,
+                'depth' => 1,
             ],
+            [
+                'name' => 'Ethnicity',
+                'order' => 7,
+                'depth' => 1,
+            ]
         ];
 
         Taxonomy::serviceEligibility()
             ->children()
-            ->createMany($parents);
+            ->createMany($firstLevelChildren);
+
+        $count = 0;
 
         Taxonomy::serviceEligibility()
-            ->children()
-            ->each(function ($item) {
+            ->children
+            ->each(function ($item) use ($count) {
                 $item->children()->create([
-                    'id' => (string) Str::uuid(),
-                    'name' => $item . ' taxonomy child',
-                    'order' => 0,
-                    'depth' => 0,
+                    'name' => $item->name . ' taxonomy child',
+                    'order' => $count,
+                    'depth' => $item->depth + 1,
                 ]);
+
+                $count++;
             });
     }
 }
