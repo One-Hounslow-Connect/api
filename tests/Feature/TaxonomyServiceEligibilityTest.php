@@ -31,6 +31,8 @@ class TaxonomyServiceEligibilityTest extends TestCase
                 'housing' => 'Housing taxonomy child,custom housing',
                 'income' => 'Income taxonomy child,custom income',
                 'language' => 'Language taxonomy child,custom language',
+                'ethnicity' => 'Ethnicity taxonomy child,custom ethnicity',
+                'other' => 'custom other',
             ]
         ]);
     }
@@ -74,6 +76,8 @@ class TaxonomyServiceEligibilityTest extends TestCase
         $service->eligibility_housing_custom = 'custom housing';
         $service->eligibility_income_custom = 'custom income';
         $service->eligibility_language_custom = 'custom language';
+        $service->eligibility_ethnicity_custom = 'custom ethnicity';
+        $service->eligibility_other_custom = 'custom other';
 
 
         $service->save();
