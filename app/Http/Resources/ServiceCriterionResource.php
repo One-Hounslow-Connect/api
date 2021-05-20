@@ -56,6 +56,7 @@ class ServiceCriterionResource extends JsonResource
             if (!empty($this->{$customFieldName})) {
                 $taxonomyList[$key][] = $this->{$customFieldName};
             }
+
             return implode(',', $taxonomyList[$key]);
         }
 

@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use App\Models\Relationships\ServiceEligibilityRelationships;
-use App\Models\Model;
 
 class ServiceEligibility extends Model
 {
