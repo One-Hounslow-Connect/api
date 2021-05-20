@@ -3,13 +3,11 @@
 namespace App\Models;
 
 use App\Models\Relationships\ServiceEligibilityRelationships;
-use Illuminate\Database\Eloquent\Model;
+use App\Models\Model;
 
 class ServiceEligibility extends Model
 {
     use ServiceEligibilityRelationships;
-
-    protected $fillable = ['id', 'taxonomy_id'];
 
     /**
      * @return \App\Models\ServiceTaxonomy
