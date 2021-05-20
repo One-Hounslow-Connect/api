@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator as ValidatorFacade;
 use ScoutElastic\Searchable;
+use Illuminate\Support\Collection;
 
 class Service extends Model implements AppliesUpdateRequests, Notifiable, HasTaxonomyRelationships
 {
@@ -460,5 +461,12 @@ class Service extends Model implements AppliesUpdateRequests, Notifiable, HasTax
             Response::HTTP_OK,
             ['Content-Type' => File::MIME_TYPE_PNG]
         );
+    }
+
+    public function getServiceEligibilities(): Collection
+    {
+        return $this->serviceEligibilities->map(function ($item) {
+            return $item->taxonomy;
+        });
     }
 }
