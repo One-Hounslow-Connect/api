@@ -19,6 +19,8 @@ class AddCustomEligibilityTypeFieldsToServices extends Migration
             $table->text('eligibility_housing_custom')->nullable();
             $table->text('eligibility_income_custom')->nullable();
             $table->text('eligibility_language_custom')->nullable();
+            $table->text('eligibility_ethnicity_custom')->nullable();
+            $table->text('eligibility_other_custom')->nullable();
         });
     }
 
@@ -36,6 +38,8 @@ class AddCustomEligibilityTypeFieldsToServices extends Migration
                 'eligibility_housing_custom',
                 'eligibility_income_custom',
                 'eligibility_language_custom',
+                'eligibility_ethnicity_custom',
+                'eligibility_other_custom',
             ]);
         });
     }
