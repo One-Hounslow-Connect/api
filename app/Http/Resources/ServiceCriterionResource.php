@@ -37,6 +37,7 @@ class ServiceCriterionResource extends JsonResource
         return $serializedData;
     }
 
+    //@TODO: change ->each() to a foreach, so we can truly accept either a Collection or array
     private function mapTaxonomyNamesToCriteriaName(iterable $taxonomyCollection)
     {
         $keyedByCriteriaName = [];
@@ -48,7 +49,7 @@ class ServiceCriterionResource extends JsonResource
         return $keyedByCriteriaName;
     }
 
-    private function generateCommaSeparatedList(iterable $taxonomyList, string $key): string
+    private function generateCommaSeparatedList(iterable $taxonomyList, string $key): ?string
     {
         $customFieldName = 'eligibility_' . $key . '_custom';
 
@@ -64,6 +65,6 @@ class ServiceCriterionResource extends JsonResource
             return $this->{$customFieldName};
         }
 
-        return '';
+        return null;
     }
 }
