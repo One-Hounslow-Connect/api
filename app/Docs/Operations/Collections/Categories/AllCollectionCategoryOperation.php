@@ -36,7 +36,7 @@ EOT
             ->responses(
                 Response::ok()->content(
                     MediaType::json()->schema(
-                        AllSchema::create(null,CollectionCategorySchema::create())
+                        AllSchema::create(null, CollectionCategorySchema::create())
                     )
                 )
             );

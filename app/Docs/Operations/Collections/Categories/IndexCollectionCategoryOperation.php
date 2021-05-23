@@ -44,7 +44,7 @@ EOT
             ->responses(
                 Response::ok()->content(
                     MediaType::json()->schema(
-                        PaginationSchema::create(null,CollectionCategorySchema::create())
+                        PaginationSchema::create(null, CollectionCategorySchema::create())
                     )
                 )
             );
