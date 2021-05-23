@@ -39,14 +39,14 @@ class CollectionCategoryController extends Controller
             ->orderBy('order');
 
         $categoryQuery = QueryBuilder::for($baseQuery)
-            ->allowedFilters([
-                Filter::exact('id'),
-            ])
             ->with('taxonomies');
         if ($request->is('*/all')) {
             $categories = $categoryQuery->get();
         } else {
-            $categories = $categoryQuery->paginate(per_page($request->per_page));
+            $categories = $categoryQuery->allowedFilters([
+                Filter::exact('id'),
+            ])
+            ->paginate(per_page($request->per_page));
         }
 
         event(EndpointHit::onRead($request, 'Viewed all collection categories'));

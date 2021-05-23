@@ -25,7 +25,7 @@ class IndexCollectionPersonaOperation extends Operation
         return parent::create($objectId)
             ->action(static::ACTION_GET)
             ->tags(CollectionPersonasTag::create())
-            ->summary('List all the persona collections')
+            ->summary('List all the persona collections with pagination')
             ->description(
                 <<<'EOT'
 **Permission:** `Open`
@@ -44,7 +44,7 @@ EOT
             ->responses(
                 Response::ok()->content(
                     MediaType::json()->schema(
-                        PaginationSchema::create(null, CollectionPersonaSchema::create())
+                        PaginationSchema::create(null,CollectionPersonaSchema::create())
                     )
                 )
             );

@@ -1,19 +1,16 @@
 <?php
 
-namespace App\Docs\Operations\Collections\Categories;
+namespace App\Docs\Operations\Collections\Personas;
 
-use App\Docs\Parameters\FilterIdParameter;
-use App\Docs\Parameters\PageParameter;
-use App\Docs\Parameters\PerPageParameter;
-use App\Docs\Schemas\Collection\Category\CollectionCategorySchema;
-use App\Docs\Schemas\PaginationSchema;
-use App\Docs\Tags\CollectionCategoriesTag;
+use App\Docs\Schemas\AllSchema;
+use App\Docs\Schemas\Collection\Persona\CollectionPersonaSchema;
+use App\Docs\Tags\CollectionPersonasTag;
 use GoldSpecDigital\ObjectOrientedOAS\Objects\BaseObject;
 use GoldSpecDigital\ObjectOrientedOAS\Objects\MediaType;
 use GoldSpecDigital\ObjectOrientedOAS\Objects\Operation;
 use GoldSpecDigital\ObjectOrientedOAS\Objects\Response;
 
-class IndexCollectionCategoryOperation extends Operation
+class AllCollectionPersonaOperation extends Operation
 {
     /**
      * @param string|null $objectId
@@ -24,8 +21,8 @@ class IndexCollectionCategoryOperation extends Operation
     {
         return parent::create($objectId)
             ->action(static::ACTION_GET)
-            ->tags(CollectionCategoriesTag::create())
-            ->summary('List all the category collections with pagination')
+            ->tags(CollectionPersonasTag::create())
+            ->summary('List all the persona collections')
             ->description(
                 <<<'EOT'
 **Permission:** `Open`
@@ -36,15 +33,10 @@ Collections are returned in ascending order of the order field.
 EOT
             )
             ->noSecurity()
-            ->parameters(
-                PageParameter::create(),
-                PerPageParameter::create(),
-                FilterIdParameter::create()
-            )
             ->responses(
                 Response::ok()->content(
                     MediaType::json()->schema(
-                        PaginationSchema::create(null,CollectionCategorySchema::create())
+                        AllSchema::create(null,CollectionPersonaSchema::create())
                     )
                 )
             );
