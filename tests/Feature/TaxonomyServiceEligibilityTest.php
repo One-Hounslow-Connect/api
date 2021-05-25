@@ -54,26 +54,9 @@ class TaxonomyServiceEligibilityTest extends TestCase
 
     private function createService()
     {
-        $service = factory(Service::class)->create();
-
-        // @FIXME: move to factory states for improved code reuse
-        $service->usefulInfos()->create([
-            'title' => 'Did You Know?',
-            'description' => 'This is a test description',
-            'order' => 1,
-        ]);
-        
-        $service->offerings()->create([
-            'offering' => 'Weekly club',
-            'order' => 1,
-        ]);
-        
-        $service->socialMedias()->create([
-            'type' => SocialMedia::TYPE_INSTAGRAM,
-            'url' => 'https://www.instagram.com/ayupdigital/',
-        ]);
-
-        // @FIXME: attach "actual" children now that SE taxonomy import migration is in place
+        $service = factory(Service::class)
+            ->states('withOfferings', 'withUsefulInfo', 'withSocialMedia')
+            ->create();
 
         // Loop through each top level child of service eligibility taxonomy
         Taxonomy::serviceEligibility()->children->each((function($topLevelChild) use ($service) {
