@@ -79,6 +79,74 @@ class TaxonomyServiceEligibilityTest extends TestCase
         $response->assertStatus(422);
     }
 
+    public function test_taxonomy_can_not_be_added_if_child_of_incorrect_service_eligibility_type()
+    {
+        // Given that I am updating an existing service
+        $service = $this->createService();
+        $serviceAdmin = factory(User::class)
+            ->create()
+            ->makeServiceAdmin($service);
+
+        // When I try to associate a taxonomy that IS a child of Service Eligibility, but NOT the correct type,
+        // i.e. a gender eligibility attached to age_group
+        $incorrectTaxonomyId = Taxonomy::serviceEligibility()
+            ->children()
+            ->where('name', 'Gender')
+            ->firstOrFail()
+            ->children
+            ->random()
+            ->id;
+
+        $payload = [
+            'service_eligibility_types' => [
+                'age_group' => [
+                    'taxonomies' => [$incorrectTaxonomyId],
+                ],
+            ],
+        ];
+
+        Passport::actingAs($serviceAdmin);
+
+        $response = $this->json('PUT', route('core.v1.services.update', $service->id), $payload);
+
+        // A validation error is thrown
+        $response->assertStatus(422);
+    }
+
+    public function test_taxonomy_can_be_added_if_child_of_correct_service_eligibility_type()
+    {
+        // Given that I am updating an existing service
+        $service = $this->createService();
+        $serviceAdmin = factory(User::class)
+            ->create()
+            ->makeServiceAdmin($service);
+
+        // When I try to associate a taxonomy that IS a child of Service Eligibility, but NOT the correct type,
+        // i.e. a gender eligibility attached to age_group
+        $correctTaxonomyId = Taxonomy::serviceEligibility()
+            ->children()
+            ->where('name', 'Age Group')
+            ->firstOrFail()
+            ->children
+            ->random()
+            ->id;
+
+        $payload = [
+            'service_eligibility_types' => [
+                'age_group' => [
+                    'taxonomies' => [$correctTaxonomyId],
+                ],
+            ],
+        ];
+
+        Passport::actingAs($serviceAdmin);
+
+        $response = $this->json('PUT', route('core.v1.services.update', $service->id), $payload);
+
+        // A validation error is thrown
+        $response->assertSuccessful();
+    }
+
     private function createService()
     {
         $service = factory(Service::class)
