@@ -462,11 +462,4 @@ class Service extends Model implements AppliesUpdateRequests, Notifiable, HasTax
             ['Content-Type' => File::MIME_TYPE_PNG]
         );
     }
-
-    public function getServiceEligibilities(): LaravelCollection
-    {
-        return $this->serviceEligibilities->map(function ($item) {
-            return $item->taxonomy;
-        });
-    }
 }
