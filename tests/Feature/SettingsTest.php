@@ -42,6 +42,14 @@ class SettingsTest extends TestCase
                         'categories_title' => 'data/cms/frontend/home/categories_title',
                         'personas_title' => 'data/cms/frontend/home/personas_title',
                         'personas_content' => 'data/cms/frontend/home/personas_content',
+                        'banners' => [
+                            [
+                                'title' => 'data/cms/frontend/home/banners/title',
+                                'content' => 'data/cms/frontend/home/banners/content',
+                                'button_text' => 'button_text',
+                                'button_url' => 'https://example.com/data/cms/frontend/home/banners/button_url',
+                            ],
+                        ],
                     ],
                     'terms_and_conditions' => [
                         'title' => 'data/cms/frontend/terms_and_conditions/title',
@@ -95,6 +103,14 @@ class SettingsTest extends TestCase
                             'categories_title',
                             'personas_title',
                             'personas_content',
+                            'banners' => [
+                                [
+                                    'title',
+                                    'content',
+                                    'button_text',
+                                    'button_url',
+                                ],
+                            ],
                         ],
                         'terms_and_conditions' => [
                             'title',
@@ -150,6 +166,14 @@ class SettingsTest extends TestCase
                             'categories_title' => 'data/cms/frontend/home/categories_title',
                             'personas_title' => 'data/cms/frontend/home/personas_title',
                             'personas_content' => 'data/cms/frontend/home/personas_content',
+                            'banners' => [
+                                [
+                                    'title' => 'data/cms/frontend/home/banners/title',
+                                    'content' => 'data/cms/frontend/home/banners/content',
+                                    'button_text' => 'button_text',
+                                    'button_url' => 'https://example.com/data/cms/frontend/home/banners/button_url',
+                                ],
+                            ],
                         ],
                         'terms_and_conditions' => [
                             'title' => 'data/cms/frontend/terms_and_conditions/title',
@@ -227,6 +251,14 @@ class SettingsTest extends TestCase
                             'categories_title' => 'Categories title',
                             'personas_title' => 'Personas title',
                             'personas_content' => 'Personas content',
+                            'banners' => [
+                                [
+                                    'title' => null,
+                                    'content' => null,
+                                    'button_text' => null,
+                                    'button_url' => null,
+                                ],
+                            ],
                         ],
                         'terms_and_conditions' => [
                             'title' => 'Title',
@@ -570,5 +602,212 @@ class SettingsTest extends TestCase
         Event::assertDispatched(EndpointHit::class, function (EndpointHit $event) {
             return ($event->getAction() === Audit::ACTION_READ);
         });
+    }
+
+    /**
+     * CMS Frontend Home Banners
+     */
+
+    /**
+     * @test
+     */
+    public function single_home_banner_can_be_added()
+    {
+        Passport::actingAs(
+            factory(User::class)->create()->makeGlobalAdmin()
+        );
+
+        $this->settingsData['cms']['frontend']['home']['banners'][] = [
+            'title' => 'data/cms/frontend/home/banners/title2',
+            'content' => 'data/cms/frontend/home/banners/content2',
+            'button_text' => 'button_text2',
+            'button_url' => 'https://example.com/data/cms/frontend/home/banners/button_url2',
+        ];
+
+        $response = $this->putJson('/core/v1/settings', $this->settingsData);
+
+        $this->settingsResponse['data']['cms']['frontend']['home']['banners'][] = [
+            'title' => 'data/cms/frontend/home/banners/title2',
+            'content' => 'data/cms/frontend/home/banners/content2',
+            'button_text' => 'button_text2',
+            'button_url' => 'https://example.com/data/cms/frontend/home/banners/button_url2',
+        ];
+
+        $response->assertJson($this->settingsResponse);
+    }
+
+    /**
+     * @test
+     */
+    public function multiple_home_banners_can_be_added()
+    {
+        Passport::actingAs(
+            factory(User::class)->create()->makeGlobalAdmin()
+        );
+
+        // Clear any existing banners
+        $this->settingsData['cms']['frontend']['home']['banners'] = [];
+
+        $response = $this->putJson('/core/v1/settings', $this->settingsData);
+
+        $this->settingsResponse['data']['cms']['frontend']['home']['banners'] = [];
+
+        $response->assertJson($this->settingsResponse);
+
+        $this->settingsData['cms']['frontend']['home']['banners'] = [
+            [
+                'title' => 'data/cms/frontend/home/banner1/title',
+                'content' => 'data/cms/frontend/home/banner1/content',
+                'button_text' => 'button_text1',
+                'button_url' => 'https://example.com/data/cms/frontend/home/banner1/button_url',
+            ],
+            [
+                'title' => 'data/cms/frontend/home/banner2/title',
+                'content' => 'data/cms/frontend/home/banner2/content',
+                'button_text' => 'button_text2',
+                'button_url' => 'https://example.com/data/cms/frontend/home/banner2/button_url',
+            ],
+        ];
+
+        $response = $this->putJson('/core/v1/settings', $this->settingsData);
+
+        $this->settingsResponse['data']['cms']['frontend']['home']['banners'] = [
+            [
+                'title' => 'data/cms/frontend/home/banner1/title',
+                'content' => 'data/cms/frontend/home/banner1/content',
+                'button_text' => 'button_text1',
+                'button_url' => 'https://example.com/data/cms/frontend/home/banner1/button_url',
+            ],
+            [
+                'title' => 'data/cms/frontend/home/banner2/title',
+                'content' => 'data/cms/frontend/home/banner2/content',
+                'button_text' => 'button_text2',
+                'button_url' => 'https://example.com/data/cms/frontend/home/banner2/button_url',
+            ],
+        ];
+
+        $response->assertJson($this->settingsResponse);
+    }
+
+    /**
+     * @test
+     */
+    public function home_banners_can_be_updated()
+    {
+        Passport::actingAs(
+            factory(User::class)->create()->makeGlobalAdmin()
+        );
+
+        $response = $this->putJson('/core/v1/settings', $this->settingsData);
+
+        $response->assertJson($this->settingsResponse);
+
+        $this->settingsData['cms']['frontend']['home']['banners'] = [
+            [
+                'title' => 'data/cms/frontend/home/banners/title_updated',
+                'content' => 'data/cms/frontend/home/banners/content_updated',
+                'button_text' => 'button_text_updated',
+                'button_url' => 'https://example.com/data/cms/frontend/home/banners/button_url_updated',
+            ],
+        ];
+
+        $response = $this->putJson('/core/v1/settings', $this->settingsData);
+
+        $this->settingsResponse['data']['cms']['frontend']['home']['banners'] = [
+            [
+                'title' => 'data/cms/frontend/home/banners/title_updated',
+                'content' => 'data/cms/frontend/home/banners/content_updated',
+                'button_text' => 'button_text_updated',
+                'button_url' => 'https://example.com/data/cms/frontend/home/banners/button_url_updated',
+            ],
+        ];
+    }
+
+    /**
+     * @test
+     */
+    public function home_banners_require_title_content_button_text_and_button_url()
+    {
+        Passport::actingAs(
+            factory(User::class)->create()->makeGlobalAdmin()
+        );
+
+        $this->settingsData['cms']['frontend']['home']['banners'] = [
+            [
+                'content' => 'data/cms/frontend/home/banners/content_updated',
+            ],
+        ];
+
+        $response = $this->putJson('/core/v1/settings', $this->settingsData);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+
+        $this->settingsData['cms']['frontend']['home']['banners'] = [
+            [
+                'title' => 'data/cms/frontend/home/banners/title_updated',
+                'content' => 'data/cms/frontend/home/banners/content_updated',
+            ],
+        ];
+
+        $response = $this->putJson('/core/v1/settings', $this->settingsData);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+
+        $this->settingsData['cms']['frontend']['home']['banners'] = [
+            [
+                'title' => 'data/cms/frontend/home/banners/title_updated',
+                'content' => 'data/cms/frontend/home/banners/content_updated',
+                'button_text' => 'button_text_updated',
+            ],
+        ];
+
+        $response = $this->putJson('/core/v1/settings', $this->settingsData);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+
+        $this->settingsData['cms']['frontend']['home']['banners'] = [
+            [
+                'title' => 'data/cms/frontend/home/banners/title_updated',
+                'content' => 'data/cms/frontend/home/banners/content_updated',
+                'button_text' => 'button_text_updated',
+                'button_url' => 'www.not-a-valid-url',
+            ],
+        ];
+
+        $response = $this->putJson('/core/v1/settings', $this->settingsData);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+
+        $this->settingsData['cms']['frontend']['home']['banners'] = [
+            [
+                'title' => 'data/cms/frontend/home/banners/title_updated',
+                'content' => 'data/cms/frontend/home/banners/content_updated',
+                'button_text' => 'button_text_updated',
+                'button_url' => 'https://example.com/data/cms/frontend/home/banners/button_url_updated',
+            ],
+        ];
+
+        $response = $this->putJson('/core/v1/settings', $this->settingsData);
+
+        $response->assertStatus(Response::HTTP_OK);
+    }
+
+    /**
+     * @test
+     */
+    public function home_banners_can_be_removed()
+    {
+        Passport::actingAs(
+            factory(User::class)->create()->makeGlobalAdmin()
+        );
+
+        // Clear any existing banners
+        $this->settingsData['cms']['frontend']['home']['banners'] = [];
+
+        $response = $this->putJson('/core/v1/settings', $this->settingsData);
+
+        $this->settingsResponse['data']['cms']['frontend']['home']['banners'] = [];
+
+        $response->assertJson($this->settingsResponse);
     }
 }
