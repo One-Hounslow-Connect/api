@@ -14,30 +14,45 @@ class TaxonomyServiceEligibilityTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->generateServiceEligibilityTaxonomy();
     }
 
-    public function test_criteria_property_returns_comma_separated_service_eligibilities()
+    public function test_service_has_correct_eligibility_schema()
     {
         $service = $this->createService();
-        $response = $this->get('/core/v1/services/' . $service->id);
+
+        $response = $this->get(route('core.v1.services.show', $service->id));
 
         $response->assertJsonFragment([
-            'criteria' => [
-                'age_group' => 'Age Group taxonomy child,custom age group',
-                'disability' => 'Disability taxonomy child,custom disability',
-                'employment' => 'Employment taxonomy child,custom employment',
-                'gender' => 'Gender taxonomy child,custom gender',
-                'housing' => 'Housing taxonomy child,custom housing',
-                'income' => 'Income taxonomy child,custom income',
-                'language' => 'Language taxonomy child,custom language',
-                'ethnicity' => 'Ethnicity taxonomy child,custom ethnicity',
-                'other' => 'custom other',
+            'eligibility_types' => [
+                'age_group' => [
+                    'taxonomies' => $service->serviceEligibilities['age_group'],
+                    'custom' => $service->service_eligibility_age_group_custom,
+                ],
+                'disability' => [
+                    'taxonomies' => $service->serviceEligibilities['disability'],
+                    'custom' => $service->service_eligibility_disability_custom,
+                ],
+                'gender' => [
+                    'taxonomies' => $service->serviceEligibilities['gender'],
+                    'custom' => $service->service_eligibility_gender_custom,
+                ],
+                'income' => [
+                    'taxonomies' => $service->serviceEligibilities['income'],
+                    'custom' => $service->service_eligibility_income_custom,
+                ],
+                'language' => [
+                    'taxonomies' => $service->serviceEligibilities['language'],
+                    'custom' => $service->service_eligibility_language_custom,
+                ],
+                'ethnicity' => [
+                    'taxonomies' => $service->serviceEligibilities['ethnicity'],
+                    'custom' => $service->service_eligibility_ethnicity_custom,
+                ],
             ]
         ]);
     }
 
-    private function  createService()
+    private function createService()
     {
         $service = factory(Service::class)->create();
 
@@ -58,15 +73,14 @@ class TaxonomyServiceEligibilityTest extends TestCase
             'url' => 'https://www.instagram.com/ayupdigital/',
         ]);
 
+        // @FIXME: attach "actual" children now that SE taxonomy import migration is in place
+
         // Loop through each top level child of service eligibility taxonomy
         Taxonomy::serviceEligibility()->children->each((function($topLevelChild) use ($service) {
             // And for each top level child, attach one of its children to the service
-            $topLevelChild->children->each(function($serviceEligibilityTaxonomyParent) use ($service) {
-                $service->serviceEligibilities()->create([
-                    'id' => (string) Str::uuid(),
-                    'taxonomy_id' => $serviceEligibilityTaxonomyParent->id,
-                ]);
-            });
+            $service->serviceEligibilities()->create([
+                'taxonomy_id' => $topLevelChild->children->first()->id,
+            ]);
         }));
 
         $service->eligibility_age_group_custom = 'custom age group';
@@ -79,72 +93,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
         $service->eligibility_ethnicity_custom = 'custom ethnicity';
         $service->eligibility_other_custom = 'custom other';
 
-
         $service->save();
         return $service;
-    }
-
-    private function generateServiceEligibilityTaxonomy(): void
-    {
-        $firstLevelChildren = [
-            [
-                'name' => 'Age Group',
-                'order' => 0,
-                'depth' => 1,
-            ],
-            [
-                'name' => 'Disability',
-                'order' => 1,
-                'depth' => 1,
-            ],
-            [
-                'name' => 'Employment',
-                'order' => 2,
-                'depth' => 1,
-            ],
-            [
-                'name' => 'Gender',
-                'order' => 3,
-                'depth' => 1,
-            ],
-            [
-                'name' => 'Housing',
-                'order' => 4,
-                'depth' => 1,
-            ],
-            [
-                'name' => 'Income',
-                'order' => 5,
-                'depth' => 1,
-            ],
-            [
-                'name' => 'Language',
-                'order' => 6,
-                'depth' => 1,
-            ],
-            [
-                'name' => 'Ethnicity',
-                'order' => 7,
-                'depth' => 1,
-            ]
-        ];
-
-        Taxonomy::serviceEligibility()
-            ->children()
-            ->createMany($firstLevelChildren);
-
-        $count = 0;
-
-        Taxonomy::serviceEligibility()
-            ->children
-            ->each(function ($item) use ($count) {
-                $item->children()->create([
-                    'name' => $item->name . ' taxonomy child',
-                    'order' => $count,
-                    'depth' => $item->depth + 1,
-                ]);
-
-                $count++;
-            });
     }
 }
