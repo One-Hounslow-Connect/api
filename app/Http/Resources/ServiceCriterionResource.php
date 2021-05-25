@@ -7,18 +7,6 @@ use Illuminate\Support\Str;
 
 class ServiceCriterionResource extends JsonResource
 {
-    private $criteriaKeys = [
-        'age_group',
-        'disability',
-        'employment',
-        'gender',
-        'housing',
-        'income',
-        'language',
-        'ethnicity',
-        'other',
-    ];
-
     /**
      * Transform the resource into an array.
      *
