@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Service;
+use App\Models\SocialMedia;
 use Faker\Generator as Faker;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Str;
@@ -42,3 +43,26 @@ $factory->afterCreating(Service::class, function (Service $service, Faker $faker
         'other' => null,
     ]);
 });
+
+$factory->afterCreatingState(Service::class, 'withOfferings', function (Service $service, Faker $faker) {
+    $service->offerings()->create([
+        'offering' => 'Weekly club',
+        'order' => 1,
+    ]);
+});
+
+$factory->afterCreatingState(Service::class, 'withUsefulInfo', function (Service $service, Faker $faker) {
+    $service->usefulInfos()->create([
+        'title' => 'Did You Know?',
+        'description' => 'This is a test description',
+        'order' => 1,
+    ]);
+});
+
+$factory->afterCreatingState(Service::class, 'withSocialMedia', function (Service $service, Faker $faker) {
+    $service->socialMedias()->create([
+        'type' => SocialMedia::TYPE_INSTAGRAM,
+        'url' => 'https://www.instagram.com/ayupdigital/',
+    ]);
+});
+
