@@ -3,6 +3,9 @@
 namespace Tests\Feature;
 
 use App\Models\Service;
+use App\Models\Taxonomy;
+use App\Models\User;
+use Laravel\Passport\Passport;
 use Tests\TestCase;
 
 class TaxonomyServiceEligibilityTest extends TestCase
@@ -47,6 +50,31 @@ class TaxonomyServiceEligibilityTest extends TestCase
                 ],
             ]
         ]);
+    }
+
+    public function test_taxonomy_can_not_be_added_if_top_level_child_of_incorrect_parent_taxonomy()
+    {
+        // Given that I am updating an existing service
+        $service = $this->createService();
+        $serviceAdmin = factory(User::class)
+            ->create()
+            ->makeServiceAdmin($service);
+
+        // When I try to associate a taxonomy that is NOT a child of Service Eligibility
+        $incorrectTaxonomyId = Taxonomy::category()->children->random()->id;
+
+        $payload = [
+            'service_eligibility_types' => [
+                'age_group' => $incorrectTaxonomyId,
+            ],
+        ];
+
+        Passport::actingAs($serviceAdmin);
+
+        $response = $this->json('PUT', route('core.v1.services.update', $service->id), $payload);
+
+        // A validation error is thrown
+        $response->assertStatus(422);
     }
 
     private function createService()
