@@ -65,7 +65,9 @@ class TaxonomyServiceEligibilityTest extends TestCase
 
         $payload = [
             'service_eligibility_types' => [
-                'age_group' => $incorrectTaxonomyId,
+                'age_group' => [
+                    'taxonomies' => [$incorrectTaxonomyId],
+                ],
             ],
         ];
 
