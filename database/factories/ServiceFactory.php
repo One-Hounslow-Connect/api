@@ -82,7 +82,7 @@ $factory->afterCreatingState(Service::class, 'withCustomEligibilities', function
 
 $factory->afterCreatingState(Service::class, 'withEligibilityTaxonomies', function (Service $service) {
     // Loop through each top level child of service eligibility taxonomy
-    Taxonomy::serviceEligibility()->children->each((function($topLevelChild) use ($service) {
+    Taxonomy::serviceEligibility()->children->each((function ($topLevelChild) use ($service) {
         // And for each top level child, attach one of its children to the service
         $service->serviceEligibilities()->create([
             'taxonomy_id' => $topLevelChild->children->first()->id,
