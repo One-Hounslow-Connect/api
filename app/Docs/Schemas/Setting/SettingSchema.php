@@ -28,7 +28,8 @@ class SettingSchema extends Schema
             Schema::string('personas_title'),
             Schema::string('personas_content')->format('markdown'),
             Schema::array('banners')
-                ->items(Schema::object()
+                ->items(
+                    Schema::object()
                         ->properties(
                             Schema::string('title'),
                             Schema::string('content')->format('markdown'),
