@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Organisation;
 use App\Models\Service;
 use App\Models\Taxonomy;
 use App\Models\User;
@@ -87,13 +88,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
 
         // When I try to associate a taxonomy that IS a child of Service Eligibility, but NOT the correct type,
         // i.e. a gender eligibility attached to age_group
-        $correctTaxonomyId = Taxonomy::serviceEligibility()
-            ->children()
-            ->where('name', 'Age Group')
-            ->firstOrFail()
-            ->children
-            ->random()
-            ->id;
+        $correctTaxonomyId = $this->randomEligibilityDescendant()->id;
 
         $payload = [
             'service_eligibility_types' => [
@@ -109,6 +104,66 @@ class TaxonomyServiceEligibilityTest extends TestCase
         $response->assertSuccessful();
     }
 
+    public function test_global_admin_can_update_eligibility_taxonomies()
+    {
+        $service = $this->createService();
+
+        // Given that I am updating an existing service as a global admin
+        $service = $this->createService();
+        $globalAdmin = factory(User::class)
+            ->create()
+            ->makeGlobalAdmin($service);
+
+        // When I try to associate a valid child taxonomy of Service Eligibility
+        $taxonomyId = $this->randomEligibilityDescendant()->id;
+
+        $payload = [
+            'service_eligibility_types' => [
+                'taxonomies' => [$taxonomyId],
+            ],
+        ];
+
+        Passport::actingAs($globalAdmin);
+
+        $response = $this->json('PUT', route('core.v1.services.update', $service->id), $payload);
+
+        // I am successful in doing so.
+        $response->assertSuccessful();
+    }
+
+    public function test_organisation_admin_can_not_update_eligibility_taxonomies()
+    {
+        $service = $this->createService();
+
+        // Given that I am updating an existing service as an organisation admin
+        $service = $this->createService();
+        $organisation = factory(Organisation::class)->create();
+
+        $organisationAdmin = factory(User::class)
+            ->create()
+            ->makeOrganisationAdmin($organisation);
+
+        // When I try to associate a valid child taxonomy of Service Eligibility
+        $taxonomyId = $this->randomEligibilityDescendant()->id;
+
+        $payload = [
+            'service_eligibility_types' => [
+                'taxonomies' => [$taxonomyId],
+            ],
+        ];
+
+        Passport::actingAs($organisationAdmin);
+
+        $response = $this->json('PUT', route('core.v1.services.update', $service->id), $payload);
+
+        // I am unauthorized to do so
+        $response->assertStatus(403);
+    }
+
+    // @TODO: test non-authorized users cant update taxonomies
+
+    // @TODO: test custom field update validation
+
     private function createService()
     {
         $service = factory(Service::class)
@@ -121,7 +176,24 @@ class TaxonomyServiceEligibilityTest extends TestCase
             )
             ->create();
 
+        $service->syncTaxonomyRelationships(collect([Taxonomy::category()->children()->firstOrFail()]));
         $service->save();
+
         return $service;
+    }
+
+    private function randomTopLevelChild()
+    {
+        return Taxonomy::serviceEligibility()
+            ->children()
+            ->inRandomOrder()
+            ->firstOrFail();
+    }
+
+    private function randomEligibilityDescendant()
+    {
+        return $this->randomTopLevelChild()
+            ->children
+            ->random();
     }
 }
