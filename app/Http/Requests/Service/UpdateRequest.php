@@ -168,7 +168,7 @@ class UpdateRequest extends FormRequest
                     $referralMethod = $this->input('referral_method', $this->service->referral_method);
 
                     return $referralMethod === Service::REFERRAL_METHOD_INTERNAL
-                    && $this->service->referral_email === null;
+                        && $this->service->referral_email === null;
                 }),
                 new NullableIf(function () {
                     $referralMethod = $this->input('referral_method', $this->service->referral_method);
@@ -191,7 +191,7 @@ class UpdateRequest extends FormRequest
                     $referralMethod = $this->input('referral_method', $this->service->referral_method);
 
                     return $referralMethod === Service::REFERRAL_METHOD_EXTERNAL
-                    && $this->service->referral_url === null;
+                        && $this->service->referral_url === null;
                 }),
                 new NullableIf(function () {
                     $referralMethod = $this->input('referral_method', $this->service->referral_method);
@@ -280,6 +280,16 @@ class UpdateRequest extends FormRequest
                 new RootTaxonomyIs(Taxonomy::NAME_CATEGORY),
             ],
 
+            // @TODO: imitate category_taxonomies rule to enforce similar rules on service_eligibility taxonomies
+            'service_eligibility_types' => ['array'],
+            'service_eligibility_types.taxonomies' => ['array'],
+            'service_eligibility_types.taxonomies.*' => [
+                'uuid',
+                'exists:taxonomies,id',
+                new RootTaxonomyIs(Taxonomy::NAME_SERVICE_ELIGIBILITY),
+            ],
+             'service_eligibility_types.*.custom' => ['string', 'nullable'],
+
             'logo_file_id' => [
                 'nullable',
                 'exists:files,id',
@@ -320,6 +330,14 @@ class UpdateRequest extends FormRequest
         return [
             'array',
             new CanUpdateCategoryTaxonomyRelationships($this->user(), $this->service),
+        ];
+    }
+
+    protected function serviceEligibilityRules(): array
+    {
+        return [
+            'array',
+            new CanUpdateServiceEligibilityTaxonomyRelationships($this->user(), $this->service),
         ];
     }
 
