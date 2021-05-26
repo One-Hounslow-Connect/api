@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Organisation;
 use App\Models\Service;
 use App\Models\Taxonomy;
+use App\Models\UpdateRequest;
 use App\Models\User;
 use Laravel\Passport\Passport;
 use Tests\TestCase;
@@ -53,6 +54,71 @@ class TaxonomyServiceEligibilityTest extends TestCase
         ]);
     }
 
+    public function test_custom_eligibility_fields_are_persisted_successfully()
+    {
+        // Given that I am updating an existing service
+        $service = $this->createService();
+        $serviceAdmin = factory(User::class)
+            ->create()
+            ->makeServiceAdmin($service);
+
+        $serviceAdmin->save();
+
+        $ageGroupCustom = 'I am updating the custom Age Group';
+        $disabilityCustom = 'I am updating the custom Disability';
+        $employmentCustom = 'I am updating the custom Employment';
+        $genderCustom = 'I am updating the custom Gender';
+        $housingCustom = 'I am updating the custom Housing';
+        $incomeCustom = 'I am updating the custom Income';
+        $languageCustom = 'I am updating the custom Language';
+        $ethnicityCustom = 'I am updating the custom Ethnicity';
+        $otherCustom = 'I am updating the custom Other';
+
+        $payload = [
+            'eligibility_types' => [
+                'custom' => [
+                    'age_group' => $ageGroupCustom,
+                    'disability' => $disabilityCustom,
+                    'employment' => $employmentCustom,
+                    'gender' => $genderCustom,
+                    'housing' => $housingCustom,
+                    'income' => $incomeCustom,
+                    'language' => $languageCustom,
+                    'ethnicity' => $ethnicityCustom,
+                    'other' => $otherCustom,
+                ]
+            ],
+        ];
+
+        Passport::actingAs($serviceAdmin);
+
+        $response = $this->json('PUT', route('core.v1.services.update', $service->id), $payload);
+
+        // I am successful
+        $response->assertSuccessful();
+
+        $updateRequestData = UpdateRequest::query()
+            ->where('updateable_type', UpdateRequest::EXISTING_TYPE_SERVICE)
+            ->where('updateable_id', $service->id)
+            ->firstOrFail()->data;
+
+        // And the service now has the appropriate custom eligibility fields set in an update request
+        $this->assertEquals($ageGroupCustom, $updateRequestData['eligibility_types']['custom']['eligibility_age_group_custom']);
+        $this->assertEquals($disabilityCustom, $updateRequestData['eligibility_types']['custom']['eligibility_disability_custom']);
+        $this->assertEquals($employmentCustom, $updateRequestData['eligibility_types']['custom']['eligibility_employment_custom']);
+        $this->assertEquals($genderCustom, $updateRequestData['eligibility_types']['custom']['eligibility_gender_custom']);
+        $this->assertEquals($housingCustom, $updateRequestData['eligibility_types']['custom']['eligibility_housing_custom']);
+        $this->assertEquals($incomeCustom, $updateRequestData['eligibility_types']['custom']['eligibility_income_custom']);
+        $this->assertEquals($languageCustom, $updateRequestData['eligibility_types']['custom']['eligibility_language_custom']);
+        $this->assertEquals($ethnicityCustom, $updateRequestData['eligibility_types']['custom']['eligibility_ethnicity_custom']);
+        $this->assertEquals($otherCustom, $updateRequestData['eligibility_types']['custom']['eligibility_other_custom']);
+    }
+
+    public function test_taxonomy_id_are_successfully_persisted()
+    {
+        $this->assertTrue(false, 'TODO: implement this test');
+    }
+
     public function test_taxonomy_can_not_be_added_if_top_level_child_of_incorrect_parent_taxonomy()
     {
         // Given that I am updating an existing service
@@ -65,7 +131,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
         $incorrectTaxonomyId = Taxonomy::category()->children->random()->id;
 
         $payload = [
-            'service_eligibility_types' => [
+            'eligibility_types' => [
                 'taxonomies' => [$incorrectTaxonomyId],
             ],
         ];
@@ -86,12 +152,14 @@ class TaxonomyServiceEligibilityTest extends TestCase
             ->create()
             ->makeServiceAdmin($service);
 
+        $serviceAdmin->save();
+
         // When I try to associate a taxonomy that IS a child of Service Eligibility, but NOT the correct type,
         // i.e. a gender eligibility attached to age_group
         $correctTaxonomyId = $this->randomEligibilityDescendant()->id;
 
         $payload = [
-            'service_eligibility_types' => [
+            'eligibility_types' => [
                 'taxonomies' => [$correctTaxonomyId],
             ],
         ];
@@ -101,6 +169,82 @@ class TaxonomyServiceEligibilityTest extends TestCase
         $response = $this->json('PUT', route('core.v1.services.update', $service->id), $payload);
 
         // A validation error is thrown
+        $response->assertSuccessful();
+    }
+
+    public function test_empty_service_eligibility_types_array_is_accepted_by_validation()
+    {
+        // Given that I am updating an existing service
+        $service = $this->createService();
+        $serviceAdmin = factory(User::class)
+            ->create()
+            ->makeServiceAdmin($service);
+
+        $serviceAdmin->save();
+
+        // When I send an empty array for eligibility types
+        $payload = [
+            'eligibility_types' => [
+            ],
+        ];
+
+        Passport::actingAs($serviceAdmin);
+
+        $response = $this->json('PUT', route('core.v1.services.update', $service->id), $payload);
+
+        // Validation passes
+        $response->assertSuccessful();
+    }
+
+    public function test_empty_service_eligibility_types_custom_array_is_accepted_by_validation()
+    {
+        // Given that I am updating an existing service
+        $service = $this->createService();
+        $serviceAdmin = factory(User::class)
+            ->create()
+            ->makeServiceAdmin($service);
+
+        $serviceAdmin->save();
+
+        // When I send an empty array for custom eligibility types
+        $payload = [
+            'eligibility_types' => [
+                'custom' => [],
+            ],
+        ];
+
+        Passport::actingAs($serviceAdmin);
+
+        $response = $this->json('PUT', route('core.v1.services.update', $service->id), $payload);
+
+        // Validation passes
+        $response->assertSuccessful();
+    }
+
+    public function test_null_service_eligibility_types_custom_array_element_is_accepted_by_validation()
+    {
+        // Given that I am updating an existing service
+        $service = $this->createService();
+        $serviceAdmin = factory(User::class)
+            ->create()
+            ->makeServiceAdmin($service);
+
+        $serviceAdmin->save();
+
+        // When I send a custom eligibility field set to null
+        $payload = [
+            'eligibility_types' => [
+                'custom' => [
+                    'age_group' => null,
+                ],
+            ],
+        ];
+
+        Passport::actingAs($serviceAdmin);
+
+        $response = $this->json('PUT', route('core.v1.services.update', $service->id), $payload);
+
+        // Validation passes
         $response->assertSuccessful();
     }
 
@@ -118,7 +262,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
         $taxonomyId = $this->randomEligibilityDescendant()->id;
 
         $payload = [
-            'service_eligibility_types' => [
+            'eligibility_types' => [
                 'taxonomies' => [$taxonomyId],
             ],
         ];
@@ -147,7 +291,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
         $taxonomyId = $this->randomEligibilityDescendant()->id;
 
         $payload = [
-            'service_eligibility_types' => [
+            'eligibility_types' => [
                 'taxonomies' => [$taxonomyId],
             ],
         ];
@@ -159,8 +303,6 @@ class TaxonomyServiceEligibilityTest extends TestCase
         // I am unauthorized to do so
         $response->assertStatus(403);
     }
-
-    // @TODO: test non-authorized users cant update taxonomies
 
     // @TODO: test custom field update validation
 
