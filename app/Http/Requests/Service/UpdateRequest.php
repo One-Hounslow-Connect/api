@@ -10,6 +10,7 @@ use App\Models\SocialMedia;
 use App\Models\Taxonomy;
 use App\Models\UserRole;
 use App\Rules\CanUpdateCategoryTaxonomyRelationships;
+use App\Rules\CanUpdateServiceEligibilityTaxonomyRelationships;
 use App\Rules\FileIsMimeType;
 use App\Rules\FileIsPendingAssignment;
 use App\Rules\InOrder;
@@ -280,15 +281,15 @@ class UpdateRequest extends FormRequest
                 new RootTaxonomyIs(Taxonomy::NAME_CATEGORY),
             ],
 
-            // @TODO: imitate category_taxonomies rule to enforce similar rules on service_eligibility taxonomies
-            'service_eligibility_types' => ['array'],
-            'service_eligibility_types.taxonomies' => ['array'],
-            'service_eligibility_types.taxonomies.*' => [
+            'eligibility_types' => $this->serviceEligibilityRules(),
+            'eligibility_types.taxonomies' => ['array'],
+            'eligibility_types.taxonomies.*' => [
                 'uuid',
                 'exists:taxonomies,id',
                 new RootTaxonomyIs(Taxonomy::NAME_SERVICE_ELIGIBILITY),
             ],
-             'service_eligibility_types.*.custom' => ['string', 'nullable'],
+             'eligibility_types.custom' => ['array'],
+             'eligibility_types.custom.*' => ['nullable', 'string', 'min:1', 'max:255'],
 
             'logo_file_id' => [
                 'nullable',
