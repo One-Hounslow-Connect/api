@@ -48,12 +48,6 @@ class CanUpdateServiceEligibilityTaxonomyRelationships implements Rule
             return false;
         }
 
-        foreach ($value as $item) {
-            if (!is_string($item)) {
-                return false;
-            }
-        }
-
         // Allow changing of taxonomies if service admin.
         if (
             ($this->model instanceof Service && $this->user->isServiceAdmin($this->model))
