@@ -12,6 +12,18 @@ class ServiceTaxonomy extends Model
     use ServiceTaxonomyRelationships;
     use ServiceTaxonomyScopes;
 
+    const SUPPORTED_CUSTOM_FIELD_NAMES = [
+        'eligibility_age_group_custom',
+        'eligibility_disability_custom',
+        'eligibility_employment_custom',
+        'eligibility_gender_custom',
+        'eligibility_housing_custom',
+        'eligibility_income_custom',
+        'eligibility_language_custom',
+        'eligibility_ethnicity_custom',
+        'eligibility_other_custom',
+    ];
+
     /**
      * @return \App\Models\ServiceTaxonomy
      */
