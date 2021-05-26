@@ -16,7 +16,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
         parent::setUp();
     }
 
-    public function test_service_has_correct_eligibility_schema()
+    public function test_service_has_correct_eligibility_response_schema()
     {
         $service = $this->createService();
 
@@ -65,43 +65,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
 
         $payload = [
             'service_eligibility_types' => [
-                'age_group' => [
-                    'taxonomies' => [$incorrectTaxonomyId],
-                ],
-            ],
-        ];
-
-        Passport::actingAs($serviceAdmin);
-
-        $response = $this->json('PUT', route('core.v1.services.update', $service->id), $payload);
-
-        // A validation error is thrown
-        $response->assertStatus(422);
-    }
-
-    public function test_taxonomy_can_not_be_added_if_child_of_incorrect_service_eligibility_type()
-    {
-        // Given that I am updating an existing service
-        $service = $this->createService();
-        $serviceAdmin = factory(User::class)
-            ->create()
-            ->makeServiceAdmin($service);
-
-        // When I try to associate a taxonomy that IS a child of Service Eligibility, but NOT the correct type,
-        // i.e. a gender eligibility attached to age_group
-        $incorrectTaxonomyId = Taxonomy::serviceEligibility()
-            ->children()
-            ->where('name', 'Gender')
-            ->firstOrFail()
-            ->children
-            ->random()
-            ->id;
-
-        $payload = [
-            'service_eligibility_types' => [
-                'age_group' => [
-                    'taxonomies' => [$incorrectTaxonomyId],
-                ],
+                'taxonomies' => [$incorrectTaxonomyId],
             ],
         ];
 
@@ -133,9 +97,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
 
         $payload = [
             'service_eligibility_types' => [
-                'age_group' => [
-                    'taxonomies' => [$correctTaxonomyId],
-                ],
+                'taxonomies' => [$correctTaxonomyId],
             ],
         ];
 
