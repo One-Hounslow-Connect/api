@@ -54,7 +54,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
         ]);
     }
 
-    public function test_custom_eligibility_fields_are_persisted_successfully()
+    public function test_custom_fields_are_created_as_update_request_and_persisted_successfully_on_approval()
     {
         // Given that I am updating an existing service
         $service = $this->createService();
@@ -97,24 +97,47 @@ class TaxonomyServiceEligibilityTest extends TestCase
         // I am successful
         $response->assertSuccessful();
 
-        $updateRequestData = UpdateRequest::query()
+        $updateRequest = UpdateRequest::query()
             ->where('updateable_type', UpdateRequest::EXISTING_TYPE_SERVICE)
             ->where('updateable_id', $service->id)
-            ->firstOrFail()->data;
+            ->firstOrFail();
+
+        $updateRequestData = $updateRequest->data;
 
         // And the service now has the appropriate custom eligibility fields set in an update request
-        $this->assertEquals($ageGroupCustom, $updateRequestData['eligibility_types']['custom']['eligibility_age_group_custom']);
-        $this->assertEquals($disabilityCustom, $updateRequestData['eligibility_types']['custom']['eligibility_disability_custom']);
-        $this->assertEquals($employmentCustom, $updateRequestData['eligibility_types']['custom']['eligibility_employment_custom']);
-        $this->assertEquals($genderCustom, $updateRequestData['eligibility_types']['custom']['eligibility_gender_custom']);
-        $this->assertEquals($housingCustom, $updateRequestData['eligibility_types']['custom']['eligibility_housing_custom']);
-        $this->assertEquals($incomeCustom, $updateRequestData['eligibility_types']['custom']['eligibility_income_custom']);
-        $this->assertEquals($languageCustom, $updateRequestData['eligibility_types']['custom']['eligibility_language_custom']);
-        $this->assertEquals($ethnicityCustom, $updateRequestData['eligibility_types']['custom']['eligibility_ethnicity_custom']);
-        $this->assertEquals($otherCustom, $updateRequestData['eligibility_types']['custom']['eligibility_other_custom']);
+        $this->assertEquals($ageGroupCustom, $updateRequestData['eligibility_types']['custom']['age_group']);
+        $this->assertEquals($disabilityCustom, $updateRequestData['eligibility_types']['custom']['disability']);
+        $this->assertEquals($employmentCustom, $updateRequestData['eligibility_types']['custom']['employment']);
+        $this->assertEquals($genderCustom, $updateRequestData['eligibility_types']['custom']['gender']);
+        $this->assertEquals($housingCustom, $updateRequestData['eligibility_types']['custom']['housing']);
+        $this->assertEquals($incomeCustom, $updateRequestData['eligibility_types']['custom']['income']);
+        $this->assertEquals($languageCustom, $updateRequestData['eligibility_types']['custom']['language']);
+        $this->assertEquals($ethnicityCustom, $updateRequestData['eligibility_types']['custom']['ethnicity']);
+        $this->assertEquals($otherCustom, $updateRequestData['eligibility_types']['custom']['other']);
+
+        $globalAdmin = factory(User::class)->create();
+        $globalAdmin->makeGlobalAdmin()->save();
+
+        // And then when a global admin approves the changes
+        Passport::actingAs($globalAdmin);
+
+        $response = $this->json('PUT', route('core.v1.update-requests.approve', $updateRequest->id));
+        $response->assertSuccessful();
+
+        $service = $service->find($service->id);
+
+        $this->assertEquals($ageGroupCustom, $service->eligibility_age_group_custom);
+        $this->assertEquals($disabilityCustom, $service->eligibility_disability_custom);
+        $this->assertEquals($employmentCustom, $service->eligibility_employment_custom);
+        $this->assertEquals($genderCustom, $service->eligibility_gender_custom);
+        $this->assertEquals($housingCustom, $service->eligibility_housing_custom);
+        $this->assertEquals($incomeCustom, $service->eligibility_income_custom);
+        $this->assertEquals($languageCustom, $service->eligibility_language_custom);
+        $this->assertEquals($ethnicityCustom, $service->eligibility_ethnicity_custom);
+        $this->assertEquals($otherCustom, $service->eligibility_other_custom);
     }
 
-    public function test_taxonomy_id_are_successfully_persisted()
+    public function test_taxonomy_id_are_created_as_update_request_and_persisted_successfully_on_approval()
     {
         $this->assertTrue(false, 'TODO: implement this test');
     }
