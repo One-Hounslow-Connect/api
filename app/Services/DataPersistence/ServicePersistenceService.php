@@ -5,6 +5,7 @@ namespace App\Services\DataPersistence;
 use App\Models\File;
 use App\Models\Model;
 use App\Models\Service;
+use App\Models\ServiceTaxonomy;
 use App\Models\Taxonomy;
 use App\Models\UpdateRequest as UpdateRequestModel;
 use App\Support\MissingValue;
@@ -73,6 +74,10 @@ class ServicePersistenceService implements DataPersistenceService
                 'social_medias' => $request->has('social_medias') ? [] : new MissingValue(),
                 'gallery_items' => $request->has('gallery_items') ? [] : new MissingValue(),
                 'category_taxonomies' => $request->missing('category_taxonomies'),
+                'eligibility_types' => [
+                    'taxonomies' => $request->missing('eligibility_types.taxonomies'),
+                    'custom' => $request->missing('eligibility_types.custom'),
+                ],
                 'logo_file_id' => $request->missing('logo_file_id'),
             ]);
 
@@ -249,8 +254,18 @@ class ServicePersistenceService implements DataPersistenceService
                 ]);
             }
 
+            foreach ($request->eligibility_types['custom'] as $fieldName => $customField) {
+                if (!in_array($fieldName, ServiceTaxonomy::SUPPORTED_CUSTOM_FIELD_NAMES)) {
+                    continue;
+                }
+
+                $service->{'eligibility_' . $fieldName . '_custom'} = $customField;
+            }
+
             // Create the category taxonomy records.
-            $taxonomies = Taxonomy::whereIn('id', $request->category_taxonomies)->get();
+            $mergedTaxonomyIds = array_merge($request->category_taxonomies, $request->eligibility_types['taxonomies']);
+            $taxonomies = Taxonomy::whereIn('id', $mergedTaxonomyIds)->get();
+
             $service->syncTaxonomyRelationships($taxonomies);
 
             return $service;
