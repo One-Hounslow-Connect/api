@@ -733,6 +733,35 @@ class SettingsTest extends TestCase
         );
 
         $this->settingsData['cms']['frontend']['home']['banners'] = [
+            null,
+        ];
+
+        $response = $this->putJson('/core/v1/settings', $this->settingsData);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+
+        $this->settingsData['cms']['frontend']['home']['banners'] = [
+            [null],
+        ];
+
+        $response = $this->putJson('/core/v1/settings', $this->settingsData);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+
+        $this->settingsData['cms']['frontend']['home']['banners'] = [
+            [
+                'title' => null,
+                'content' => null,
+                'button_text' => null,
+                'button_url' => null,
+            ],
+        ];
+
+        $response = $this->putJson('/core/v1/settings', $this->settingsData);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+
+        $this->settingsData['cms']['frontend']['home']['banners'] = [
             [
                 'content' => 'data/cms/frontend/home/banners/content_updated',
             ],
