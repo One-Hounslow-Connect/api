@@ -13,6 +13,7 @@ use App\Notifications\Notifications;
 use App\Rules\FileIsMimeType;
 use App\Sms\Sms;
 use App\TaxonomyRelationships\HasTaxonomyRelationships;
+use App\TaxonomyRelationships\UpdateServiceEligibilityTaxonomyRelationships;
 use App\TaxonomyRelationships\UpdateTaxonomyRelationships;
 use App\UpdateRequest\AppliesUpdateRequests;
 use App\UpdateRequest\UpdateRequests;
@@ -36,6 +37,7 @@ class Service extends Model implements AppliesUpdateRequests, Notifiable, HasTax
     use ServiceScopes;
     use UpdateRequests;
     use UpdateTaxonomyRelationships;
+    use UpdateServiceEligibilityTaxonomyRelationships;
 
     const TYPE_SERVICE = 'service';
     const TYPE_ACTIVITY = 'activity';
@@ -321,7 +323,6 @@ class Service extends Model implements AppliesUpdateRequests, Notifiable, HasTax
         }
 
 
-
         if (array_key_exists('eligibility_types', $data)) {
             // Update the custom eligibility fields.
             if (array_key_exists('custom', $data['eligibility_types'])) {
@@ -330,10 +331,15 @@ class Service extends Model implements AppliesUpdateRequests, Notifiable, HasTax
                         continue;
                     }
 
+                    // @TODO: this is a bit wobbly and could cause inconsistencies
                     $this->{'eligibility_' . $fieldName . '_custom'} = $value;
                 }
             }
             // @TODO: Update the service eligibility taxonomy records
+            if (array_key_exists('taxonomies', $data['eligibility_types'])) {
+                $eligibilityTaxonomies = Taxonomy::whereIn('id', $data['eligibility_types']['taxonomies'])->get();
+                $this->syncEligibilityRelationships($eligibilityTaxonomies);
+            }
         }
 
         // Ensure conditional fields are reset if needed.
@@ -462,8 +468,8 @@ class Service extends Model implements AppliesUpdateRequests, Notifiable, HasTax
 
     /**
      * @param int|null $maxDimension
-     * @throws \Illuminate\Contracts\Filesystem\FileNotFoundException|\InvalidArgumentException
      * @return \App\Models\File|\Illuminate\Http\Response|\Illuminate\Contracts\Support\Responsable
+     * @throws \Illuminate\Contracts\Filesystem\FileNotFoundException|\InvalidArgumentException
      */
     public static function placeholderLogo(int $maxDimension = null)
     {
