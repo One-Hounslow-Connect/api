@@ -27,7 +27,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
 
     public function test_guest_can_list_them()
     {
-        $response = $this->json('GET', '/core/v1/taxonomies/service-eligibility');
+        $response = $this->json('GET', '/core/v1/taxonomies/service-eligibilities');
 
         $taxonomyCount = Taxonomy::serviceEligibility()->children()->count();
 
@@ -52,7 +52,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
     {
         $this->fakeEvents();
 
-        $this->json('GET', '/core/v1/taxonomies/service-eligibility');
+        $this->json('GET', '/core/v1/taxonomies/service-eligibilities');
 
         Event::assertDispatched(EndpointHit::class, function (EndpointHit $event) {
             return ($event->getAction() === Audit::ACTION_READ);

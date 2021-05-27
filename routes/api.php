@@ -172,7 +172,7 @@ Route::prefix('/core/v1')
                 ]);
 
             // Taxonomy Service Eligibility.
-            Route::get('/taxonomies/service-eligibility', 'TaxonomyServiceEligibilityController@index');
+            Route::get('/taxonomies/service-eligibilities', 'TaxonomyServiceEligibilityController@index');
 
             // Thesaurus.
             Route::get('/thesaurus', 'ThesaurusController@index')
