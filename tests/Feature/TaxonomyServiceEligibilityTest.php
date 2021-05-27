@@ -139,7 +139,48 @@ class TaxonomyServiceEligibilityTest extends TestCase
 
     public function test_taxonomy_id_are_created_as_update_request_and_persisted_successfully_on_approval()
     {
-        $this->assertTrue(false, 'TODO: implement this test');
+        // Given that I am updating an existing service
+        $service = $this->createService();
+        $serviceAdmin = factory(User::class)
+            ->create()
+            ->makeServiceAdmin($service);
+
+        $serviceAdmin->save();
+
+        $taxonomyId = $this->randomEligibilityDescendant()->id;
+
+        $payload = [
+            'eligibility_types' => [
+                'taxonomies' => [$taxonomyId],
+            ],
+        ];
+
+        Passport::actingAs($serviceAdmin);
+
+        $response = $this->json('PUT', route('core.v1.services.update', $service->id), $payload);
+
+        $response->assertSuccessful();
+
+        $updateRequest = UpdateRequest::query()
+            ->where('updateable_type', UpdateRequest::EXISTING_TYPE_SERVICE)
+            ->where('updateable_id', $service->id)
+            ->firstOrFail();
+
+        $updateRequestData = $updateRequest->data;
+
+        $this->assertEquals($taxonomyId, $updateRequestData['eligibility_types']['taxonomies'][0]);
+
+        $globalAdmin = factory(User::class)->create();
+        $globalAdmin->makeGlobalAdmin()->save();
+
+        // And then when a global admin approves the changes
+        Passport::actingAs($globalAdmin);
+
+        $response = $this->json('PUT', route('core.v1.update-requests.approve', $updateRequest->id));
+        $response->assertSuccessful();
+
+        $service = $service->find($service->id);
+        $this->assertEquals($service->serviceEligibilities()->get()->first()->taxonomy_id, $taxonomyId);
     }
 
     public function test_taxonomy_can_not_be_added_if_top_level_child_of_incorrect_parent_taxonomy()
