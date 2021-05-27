@@ -391,6 +391,10 @@ class ServicesTest extends TestCase
             ],
             'gallery_items' => [],
             'category_taxonomies' => [],
+            'eligibility_types' => [
+                'custom' => [],
+                'taxonomies' => [],
+            ],
         ];
         $response = $this->json('POST', '/core/v1/services', $payload);
 
@@ -567,6 +571,10 @@ class ServicesTest extends TestCase
             ],
             'gallery_items' => [],
             'category_taxonomies' => [],
+            'eligibility_types' => [
+                'custom' => [],
+                'taxonomies' => [],
+            ],
         ];
 
         //When they create a service
@@ -1681,6 +1689,10 @@ class ServicesTest extends TestCase
             'category_taxonomies' => [
                 $taxonomy->id,
             ],
+            'eligibility_types' => [
+                'custom' => [],
+                'taxonomies' => [],
+            ],
         ];
         $response = $this->json('PUT', "/core/v1/services/{$service->id}", $payload);
 
@@ -1753,6 +1765,10 @@ class ServicesTest extends TestCase
             ],
             'category_taxonomies' => [
                 $taxonomy->id,
+            ],
+            'eligibility_types' => [
+                'custom' => [],
+                'taxonomies' => [],
             ],
         ];
         $response = $this->json('PUT', "/core/v1/services/{$service->id}", $payload);
@@ -1827,6 +1843,10 @@ class ServicesTest extends TestCase
             'gallery_items' => [],
             'category_taxonomies' => [
                 $taxonomy->id,
+            ],
+            'eligibility_types' => [
+                'custom' => [],
+                'taxonomies' => [],
             ],
         ];
         $response = $this->json('PUT', "/core/v1/services/{$service->id}", $payload);
