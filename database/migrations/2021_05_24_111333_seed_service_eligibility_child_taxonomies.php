@@ -14,8 +14,16 @@ class SeedServiceEligibilityChildTaxonomies extends Migration
     {
         $this->now = Date::now();
         $taxonomies = $this->loadServiceEligibilityTaxonomies();
+
+        $taxonomies = collect($taxonomies)->map(function($taxonomy) {
+            $taxonomy['created_at'] = $this->now;
+            $taxonomy['updated_at'] = $this->now;
+
+            return $taxonomy;
+        });
+
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-        DB::table('taxonomies')->insert($taxonomies);
+        DB::table('taxonomies')->insert($taxonomies->toArray());
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
     }
 
@@ -24,7 +32,7 @@ class SeedServiceEligibilityChildTaxonomies extends Migration
      */
     public function down()
     {
-        DB::table('taxonomies')->truncate();
+        DB::table('service_eligibilities')->truncate();
     }
 
     /**
