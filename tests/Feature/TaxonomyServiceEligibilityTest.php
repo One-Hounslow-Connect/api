@@ -6,6 +6,7 @@ use App\Events\EndpointHit;
 use App\Models\Audit;
 use App\Models\Organisation;
 use App\Models\Service;
+use App\Models\SocialMedia;
 use App\Models\Taxonomy;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Event;
@@ -222,6 +223,89 @@ class TaxonomyServiceEligibilityTest extends TestCase
         $response->assertSuccessful();
 
         $service = $service->find($service->id);
+        $this->assertEquals($service->serviceEligibilities()->get()->first()->taxonomy_id, $taxonomyId);
+    }
+
+    public function test_taxonomy_id_are_created_with_new_service_and_persisted_successfully()
+    {
+        // Given that I am creating a new service as a global admin (i.e. no update request)
+        $organisation = factory(Organisation::class)->create();
+
+        $globalAdmin = factory(User::class)
+            ->create()
+            ->makeGlobalAdmin();
+
+        $globalAdmin->save();
+
+        $taxonomyId = $this->randomEligibilityDescendant()->id;
+
+        $payload = [
+            'organisation_id' => $organisation->id,
+            'slug' => 'test-service',
+            'name' => 'Test Service',
+            'type' => Service::TYPE_SERVICE,
+            'status' => Service::STATUS_ACTIVE,
+            'intro' => 'This is a test intro',
+            'description' => 'Lorem ipsum',
+            'wait_time' => null,
+            'is_free' => true,
+            'fees_text' => null,
+            'fees_url' => null,
+            'testimonial' => null,
+            'video_embed' => null,
+            'url' => $this->faker->url,
+            'contact_name' => $this->faker->name,
+            'contact_phone' => random_uk_phone(),
+            'contact_email' => $this->faker->safeEmail,
+            'show_referral_disclaimer' => false,
+            'referral_method' => Service::REFERRAL_METHOD_NONE,
+            'referral_button_text' => null,
+            'referral_email' => null,
+            'referral_url' => null,
+            'criteria' => [
+                'age_group' => null,
+                'disability' => null,
+                'employment' => null,
+                'gender' => null,
+                'housing' => null,
+                'income' => null,
+                'language' => null,
+                'other' => null,
+            ],
+            'useful_infos' => [
+                [
+                    'title' => 'Did you know?',
+                    'description' => 'Lorem ipsum',
+                    'order' => 1,
+                ],
+            ],
+            'offerings' => [
+                [
+                    'offering' => 'Weekly club',
+                    'order' => 1,
+                ],
+            ],
+            'social_medias' => [
+                [
+                    'type' => SocialMedia::TYPE_INSTAGRAM,
+                    'url' => 'https://www.instagram.com/ayupdigital',
+                ],
+            ],
+            'gallery_items' => [],
+            'category_taxonomies' => [Taxonomy::category()->children()->firstOrFail()->id],
+            'eligibility_types' => [
+                'taxonomies' => [$taxonomyId],
+            ],
+        ];
+
+        Passport::actingAs($globalAdmin);
+
+        $response = $this->json('POST', '/core/v1/services', $payload);
+
+
+        $response->assertStatus(Response::HTTP_CREATED);
+
+        $service = Service::find($response->json()['data']['id']);
         $this->assertEquals($service->serviceEligibilities()->get()->first()->taxonomy_id, $taxonomyId);
     }
 
