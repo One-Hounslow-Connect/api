@@ -15,7 +15,7 @@ class SeedServiceEligibilityChildTaxonomies extends Migration
         $this->now = Date::now();
         $taxonomies = $this->loadServiceEligibilityTaxonomies();
 
-        $taxonomies = collect($taxonomies)->map(function($taxonomy) {
+        $taxonomies = collect($taxonomies)->map(function ($taxonomy) {
             $taxonomy['created_at'] = $this->now;
             $taxonomy['updated_at'] = $this->now;
 

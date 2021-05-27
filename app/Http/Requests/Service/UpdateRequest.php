@@ -288,8 +288,8 @@ class UpdateRequest extends FormRequest
                 'exists:taxonomies,id',
                 new RootTaxonomyIs(Taxonomy::NAME_SERVICE_ELIGIBILITY),
             ],
-             'eligibility_types.custom' => ['array'],
-             'eligibility_types.custom.*' => ['nullable', 'string', 'min:1', 'max:255'],
+            'eligibility_types.custom' => ['array'],
+            'eligibility_types.custom.*' => ['nullable', 'string', 'min:1', 'max:255'],
 
             'logo_file_id' => [
                 'nullable',

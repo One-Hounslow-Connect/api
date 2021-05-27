@@ -2,11 +2,9 @@
 
 namespace App\Rules;
 
-use App\Models\Organisation;
 use App\Models\Service;
 use App\Models\Taxonomy;
 use App\Models\User;
-use App\TaxonomyRelationships\HasTaxonomyRelationships;
 use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Support\Arr;
 

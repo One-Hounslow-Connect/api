@@ -322,7 +322,6 @@ class Service extends Model implements AppliesUpdateRequests, Notifiable, HasTax
             $this->syncTaxonomyRelationships($taxonomies);
         }
 
-
         if (array_key_exists('eligibility_types', $data)) {
             // Update the custom eligibility fields.
             if (array_key_exists('custom', $data['eligibility_types'])) {
@@ -468,8 +467,8 @@ class Service extends Model implements AppliesUpdateRequests, Notifiable, HasTax
 
     /**
      * @param int|null $maxDimension
-     * @return \App\Models\File|\Illuminate\Http\Response|\Illuminate\Contracts\Support\Responsable
      * @throws \Illuminate\Contracts\Filesystem\FileNotFoundException|\InvalidArgumentException
+     * @return \App\Models\File|\Illuminate\Http\Response|\Illuminate\Contracts\Support\Responsable
      */
     public static function placeholderLogo(int $maxDimension = null)
     {
