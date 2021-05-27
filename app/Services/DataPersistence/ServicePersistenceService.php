@@ -74,10 +74,15 @@ class ServicePersistenceService implements DataPersistenceService
                 'social_medias' => $request->has('social_medias') ? [] : new MissingValue(),
                 'gallery_items' => $request->has('gallery_items') ? [] : new MissingValue(),
                 'category_taxonomies' => $request->missing('category_taxonomies'),
-                'eligibility_types' => [
-                    'taxonomies' => $request->missing('eligibility_types.taxonomies'),
-                    'custom' => $request->missing('eligibility_types.custom'),
-                ],
+                'eligibility_types' => $request->filled('eligibility_types') ? array_filter_missing([
+                    'taxonomies' => $request->filled('eligibility_types.taxonomies')
+                        ? $request->eligibility_types['taxonomies']
+                        : new MissingValue(),
+                    'custom' => $request->filled('eligibility_types.custom')
+                        ? $request->eligibility_types['custom']
+                        : new MissingValue(),
+                ])
+                    : new MissingValue(),
                 'logo_file_id' => $request->missing('logo_file_id'),
             ]);
 
@@ -254,19 +259,25 @@ class ServicePersistenceService implements DataPersistenceService
                 ]);
             }
 
-            foreach ($request->eligibility_types['custom'] as $fieldName => $customField) {
-                if (!in_array($fieldName, ServiceTaxonomy::SUPPORTED_CUSTOM_FIELD_NAMES)) {
-                    continue;
-                }
+            if ($request->has('eligibility_types.custom')) {
+                foreach ($request->eligibility_types['custom'] as $fieldName => $customField) {
+                    if (!in_array($fieldName, ServiceTaxonomy::SUPPORTED_CUSTOM_FIELD_NAMES)) {
+                        continue;
+                    }
 
-                $service->{'eligibility_' . $fieldName . '_custom'} = $customField;
+                    $service->{'eligibility_' . $fieldName . '_custom'} = $customField;
+                }
             }
 
             // Create the category taxonomy records.
-            $mergedTaxonomyIds = array_merge($request->category_taxonomies, $request->eligibility_types['taxonomies']);
-            $taxonomies = Taxonomy::whereIn('id', $mergedTaxonomyIds)->get();
-
+            $taxonomies = Taxonomy::whereIn('id', $request->category_taxonomies)->get();
             $service->syncTaxonomyRelationships($taxonomies);
+
+            // Create the service eligibility taxonomy records.
+            if ($request->has('eligibility_types.taxonomies') && !empty($request->eligibility_types['taxonomies'])) {
+                $eligibilityTypes = Taxonomy::whereIn('id', $request->eligibility_types['taxonomies'])->get();
+                $service->syncEligibilityRelationships($eligibilityTypes);
+            }
 
             return $service;
         });
