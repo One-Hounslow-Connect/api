@@ -191,7 +191,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
 
         $response = $this->json('PUT', route('core.v1.services.update', $service->id), $payload);
 
-        // A validation error is thrown
+        // The response is successful
         $response->assertSuccessful();
     }
 
@@ -279,7 +279,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
         $service = $this->createService();
         $globalAdmin = factory(User::class)
             ->create()
-            ->makeGlobalAdmin($service);
+            ->makeGlobalAdmin();
 
         // When I try to associate a valid child taxonomy of Service Eligibility
         $taxonomyId = $this->randomEligibilityDescendant()->id;
@@ -326,8 +326,6 @@ class TaxonomyServiceEligibilityTest extends TestCase
         // I am unauthorized to do so
         $response->assertStatus(403);
     }
-
-    // @TODO: test custom field update validation
 
     private function createService()
     {
