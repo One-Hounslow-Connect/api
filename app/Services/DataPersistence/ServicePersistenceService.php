@@ -9,7 +9,6 @@ use App\Models\ServiceTaxonomy;
 use App\Models\Taxonomy;
 use App\Models\UpdateRequest as UpdateRequestModel;
 use App\Support\MissingValue;
-use Elasticsearch\Endpoints\Update;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -19,8 +18,8 @@ class ServicePersistenceService implements DataPersistenceService
     public function store(FormRequest $request)
     {
         return $request->user()->isGlobalAdmin()
-        ? $this->processAsNewEntity($request)
-        : $this->processAsUpdateRequest($request);
+            ? $this->processAsNewEntity($request)
+            : $this->processAsUpdateRequest($request);
     }
 
     public function update(FormRequest $request, Model $model)
@@ -58,29 +57,25 @@ class ServicePersistenceService implements DataPersistenceService
                 'referral_email' => $request->missing('referral_email'),
                 'referral_url' => $request->missing('referral_url'),
                 'criteria' => $request->has('criteria')
-                ? array_filter_missing([
-                    'age_group' => $request->missing('criteria.age_group'),
-                    'disability' => $request->missing('criteria.disability'),
-                    'employment' => $request->missing('criteria.employment'),
-                    'gender' => $request->missing('criteria.gender'),
-                    'housing' => $request->missing('criteria.housing'),
-                    'income' => $request->missing('criteria.income'),
-                    'language' => $request->missing('criteria.language'),
-                    'other' => $request->missing('criteria.other'),
-                ])
-                : new MissingValue(),
+                    ? array_filter_missing([
+                        'age_group' => $request->missing('criteria.age_group'),
+                        'disability' => $request->missing('criteria.disability'),
+                        'employment' => $request->missing('criteria.employment'),
+                        'gender' => $request->missing('criteria.gender'),
+                        'housing' => $request->missing('criteria.housing'),
+                        'income' => $request->missing('criteria.income'),
+                        'language' => $request->missing('criteria.language'),
+                        'other' => $request->missing('criteria.other'),
+                    ])
+                    : new MissingValue(),
                 'useful_infos' => $request->has('useful_infos') ? [] : new MissingValue(),
                 'offerings' => $request->has('offerings') ? [] : new MissingValue(),
                 'social_medias' => $request->has('social_medias') ? [] : new MissingValue(),
                 'gallery_items' => $request->has('gallery_items') ? [] : new MissingValue(),
                 'category_taxonomies' => $request->missing('category_taxonomies'),
                 'eligibility_types' => $request->filled('eligibility_types') ? array_filter_missing([
-                    'taxonomies' => $request->filled('eligibility_types.taxonomies')
-                        ? $request->eligibility_types['taxonomies']
-                        : new MissingValue(),
-                    'custom' => $request->filled('eligibility_types.custom')
-                        ? $request->eligibility_types['custom']
-                        : new MissingValue(),
+                    'taxonomies' => $request->input('eligibility_types.taxonomies', new MissingValue()),
+                    'custom' => $request->input('eligibility_types.custom', new MissingValue()),
                 ])
                     : new MissingValue(),
                 'logo_file_id' => $request->missing('logo_file_id'),
@@ -274,8 +269,8 @@ class ServicePersistenceService implements DataPersistenceService
             $service->syncTaxonomyRelationships($taxonomies);
 
             // Create the service eligibility taxonomy records.
-            if ($request->has('eligibility_types.taxonomies') && !empty($request->eligibility_types['taxonomies'])) {
-                $eligibilityTypes = Taxonomy::whereIn('id', $request->eligibility_types['taxonomies'])->get();
+            if ($request->filled('eligibility_types.taxonomies')) {
+                $eligibilityTypes = Taxonomy::whereIn('id', $request->input('eligibility_types.taxonomies'))->get();
                 $service->syncEligibilityRelationships($eligibilityTypes);
             }
 
