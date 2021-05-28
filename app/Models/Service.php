@@ -326,15 +326,9 @@ class Service extends Model implements AppliesUpdateRequests, Notifiable, HasTax
             // Update the custom eligibility fields.
             if (array_key_exists('custom', $data['eligibility_types'])) {
                 foreach ($data['eligibility_types']['custom'] as $fieldName => $value) {
-                    if (!in_array($fieldName, ServiceTaxonomy::SUPPORTED_CUSTOM_FIELD_NAMES)) {
-                        continue;
-                    }
-
-                    // @TODO: this is a bit wobbly and could cause inconsistencies
                     $this->{'eligibility_' . $fieldName . '_custom'} = $value;
                 }
             }
-            // @TODO: Update the service eligibility taxonomy records
             if (array_key_exists('taxonomies', $data['eligibility_types'])) {
                 $eligibilityTaxonomies = Taxonomy::whereIn('id', $data['eligibility_types']['taxonomies'])->get();
                 $this->syncEligibilityRelationships($eligibilityTaxonomies);
