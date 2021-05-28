@@ -27,6 +27,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Laravel\Passport\Passport;
 use Tests\TestCase;
 
@@ -4298,4 +4299,106 @@ class ServicesTest extends TestCase
             'service_id' => $serviceId,
         ]);
     }
+
+    public function test_service_eligiblity_custom_fields_schema_on_read()
+    {
+        $service = factory(Service::class)
+            ->states(
+                'withOfferings',
+                'withUsefulInfo',
+                'withSocialMedia',
+                'withCustomEligibilities'
+            )
+            ->create();
+
+        $service->syncTaxonomyRelationships(collect([Taxonomy::category()->children()->firstOrFail()]));
+        $service->save();
+
+        $response = $this->get(route('core.v1.services.show', $service->id));
+
+        $response->assertJsonFragment([
+            'data' => [
+                'eligibility_types' => [
+                    'age_group' => [
+                        'custom' => $service->eligibility_age_group_custom,
+                        'taxonomies' => [],
+                    ],
+                    'disability' => [
+                        'custom' => $service->eligibility_disability_custom,
+                        'taxonomies' => [],
+                    ],
+                    'ethnicity' => [
+                        'custom' => $service->eligibility_ethnicity_custom,
+                        'taxonomies' => [],
+                    ],
+                    'gender' => [
+                        'custom' => $service->eligibility_gender_custom,
+                        'taxonomies' => [],
+                    ],
+                    'income' => [
+                        'custom' => $service->eligibility_income_custom,
+                        'taxonomies' => [],
+                    ],
+                    'language' => [
+                        'custom' => $service->eligibility_language_custom,
+                        'taxonomies' => [],
+                    ],
+                ],
+            ]
+        ]);
+    }
+
+    public function test_service_eligiblity_taxonomy_id_schema_on_read()
+    {
+        $service = factory(Service::class)
+            ->states(
+                'withOfferings',
+                'withUsefulInfo',
+                'withSocialMedia'
+            )
+            ->create();
+
+        $taxonomies = Taxonomy::serviceEligibility()->children->mapWithKeys(function($taxonomy) use ($service) {
+            return [
+                Str::snake($taxonomy->name) => $taxonomy->children()->inRandomOrder()->first(),
+            ];
+        });
+
+        $service->syncTaxonomyRelationships(collect([Taxonomy::category()->children()->firstOrFail()]));
+        $service->save();
+
+        $response = $this->get(route('core.v1.services.show', $service->id));
+
+        $response->assertJsonFragment([
+            'data' => [
+                'eligibility_types' => [
+                    'age_group' => [
+                        'custom' => null,
+                        'taxonomies' => [$taxonomies['age_group']],
+                    ],
+                    'disability' => [
+                        'custom' => null,
+                        'taxonomies' => [$taxonomies['disability']],
+                    ],
+                    'ethnicity' => [
+                        'custom' => null,
+                        'taxonomies' => [$taxonomies['ethnicity']],
+                    ],
+                    'gender' => [
+                        'custom' => null,
+                        'taxonomies' => [$taxonomies['gender']],
+                    ],
+                    'income' => [
+                        'custom' => null,
+                        'taxonomies' => [$taxonomies['income']],
+                    ],
+                    'language' => [
+                        'custom' => null,
+                        'taxonomies' => [$taxonomies['language']],
+                    ],
+                ],
+            ]
+        ]);
+    }
+
 }

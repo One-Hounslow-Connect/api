@@ -61,42 +61,6 @@ class TaxonomyServiceEligibilityTest extends TestCase
         });
     }
 
-    public function test_service_has_correct_eligibility_response_schema()
-    {
-        $service = $this->createService();
-
-        $response = $this->get(route('core.v1.services.show', $service->id));
-
-        $response->assertJsonFragment([
-            'eligibility_types' => [
-                'age_group' => [
-                    'taxonomies' => $service->serviceEligibilities['age_group']['taxonomies'],
-                    'custom' => $service->eligibility_age_group_custom,
-                ],
-                'disability' => [
-                    'taxonomies' => $service->serviceEligibilities['disability']['taxonomies'],
-                    'custom' => $service->eligibility_disability_custom,
-                ],
-                'ethnicity' => [
-                    'taxonomies' => $service->serviceEligibilities['ethnicity']['taxonomies'],
-                    'custom' => $service->eligibility_ethnicity_custom,
-                ],
-                'gender' => [
-                    'taxonomies' => $service->serviceEligibilities['gender']['taxonomies'],
-                    'custom' => $service->eligibility_gender_custom,
-                ],
-                'income' => [
-                    'taxonomies' => $service->serviceEligibilities['income']['taxonomies'],
-                    'custom' => $service->eligibility_income_custom,
-                ],
-                'language' => [
-                    'taxonomies' => $service->serviceEligibilities['language']['taxonomies'],
-                    'custom' => $service->eligibility_language_custom,
-                ],
-            ],
-        ]);
-    }
-
     public function test_custom_fields_are_created_as_update_request_and_persisted_successfully_on_approval()
     {
         // Given that I am updating an existing service
