@@ -289,7 +289,15 @@ class UpdateRequest extends FormRequest
                 new RootTaxonomyIs(Taxonomy::NAME_SERVICE_ELIGIBILITY),
             ],
             'eligibility_types.custom' => ['array'],
-            'eligibility_types.custom.*' => ['nullable', 'string', 'min:1', 'max:255'],
+            'eligibility_types.custom.age_group' => ['nullable', 'string', 'min:1', 'max:255'],
+            'eligibility_types.custom.disability_custom' => ['nullable', 'string', 'min:1', 'max:255'],
+            'eligibility_types.custom.employment_custom' => ['nullable', 'string', 'min:1', 'max:255'],
+            'eligibility_types.custom.gender' => ['nullable', 'string', 'min:1', 'max:255'],
+            'eligibility_types.custom.housing' => ['nullable', 'string', 'min:1', 'max:255'],
+            'eligibility_types.custom.income' => ['nullable', 'string', 'min:1', 'max:255'],
+            'eligibility_types.custom.language' => ['nullable', 'string', 'min:1', 'max:255'],
+            'eligibility_types.custom.ethnicity' => ['nullable', 'string', 'min:1', 'max:255'],
+            'eligibility_types.custom.other' => ['nullable', 'string', 'min:1', 'max:255'],
 
             'logo_file_id' => [
                 'nullable',
