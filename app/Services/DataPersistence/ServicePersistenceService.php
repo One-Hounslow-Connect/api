@@ -255,25 +255,26 @@ class ServicePersistenceService implements DataPersistenceService
                 ]);
             }
 
-            if ($request->has('eligibility_types.custom')) {
-                foreach ($request->eligibility_types['custom'] as $fieldName => $customField) {
-                    if (!in_array($fieldName, ServiceEligibility::SUPPORTED_CUSTOM_FIELD_NAMES)) {
-                        continue;
-                    }
-
-                    $service->{'eligibility_' . $fieldName . '_custom'} = $customField;
-                }
-            }
-
             // Create the category taxonomy records.
             $taxonomies = Taxonomy::whereIn('id', $request->category_taxonomies)->get();
             $service->syncTaxonomyRelationships($taxonomies);
 
-            // Create the service eligibility taxonomy records.
-            if ($request->filled('eligibility_types.taxonomies')) {
-                $eligibilityTypes = Taxonomy::whereIn('id', $request->input('eligibility_types.taxonomies'))->get();
-                $service->syncEligibilityRelationships($eligibilityTypes);
+            // Create the service eligibility taxonomy records and custom fields
+            $eligibilityIds = [];
+
+            if ($request->filled('eligibility_types')) {
+                foreach ($request->eligibility_types as $fieldName => $eligibilityData) {
+                    $service->{'eligibility_' . $fieldName . '_custom'} = $eligibilityData['custom'];
+                    // array key check cover scenarios like "other" where there is no taxonomy
+                    if (array_key_exists('taxonomies', $eligibilityData)) {
+                        foreach ($eligibilityData['taxonomies'] as $taxonomyId) {
+                            $eligibilityIds[] = $taxonomyId;
+                        }
+                    }
+                }
             }
+            $eligibilityTypes = Taxonomy::whereIn('id', $eligibilityIds)->get();
+            $service->syncEligibilityRelationships($eligibilityTypes);
 
             return $service;
         });
