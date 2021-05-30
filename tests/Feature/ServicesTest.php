@@ -4317,34 +4317,43 @@ class ServicesTest extends TestCase
         $response = $this->get(route('core.v1.services.show', $service->id));
 
         $response->assertJsonFragment([
-            'data' => [
-                'eligibility_types' => [
-                    'age_group' => [
-                        'custom' => $service->eligibility_age_group_custom,
-                        'taxonomies' => [],
-                    ],
-                    'disability' => [
-                        'custom' => $service->eligibility_disability_custom,
-                        'taxonomies' => [],
-                    ],
-                    'ethnicity' => [
-                        'custom' => $service->eligibility_ethnicity_custom,
-                        'taxonomies' => [],
-                    ],
-                    'gender' => [
-                        'custom' => $service->eligibility_gender_custom,
-                        'taxonomies' => [],
-                    ],
-                    'income' => [
-                        'custom' => $service->eligibility_income_custom,
-                        'taxonomies' => [],
-                    ],
-                    'language' => [
-                        'custom' => $service->eligibility_language_custom,
-                        'taxonomies' => [],
-                    ],
+            'eligibility_types' => [
+                'age_group' => [
+                    'custom' => $service->eligibility_age_group_custom,
+                    'taxonomies' => [],
                 ],
-            ]
+                'disability' => [
+                    'custom' => $service->eligibility_disability_custom,
+                    'taxonomies' => [],
+                ],
+                'employment' => [
+                    'custom' => $service->eligibility_employment_custom,
+                    'taxonomies' => [],
+                ],
+                'ethnicity' => [
+                    'custom' => $service->eligibility_ethnicity_custom,
+                    'taxonomies' => [],
+                ],
+                'gender' => [
+                    'custom' => $service->eligibility_gender_custom,
+                    'taxonomies' => [],
+                ],
+                'housing' => [
+                    'custom' => $service->eligibility_housing_custom,
+                    'taxonomies' => [],
+                ],
+                'income' => [
+                    'custom' => $service->eligibility_income_custom,
+                    'taxonomies' => [],
+                ],
+                'language' => [
+                    'custom' => $service->eligibility_language_custom,
+                    'taxonomies' => [],
+                ],
+                'other' => [
+                    'custom' => $service->eligibility_other_custom,
+                ],
+            ],
         ]);
     }
 
@@ -4358,47 +4367,60 @@ class ServicesTest extends TestCase
             )
             ->create();
 
-        $taxonomies = Taxonomy::serviceEligibility()->children->mapWithKeys(function($taxonomy) use ($service) {
+        $taxonomies = Taxonomy::serviceEligibility()->children->mapWithKeys(function ($taxonomy) {
             return [
                 Str::snake($taxonomy->name) => $taxonomy->children()->inRandomOrder()->first(),
             ];
         });
 
         $service->syncTaxonomyRelationships(collect([Taxonomy::category()->children()->firstOrFail()]));
+        $service->syncEligibilityRelationships($taxonomies);
         $service->save();
+
+        $taxonomyIDs = $taxonomies->map(function ($taxonomy) {
+            return $taxonomy->id;
+        });
 
         $response = $this->get(route('core.v1.services.show', $service->id));
 
         $response->assertJsonFragment([
-            'data' => [
-                'eligibility_types' => [
-                    'age_group' => [
-                        'custom' => null,
-                        'taxonomies' => [$taxonomies['age_group']],
-                    ],
-                    'disability' => [
-                        'custom' => null,
-                        'taxonomies' => [$taxonomies['disability']],
-                    ],
-                    'ethnicity' => [
-                        'custom' => null,
-                        'taxonomies' => [$taxonomies['ethnicity']],
-                    ],
-                    'gender' => [
-                        'custom' => null,
-                        'taxonomies' => [$taxonomies['gender']],
-                    ],
-                    'income' => [
-                        'custom' => null,
-                        'taxonomies' => [$taxonomies['income']],
-                    ],
-                    'language' => [
-                        'custom' => null,
-                        'taxonomies' => [$taxonomies['language']],
-                    ],
+            'eligibility_types' => [
+                'age_group' => [
+                    'custom' => null,
+                    'taxonomies' => [$taxonomyIDs['age_group']],
                 ],
-            ]
+                'disability' => [
+                    'custom' => null,
+                    'taxonomies' => [$taxonomyIDs['disability']],
+                ],
+                'ethnicity' => [
+                    'custom' => null,
+                    'taxonomies' => [$taxonomyIDs['ethnicity']],
+                ],
+                'employment' => [
+                    'custom' => null,
+                    'taxonomies' => [], // @TODO: cannot expect any taxonomies attached until we have them defined for this category
+                ],
+                'gender' => [
+                    'custom' => null,
+                    'taxonomies' => [$taxonomyIDs['gender']],
+                ],
+                'housing' => [
+                    'custom' => null,
+                    'taxonomies' => [], // @TODO: cannot expect any taxonomies attached until we have them defined for this category
+                ],
+                'income' => [
+                    'custom' => null,
+                    'taxonomies' => [$taxonomyIDs['income']],
+                ],
+                'language' => [
+                    'custom' => null,
+                    'taxonomies' => [$taxonomyIDs['language']],
+                ],
+                'other' => [
+                    'custom' => null,
+                ],
+            ],
         ]);
     }
-
 }
