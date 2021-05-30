@@ -5,6 +5,7 @@ namespace App\Services\DataPersistence;
 use App\Models\File;
 use App\Models\Model;
 use App\Models\Service;
+use App\Models\ServiceEligibility;
 use App\Models\ServiceTaxonomy;
 use App\Models\Taxonomy;
 use App\Models\UpdateRequest as UpdateRequestModel;
@@ -256,7 +257,7 @@ class ServicePersistenceService implements DataPersistenceService
 
             if ($request->has('eligibility_types.custom')) {
                 foreach ($request->eligibility_types['custom'] as $fieldName => $customField) {
-                    if (!in_array($fieldName, ServiceTaxonomy::SUPPORTED_CUSTOM_FIELD_NAMES)) {
+                    if (!in_array($fieldName, ServiceEligibility::SUPPORTED_CUSTOM_FIELD_NAMES)) {
                         continue;
                     }
 

@@ -12,18 +12,6 @@ class ServiceTaxonomy extends Model
     use ServiceTaxonomyRelationships;
     use ServiceTaxonomyScopes;
 
-    const SUPPORTED_CUSTOM_FIELD_NAMES = [
-        'age_group',
-        'disability',
-        'employment',
-        'gender',
-        'housing',
-        'income',
-        'language',
-        'ethnicity',
-        'other',
-    ];
-
     /**
      * @return \App\Models\ServiceTaxonomy
      */
