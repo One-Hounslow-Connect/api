@@ -4688,4 +4688,124 @@ class ServicesTest extends TestCase
             ],
         ]);
     }
+
+    public function test_create_service_with_eligibility_taxonomies()
+    {
+        $organisation = factory(Organisation::class)->create();
+        $user = factory(User::class)->create()->makeGlobalAdmin();
+
+        $taxonomies = Taxonomy::serviceEligibility()->children->mapWithKeys(function ($taxonomy) {
+            return [
+                Str::snake($taxonomy->name) => $taxonomy->children()->inRandomOrder()->first(),
+            ];
+        });
+
+        $taxonomyIDs = $taxonomies->map(function ($taxonomy) {
+            return $taxonomy->id;
+        });
+
+        Passport::actingAs($user);
+
+        $payload = [
+            'organisation_id' => $organisation->id,
+            'slug' => 'test-service',
+            'name' => 'Test Service',
+            'type' => Service::TYPE_SERVICE,
+            'status' => Service::STATUS_ACTIVE,
+            'intro' => 'This is a test intro',
+            'description' => 'Lorem ipsum',
+            'wait_time' => null,
+            'is_free' => true,
+            'fees_text' => null,
+            'fees_url' => null,
+            'testimonial' => null,
+            'video_embed' => null,
+            'url' => $this->faker->url,
+            'contact_name' => $this->faker->name,
+            'contact_phone' => random_uk_phone(),
+            'contact_email' => $this->faker->safeEmail,
+            'show_referral_disclaimer' => false,
+            'referral_method' => Service::REFERRAL_METHOD_NONE,
+            'referral_button_text' => null,
+            'referral_email' => null,
+            'referral_url' => null,
+            'criteria' => [
+                'age_group' => null,
+                'disability' => null,
+                'employment' => null,
+                'gender' => null,
+                'housing' => null,
+                'income' => null,
+                'language' => null,
+                'other' => null,
+            ],
+            'useful_infos' => [
+                [
+                    'title' => 'Did you know?',
+                    'description' => 'Lorem ipsum',
+                    'order' => 1,
+                ],
+            ],
+            'offerings' => [
+                [
+                    'offering' => 'Weekly club',
+                    'order' => 1,
+                ],
+            ],
+            'social_medias' => [
+                [
+                    'type' => SocialMedia::TYPE_INSTAGRAM,
+                    'url' => 'https://www.instagram.com/ayupdigital',
+                ],
+            ],
+            'gallery_items' => [],
+            'category_taxonomies' => [Taxonomy::category()->children()->firstOrFail()->id],
+        ];
+
+        $taxonomyPayload = [
+            'eligibility_types' => [
+                'age_group' => [
+                    'custom' => null,
+                    'taxonomies' => [$taxonomyIDs['age_group']],
+                ],
+                'disability' => [
+                    'custom' => null,
+                    'taxonomies' => [$taxonomyIDs['disability']],
+                ],
+                'ethnicity' => [
+                    'custom' => null,
+                    'taxonomies' => [$taxonomyIDs['ethnicity']],
+                ],
+                'employment' => [
+                    'custom' => null,
+                    'taxonomies' => [], // @TODO: cannot expect any taxonomies attached until we have them defined for this category
+                ],
+                'gender' => [
+                    'custom' => null,
+                    'taxonomies' => [$taxonomyIDs['gender']],
+                ],
+                'housing' => [
+                    'custom' => null,
+                    'taxonomies' => [], // @TODO: cannot expect any taxonomies attached until we have them defined for this category
+                ],
+                'income' => [
+                    'custom' => null,
+                    'taxonomies' => [$taxonomyIDs['income']],
+                ],
+                'language' => [
+                    'custom' => null,
+                    'taxonomies' => [$taxonomyIDs['language']],
+                ],
+                'other' => [
+                    'custom' => null,
+                ],
+            ],
+        ];
+
+        $payload = array_merge($taxonomyPayload, $payload);
+
+        $response = $this->json('POST', '/core/v1/services', $payload);
+        $response->assertStatus(Response::HTTP_CREATED);
+        $response->assertJsonFragment($taxonomyPayload);
+    }
 }
