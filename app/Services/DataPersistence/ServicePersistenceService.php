@@ -74,11 +74,8 @@ class ServicePersistenceService implements DataPersistenceService
                 'social_medias' => $request->has('social_medias') ? [] : new MissingValue(),
                 'gallery_items' => $request->has('gallery_items') ? [] : new MissingValue(),
                 'category_taxonomies' => $request->missing('category_taxonomies'),
-                'eligibility_types' => $request->filled('eligibility_types') ? array_filter_missing([
-                    'taxonomies' => $request->input('eligibility_types.taxonomies', new MissingValue()),
-                    'custom' => $request->input('eligibility_types.custom', new MissingValue()),
-                ])
-                    : new MissingValue(),
+                // @FIXME: this is checking the incorrect field(s) in request
+                'eligibility_types' => $request->filled('eligibility_types') ? $request->eligibility_types : new MissingValue(),
                 'logo_file_id' => $request->missing('logo_file_id'),
             ]);
 
