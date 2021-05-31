@@ -108,7 +108,55 @@ class ServiceSchema extends Schema
                     ->nullable(),
                 Schema::string('updated_at')
                     ->format(Schema::FORMAT_DATE_TIME)
-                    ->nullable()
+                    ->nullable(),
+                Schema::object('eligibility_types')
+                    ->properties(
+                        Schema::object('age_group')
+                            ->properties(
+                                Schema::string('custom'),
+                                Schema::array('taxonomies')->items(Schema::string())
+                            ),
+                        Schema::object('disability')
+                            ->properties(
+                                Schema::string('custom'),
+                                Schema::array('taxonomies')->items(Schema::string())
+                            ),
+                        Schema::object('employment')
+                            ->properties(
+                                Schema::string('custom'),
+                                Schema::array('taxonomies')->items(Schema::string())
+                            ),
+                        Schema::object('gender')
+                            ->properties(
+                                Schema::string('custom'),
+                                Schema::array('taxonomies')->items(Schema::string())
+                            ),
+                        Schema::object('housing')
+                            ->properties(
+                                Schema::string('custom'),
+                                Schema::array('taxonomies')->items(Schema::string())
+                            ),
+                        Schema::object('income')
+                            ->properties(
+                                Schema::string('custom'),
+                                Schema::array('taxonomies')->items(Schema::string())
+                            ),
+                        Schema::object('language')
+                            ->properties(
+                                Schema::string('custom'),
+                                Schema::array('taxonomies')->items(Schema::string())
+                            ),
+                        Schema::object('ethnicity')
+                            ->properties(
+                                Schema::string('custom'),
+                                Schema::array('taxonomies')->items(Schema::string())
+                            ),
+                        Schema::object('other')
+                            ->properties(
+                                Schema::string('custom'),
+                                Schema::array('taxonomies')->items(Schema::string())
+                            )
+                    )
             );
     }
 }
