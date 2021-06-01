@@ -4377,6 +4377,7 @@ class ServicesTest extends TestCase
             ->create();
 
         $taxonomyIds = $service->serviceEligibilities()->pluck('taxonomy_id')->all();
+        sort($taxonomyIds, SORT_STRING);
 
         $response = $this->get(route('core.v1.services.index'));
 
@@ -4852,6 +4853,13 @@ class ServicesTest extends TestCase
         $response = $this->json('PUT', "/core/v1/services/{$service->id}", $payload);
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonFragment($payload);
+
+        // request the service to check update request was auto-applied
+        $service = $service->fresh()->load('serviceEligibilities');
+
+        foreach ($payload['eligibility_types']['custom'] as $customFieldName => $customFieldValue) {
+            $this->assertEquals($customFieldValue, $service->{'eligibility_' . $customFieldName . '_custom'});
+        }
     }
 
     public function test_update_service_with_custom_fields_and_eligibility_taxonomies()
