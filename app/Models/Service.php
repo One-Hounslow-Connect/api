@@ -338,7 +338,7 @@ class Service extends Model implements AppliesUpdateRequests, Notifiable, HasTax
                 $this->syncEligibilityRelationships($eligibilityTaxonomies);
             }
             if (array_key_exists('custom', $data['eligibility_types'])) {
-                foreach($data['eligibility_types']['custom'] as $customEligibilityType => $value) {
+                foreach ($data['eligibility_types']['custom'] as $customEligibilityType => $value) {
                     $fieldName = 'eligibility_' . $customEligibilityType . '_custom';
                     $this->{$fieldName} = $value;
                 }
