@@ -337,6 +337,14 @@ class Service extends Model implements AppliesUpdateRequests, Notifiable, HasTax
                 $eligibilityTaxonomies = Taxonomy::whereIn('id', $data['eligibility_types']['taxonomies'])->get();
                 $this->syncEligibilityRelationships($eligibilityTaxonomies);
             }
+            if (array_key_exists('custom', $data['eligibility_types'])) {
+                foreach($data['eligibility_types']['custom'] as $customEligibilityType => $value) {
+                    $fieldName = 'eligibility_' . $customEligibilityType . '_custom';
+                    $this->{$fieldName} = $value;
+                }
+
+                $this->save();
+            }
         }
 
         // Ensure conditional fields are reset if needed.
