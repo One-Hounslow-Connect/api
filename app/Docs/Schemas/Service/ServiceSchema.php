@@ -112,15 +112,15 @@ class ServiceSchema extends Schema
                 Schema::object('eligibility_types')
                     ->properties(
                         Schema::object('custom')
-                        ->properties(
-                            Schema::string('age_group'),
-                            Schema::string('disability'),
-                            Schema::string('ethnicity'),
-                            Schema::string('gender'),
-                            Schema::string('income'),
-                            Schema::string('language'),
-                            Schema::string('other')
-                        ),
+                            ->properties(
+                                Schema::string('age_group'),
+                                Schema::string('disability'),
+                                Schema::string('ethnicity'),
+                                Schema::string('gender'),
+                                Schema::string('income'),
+                                Schema::string('language'),
+                                Schema::string('other')
+                            ),
                         Schema::array('taxonomies')
                             ->items(
                                 Schema::string()
