@@ -11,39 +11,19 @@ trait ServiceMutators
 {
     public function getServiceEligibilitiesAttribute(): Collection
     {
-        $keyedByName = [];
-
-        foreach (ServiceEligibility::SUPPORTED_CUSTOM_FIELD_NAMES as $fieldName) {
-            $keyedByName[$fieldName]['custom'] = $this->getCustomEligibilityField($fieldName);
-
-            // There is no 'other' taxonomy top-level child of Service Eligibility
-            if ($fieldName !== 'other') {
-                $keyedByName[$fieldName]['taxonomies'] = [];
-            }
-        }
-
-        $this->serviceEligibilities()
-            ->get()
-            ->each(function ($item) use (&$keyedByName) {
-                $key = Str::snake($item->taxonomy->parent->name);
-
-                // CH-303: Fred here - I'd quite like to have had an array of the actual Taxonomy models here, but this
-                // is out of scope for the current work and it simplifies things a bit to bring the data together here.
-                // if more eligibility data is required in the API response in future, this method and the resource
-                // class can always be refactored.
-                $keyedByName[$key]['taxonomies'][] = $item->taxonomy_id;
-            });
-
-
-
-        // I feel like this is kind of inefficient as we have to return the whole array every time and then search it
-        return new Collection($keyedByName);
-    }
-
-    private function getCustomEligibilityField(string $fieldName)
-    {
-        $customFieldName = 'eligibility_' . $fieldName . '_custom';
-
-        return $this->{$customFieldName};
+        return new Collection([
+            'custom' => [
+                'age_group' => $this->eligibility_age_group_custom,
+                'disability' => $this->eligibility_disability_custom,
+                'employment' => $this->eligibility_employment_custom,
+                'ethnicity' => $this->eligibility_ethnicity_custom,
+                'gender' => $this->eligibility_gender_custom,
+                'housing' => $this->eligibility_housing_custom,
+                'income' => $this->eligibility_income_custom,
+                'language' => $this->eligibility_language_custom,
+                'other' => $this->eligibility_other_custom,
+            ],
+            'taxonomies' => $this->serviceEligibilities()->pluck('taxonomy_id')->all(),
+        ]);
     }
 }
