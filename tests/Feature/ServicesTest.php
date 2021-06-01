@@ -27,7 +27,6 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Laravel\Passport\Passport;
 use Tests\TestCase;
 
@@ -4307,52 +4306,29 @@ class ServicesTest extends TestCase
                 'withOfferings',
                 'withUsefulInfo',
                 'withSocialMedia',
-                'withCustomEligibilities'
+                'withCustomEligibilities',
+                'withCategoryTaxonomies'
             )
             ->create();
 
-        $service->syncTaxonomyRelationships(collect([Taxonomy::category()->children()->firstOrFail()]));
         $service->save();
 
         $response = $this->get(route('core.v1.services.index'));
 
         $response->assertJsonFragment([
             'eligibility_types' => [
-                'age_group' => [
-                    'custom' => $service->eligibility_age_group_custom,
-                    'taxonomies' => [],
+                'custom' => [
+                    'age_group' => $service->eligibility_age_group_custom,
+                    'disability' => $service->eligibility_disability_custom,
+                    'employment' => $service->eligibility_employment_custom,
+                    'ethnicity' => $service->eligibility_ethnicity_custom,
+                    'gender' => $service->eligibility_gender_custom,
+                    'housing' => $service->eligibility_housing_custom,
+                    'income' => $service->eligibility_income_custom,
+                    'language' => $service->eligibility_language_custom,
+                    'other' => $service->eligibility_other_custom,
                 ],
-                'disability' => [
-                    'custom' => $service->eligibility_disability_custom,
-                    'taxonomies' => [],
-                ],
-                'employment' => [
-                    'custom' => $service->eligibility_employment_custom,
-                    'taxonomies' => [],
-                ],
-                'ethnicity' => [
-                    'custom' => $service->eligibility_ethnicity_custom,
-                    'taxonomies' => [],
-                ],
-                'gender' => [
-                    'custom' => $service->eligibility_gender_custom,
-                    'taxonomies' => [],
-                ],
-                'housing' => [
-                    'custom' => $service->eligibility_housing_custom,
-                    'taxonomies' => [],
-                ],
-                'income' => [
-                    'custom' => $service->eligibility_income_custom,
-                    'taxonomies' => [],
-                ],
-                'language' => [
-                    'custom' => $service->eligibility_language_custom,
-                    'taxonomies' => [],
-                ],
-                'other' => [
-                    'custom' => $service->eligibility_other_custom,
-                ],
+                'taxonomies' => [],
             ],
         ]);
     }
@@ -4364,63 +4340,29 @@ class ServicesTest extends TestCase
                 'withOfferings',
                 'withUsefulInfo',
                 'withSocialMedia',
-                'withEligibilityTaxonomies'
+                'withEligibilityTaxonomies',
+                'withCategoryTaxonomies'
             )
             ->create();
 
-        $taxonomies = Taxonomy::serviceEligibility()->children->mapWithKeys(function ($taxonomy) {
-            return [
-                Str::snake($taxonomy->name) => $taxonomy->children()->inRandomOrder()->first(),
-            ];
-        });
-
-        $service->syncTaxonomyRelationships(collect([Taxonomy::category()->children()->firstOrFail()]));
-        $service->syncEligibilityRelationships($taxonomies);
-        $service->save();
-
-        $taxonomyIDs = $taxonomies->map(function ($taxonomy) {
-            return $taxonomy->id;
-        });
+        $taxonomyIds = $service->serviceEligibilities()->pluck('taxonomy_id')->all();
 
         $response = $this->get(route('core.v1.services.index'));
 
         $response->assertJsonFragment([
             'eligibility_types' => [
-                'age_group' => [
-                    'custom' => null,
-                    'taxonomies' => [$taxonomyIDs['age_group']],
+                'custom' => [
+                    'age_group' => null,
+                    'disability' => null,
+                    'employment' => null,
+                    'ethnicity' => null,
+                    'gender' => null,
+                    'housing' => null,
+                    'income' => null,
+                    'language' => null,
+                    'other' => null,
                 ],
-                'disability' => [
-                    'custom' => null,
-                    'taxonomies' => [$taxonomyIDs['disability']],
-                ],
-                'ethnicity' => [
-                    'custom' => null,
-                    'taxonomies' => [$taxonomyIDs['ethnicity']],
-                ],
-                'employment' => [
-                    'custom' => null,
-                    'taxonomies' => [], // @TODO: cannot expect any taxonomies attached until we have them defined for this category
-                ],
-                'gender' => [
-                    'custom' => null,
-                    'taxonomies' => [$taxonomyIDs['gender']],
-                ],
-                'housing' => [
-                    'custom' => null,
-                    'taxonomies' => [], // @TODO: cannot expect any taxonomies attached until we have them defined for this category
-                ],
-                'income' => [
-                    'custom' => null,
-                    'taxonomies' => [$taxonomyIDs['income']],
-                ],
-                'language' => [
-                    'custom' => null,
-                    'taxonomies' => [$taxonomyIDs['language']],
-                ],
-                'other' => [
-                    'custom' => null,
-                ],
+                'taxonomies' => $taxonomyIds,
             ],
         ]);
     }
@@ -4432,65 +4374,30 @@ class ServicesTest extends TestCase
                 'withOfferings',
                 'withUsefulInfo',
                 'withSocialMedia',
-                'withCustomEligibilities'
+                'withCustomEligibilities',
+                'withCategoryTaxonomies',
+                'withEligibilityTaxonomies'
             )
             ->create();
 
-
-        $service->syncTaxonomyRelationships(collect([Taxonomy::category()->children()->firstOrFail()]));
-
-        $taxonomies = Taxonomy::serviceEligibility()->children->mapWithKeys(function ($taxonomy) {
-            return [
-                Str::snake($taxonomy->name) => $taxonomy->children()->inRandomOrder()->first(),
-            ];
-        });
-        $service->syncEligibilityRelationships($taxonomies);
-
-        $service->save();
-
-        $taxonomyIDs = $taxonomies->map(function ($taxonomy) {
-            return $taxonomy->id;
-        });
+        $taxonomyIds = $service->serviceEligibilities()->pluck('taxonomy_id')->all();
 
         $response = $this->get(route('core.v1.services.index'));
 
         $response->assertJsonFragment([
             'eligibility_types' => [
-                'age_group' => [
-                    'custom' => $service->eligibility_age_group_custom,
-                    'taxonomies' => [$taxonomyIDs['age_group']],
+                'custom' => [
+                    'age_group' => $service->eligibility_age_group_custom,
+                    'disability' => $service->eligibility_disability_custom,
+                    'employment' => $service->eligibility_employment_custom,
+                    'ethnicity' => $service->eligibility_ethnicity_custom,
+                    'gender' => $service->eligibility_gender_custom,
+                    'housing' => $service->eligibility_housing_custom,
+                    'income' => $service->eligibility_income_custom,
+                    'language' => $service->eligibility_language_custom,
+                    'other' => $service->eligibility_other_custom,
                 ],
-                'disability' => [
-                    'custom' => $service->eligibility_disability_custom,
-                    'taxonomies' => [$taxonomyIDs['disability']],
-                ],
-                'ethnicity' => [
-                    'custom' => $service->eligibility_ethnicity_custom,
-                    'taxonomies' => [$taxonomyIDs['ethnicity']],
-                ],
-                'employment' => [
-                    'custom' => $service->eligibility_employment_custom,
-                    'taxonomies' => [], // @TODO: cannot expect any taxonomies attached until we have them defined for this category
-                ],
-                'gender' => [
-                    'custom' => $service->eligibility_gender_custom,
-                    'taxonomies' => [$taxonomyIDs['gender']],
-                ],
-                'housing' => [
-                    'custom' => $service->eligibility_housing_custom,
-                    'taxonomies' => [], // @TODO: cannot expect any taxonomies attached until we have them defined for this category
-                ],
-                'income' => [
-                    'custom' => $service->eligibility_income_custom,
-                    'taxonomies' => [$taxonomyIDs['income']],
-                ],
-                'language' => [
-                    'custom' => $service->eligibility_language_custom,
-                    'taxonomies' => [$taxonomyIDs['language']],
-                ],
-                'other' => [
-                    'custom' => $service->eligibility_other_custom,
-                ],
+                'taxonomies' => $taxonomyIds,
             ],
         ]);
     }
@@ -4502,52 +4409,27 @@ class ServicesTest extends TestCase
                 'withOfferings',
                 'withUsefulInfo',
                 'withSocialMedia',
-                'withCustomEligibilities'
+                'withCustomEligibilities',
+                'withCategoryTaxonomies'
             )
             ->create();
-
-        $service->syncTaxonomyRelationships(collect([Taxonomy::category()->children()->firstOrFail()]));
-        $service->save();
 
         $response = $this->get(route('core.v1.services.show', $service->id));
 
         $response->assertJsonFragment([
             'eligibility_types' => [
-                'age_group' => [
-                    'custom' => $service->eligibility_age_group_custom,
-                    'taxonomies' => [],
+                'custom' => [
+                    'age_group' => $service->eligibility_age_group_custom,
+                    'disability' => $service->eligibility_disability_custom,
+                    'employment' => $service->eligibility_employment_custom,
+                    'ethnicity' => $service->eligibility_ethnicity_custom,
+                    'gender' => $service->eligibility_gender_custom,
+                    'housing' => $service->eligibility_housing_custom,
+                    'income' => $service->eligibility_income_custom,
+                    'language' => $service->eligibility_language_custom,
+                    'other' => $service->eligibility_other_custom,
                 ],
-                'disability' => [
-                    'custom' => $service->eligibility_disability_custom,
-                    'taxonomies' => [],
-                ],
-                'employment' => [
-                    'custom' => $service->eligibility_employment_custom,
-                    'taxonomies' => [],
-                ],
-                'ethnicity' => [
-                    'custom' => $service->eligibility_ethnicity_custom,
-                    'taxonomies' => [],
-                ],
-                'gender' => [
-                    'custom' => $service->eligibility_gender_custom,
-                    'taxonomies' => [],
-                ],
-                'housing' => [
-                    'custom' => $service->eligibility_housing_custom,
-                    'taxonomies' => [],
-                ],
-                'income' => [
-                    'custom' => $service->eligibility_income_custom,
-                    'taxonomies' => [],
-                ],
-                'language' => [
-                    'custom' => $service->eligibility_language_custom,
-                    'taxonomies' => [],
-                ],
-                'other' => [
-                    'custom' => $service->eligibility_other_custom,
-                ],
+                'taxonomies' => [],
             ],
         ]);
     }
@@ -4558,63 +4440,31 @@ class ServicesTest extends TestCase
             ->states(
                 'withOfferings',
                 'withUsefulInfo',
-                'withSocialMedia'
+                'withSocialMedia',
+                'withCategoryTaxonomies',
+                'withEligibilityTaxonomies'
             )
             ->create();
 
-        $taxonomies = Taxonomy::serviceEligibility()->children->mapWithKeys(function ($taxonomy) {
-            return [
-                Str::snake($taxonomy->name) => $taxonomy->children()->inRandomOrder()->first(),
-            ];
-        });
+        $taxonomyIds = $service->serviceEligibilities()->pluck('taxonomy_id')->all();
 
-        $service->syncTaxonomyRelationships(collect([Taxonomy::category()->children()->firstOrFail()]));
-        $service->syncEligibilityRelationships($taxonomies);
-        $service->save();
-
-        $taxonomyIDs = $taxonomies->map(function ($taxonomy) {
-            return $taxonomy->id;
-        });
 
         $response = $this->get(route('core.v1.services.show', $service->id));
 
         $response->assertJsonFragment([
             'eligibility_types' => [
-                'age_group' => [
-                    'custom' => null,
-                    'taxonomies' => [$taxonomyIDs['age_group']],
+                'custom' => [
+                    'age_group' => null,
+                    'disability' => null,
+                    'employment' => null,
+                    'ethnicity' => null,
+                    'gender' => null,
+                    'housing' => null,
+                    'income' => null,
+                    'language' => null,
+                    'other' => null,
                 ],
-                'disability' => [
-                    'custom' => null,
-                    'taxonomies' => [$taxonomyIDs['disability']],
-                ],
-                'ethnicity' => [
-                    'custom' => null,
-                    'taxonomies' => [$taxonomyIDs['ethnicity']],
-                ],
-                'employment' => [
-                    'custom' => null,
-                    'taxonomies' => [], // @TODO: cannot expect any taxonomies attached until we have them defined for this category
-                ],
-                'gender' => [
-                    'custom' => null,
-                    'taxonomies' => [$taxonomyIDs['gender']],
-                ],
-                'housing' => [
-                    'custom' => null,
-                    'taxonomies' => [], // @TODO: cannot expect any taxonomies attached until we have them defined for this category
-                ],
-                'income' => [
-                    'custom' => null,
-                    'taxonomies' => [$taxonomyIDs['income']],
-                ],
-                'language' => [
-                    'custom' => null,
-                    'taxonomies' => [$taxonomyIDs['language']],
-                ],
-                'other' => [
-                    'custom' => null,
-                ],
+                'taxonomies' => $taxonomyIds,
             ],
         ]);
     }
@@ -4626,65 +4476,32 @@ class ServicesTest extends TestCase
                 'withOfferings',
                 'withUsefulInfo',
                 'withSocialMedia',
-                'withCustomEligibilities'
+                'withCustomEligibilities',
+                'withCategoryTaxonomies',
+                'withEligibilityTaxonomies'
             )
             ->create();
 
 
-        $service->syncTaxonomyRelationships(collect([Taxonomy::category()->children()->firstOrFail()]));
+        $taxonomyIds = $service->serviceEligibilities()->pluck('taxonomy_id')->all();
 
-        $taxonomies = Taxonomy::serviceEligibility()->children->mapWithKeys(function ($taxonomy) {
-            return [
-                Str::snake($taxonomy->name) => $taxonomy->children()->inRandomOrder()->first(),
-            ];
-        });
-        $service->syncEligibilityRelationships($taxonomies);
-
-        $service->save();
-
-        $taxonomyIDs = $taxonomies->map(function ($taxonomy) {
-            return $taxonomy->id;
-        });
 
         $response = $this->get(route('core.v1.services.show', $service->id));
 
         $response->assertJsonFragment([
             'eligibility_types' => [
-                'age_group' => [
-                    'custom' => $service->eligibility_age_group_custom,
-                    'taxonomies' => [$taxonomyIDs['age_group']],
+                'custom' => [
+                    'age_group' => $service->eligibility_age_group_custom,
+                    'disability' => $service->eligibility_disability_custom,
+                    'employment' => $service->eligibility_employment_custom,
+                    'ethnicity' => $service->eligibility_ethnicity_custom,
+                    'gender' => $service->eligibility_gender_custom,
+                    'housing' => $service->eligibility_housing_custom,
+                    'income' => $service->eligibility_income_custom,
+                    'language' => $service->eligibility_language_custom,
+                    'other' => $service->eligibility_other_custom,
                 ],
-                'disability' => [
-                    'custom' => $service->eligibility_disability_custom,
-                    'taxonomies' => [$taxonomyIDs['disability']],
-                ],
-                'ethnicity' => [
-                    'custom' => $service->eligibility_ethnicity_custom,
-                    'taxonomies' => [$taxonomyIDs['ethnicity']],
-                ],
-                'employment' => [
-                    'custom' => $service->eligibility_employment_custom,
-                    'taxonomies' => [], // @TODO: cannot expect any taxonomies attached until we have them defined for this category
-                ],
-                'gender' => [
-                    'custom' => $service->eligibility_gender_custom,
-                    'taxonomies' => [$taxonomyIDs['gender']],
-                ],
-                'housing' => [
-                    'custom' => $service->eligibility_housing_custom,
-                    'taxonomies' => [], // @TODO: cannot expect any taxonomies attached until we have them defined for this category
-                ],
-                'income' => [
-                    'custom' => $service->eligibility_income_custom,
-                    'taxonomies' => [$taxonomyIDs['income']],
-                ],
-                'language' => [
-                    'custom' => $service->eligibility_language_custom,
-                    'taxonomies' => [$taxonomyIDs['language']],
-                ],
-                'other' => [
-                    'custom' => $service->eligibility_other_custom,
-                ],
+                'taxonomies' => $taxonomyIds,
             ],
         ]);
     }
@@ -4694,15 +4511,17 @@ class ServicesTest extends TestCase
         $organisation = factory(Organisation::class)->create();
         $user = factory(User::class)->create()->makeGlobalAdmin();
 
-        $taxonomies = Taxonomy::serviceEligibility()->children->mapWithKeys(function ($taxonomy) {
-            return [
-                Str::snake($taxonomy->name) => $taxonomy->children()->inRandomOrder()->first(),
-            ];
-        });
+        $taxonomyIds = Taxonomy::serviceEligibility()
+            ->children
+            ->map(function ($taxonomy) {
+                return $taxonomy
+                    ->children()
+                    ->inRandomOrder()
+                    ->pluck('id')
+                    ->first();
+            })->toArray();
 
-        $taxonomyIDs = $taxonomies->map(function ($taxonomy) {
-            return $taxonomy->id;
-        });
+        sort($taxonomyIds, SORT_STRING);
 
         Passport::actingAs($user);
 
@@ -4764,41 +4583,18 @@ class ServicesTest extends TestCase
 
         $taxonomyPayload = [
             'eligibility_types' => [
-                'age_group' => [
-                    'custom' => null,
-                    'taxonomies' => [$taxonomyIDs['age_group']],
+                'custom' => [
+                    'age_group' => null,
+                    'disability' => null,
+                    'employment' => null,
+                    'ethnicity' => null,
+                    'gender' => null,
+                    'housing' => null,
+                    'income' => null,
+                    'language' => null,
+                    'other' => null,
                 ],
-                'disability' => [
-                    'custom' => null,
-                    'taxonomies' => [$taxonomyIDs['disability']],
-                ],
-                'ethnicity' => [
-                    'custom' => null,
-                    'taxonomies' => [$taxonomyIDs['ethnicity']],
-                ],
-                'employment' => [
-                    'custom' => null,
-                    'taxonomies' => [], // @TODO: cannot expect any taxonomies attached until we have them defined for this category
-                ],
-                'gender' => [
-                    'custom' => null,
-                    'taxonomies' => [$taxonomyIDs['gender']],
-                ],
-                'housing' => [
-                    'custom' => null,
-                    'taxonomies' => [], // @TODO: cannot expect any taxonomies attached until we have them defined for this category
-                ],
-                'income' => [
-                    'custom' => null,
-                    'taxonomies' => [$taxonomyIDs['income']],
-                ],
-                'language' => [
-                    'custom' => null,
-                    'taxonomies' => [$taxonomyIDs['language']],
-                ],
-                'other' => [
-                    'custom' => null,
-                ],
+                'taxonomies' => $taxonomyIds,
             ],
         ];
 
@@ -4809,7 +4605,7 @@ class ServicesTest extends TestCase
         $response->assertJsonFragment($taxonomyPayload);
     }
 
-    public function test_create_service_with_custom_fields()
+    public function test_create_service_with_custom_eligibility_fields()
     {
         $organisation = factory(Organisation::class)->create();
         $user = factory(User::class)->create()->makeGlobalAdmin();
@@ -4874,41 +4670,18 @@ class ServicesTest extends TestCase
 
         $taxonomyPayload = [
             'eligibility_types' => [
-                'age_group' => [
-                    'custom' => 'created with custom age group',
-                    'taxonomies' => [],
+                'custom' => [
+                    'age_group' => 'custom age group',
+                    'disability' => 'custom disability',
+                    'employment' => 'custom employment',
+                    'ethnicity' => 'custom ethnicity',
+                    'gender' => 'custom gender',
+                    'housing' => 'custom housing',
+                    'income' => 'custom income',
+                    'language' => 'custom language',
+                    'other' => 'custom other',
                 ],
-                'disability' => [
-                    'custom' => 'created with custom disability',
-                    'taxonomies' => [],
-                ],
-                'ethnicity' => [
-                    'custom' => 'created with custom ethnicity',
-                    'taxonomies' => [],
-                ],
-                'employment' => [
-                    'custom' => 'created with custom employment',
-                    'taxonomies' => [], // @TODO: cannot expect any taxonomies attached until we have them defined for this category
-                ],
-                'gender' => [
-                    'custom' => 'created with custom gender',
-                    'taxonomies' => [],
-                ],
-                'housing' => [
-                    'custom' => 'created with custom housing',
-                    'taxonomies' => [], // @TODO: cannot expect any taxonomies attached until we have them defined for this category
-                ],
-                'income' => [
-                    'custom' => 'created with custom income',
-                    'taxonomies' => [],
-                ],
-                'language' => [
-                    'custom' => 'created with custom language',
-                    'taxonomies' => [],
-                ],
-                'other' => [
-                    'custom' => 'created with custom other',
-                ],
+                'taxonomies' => [],
             ],
         ];
 
@@ -4924,15 +4697,18 @@ class ServicesTest extends TestCase
         $organisation = factory(Organisation::class)->create();
         $user = factory(User::class)->create()->makeGlobalAdmin();
 
-        $taxonomies = Taxonomy::serviceEligibility()->children->mapWithKeys(function ($taxonomy) {
-            return [
-                Str::snake($taxonomy->name) => $taxonomy->children()->inRandomOrder()->first(),
-            ];
-        });
+        $taxonomyIds = Taxonomy::serviceEligibility()
+            ->children
+            ->map(function ($taxonomy) {
+                return $taxonomy
+                    ->children()
+                    ->inRandomOrder()
+                    ->pluck('id')
+                    ->first();
+            })
+            ->toArray();
 
-        $taxonomyIDs = $taxonomies->map(function ($taxonomy) {
-            return $taxonomy->id;
-        });
+        sort($taxonomyIds, SORT_STRING);
 
         Passport::actingAs($user);
 
@@ -4994,41 +4770,18 @@ class ServicesTest extends TestCase
 
         $taxonomyPayload = [
             'eligibility_types' => [
-                'age_group' => [
-                    'custom' => 'created with custom age group',
-                    'taxonomies' => [$taxonomyIDs['age_group']],
+                'custom' => [
+                    'age_group' => 'created with custom age group',
+                    'disability' => 'created with custom disability',
+                    'employment' => 'created with custom employment',
+                    'ethnicity' => 'created with custom ethnicity',
+                    'gender' => 'created with custom gender',
+                    'housing' => 'created with custom housing',
+                    'income' => 'created with custom income',
+                    'language' => 'created with custom language',
+                    'other' => 'created with custom other',
                 ],
-                'disability' => [
-                    'custom' => 'created with custom disability',
-                    'taxonomies' => [$taxonomyIDs['disability']],
-                ],
-                'ethnicity' => [
-                    'custom' => 'created with custom ethnicity',
-                    'taxonomies' => [$taxonomyIDs['ethnicity']],
-                ],
-                'employment' => [
-                    'custom' => 'created with custom employment',
-                    'taxonomies' => [], // @TODO: cannot expect any taxonomies attached until we have them defined for this category
-                ],
-                'gender' => [
-                    'custom' => 'created with custom gender',
-                    'taxonomies' => [$taxonomyIDs['gender']],
-                ],
-                'housing' => [
-                    'custom' => 'created with custom housing',
-                    'taxonomies' => [], // @TODO: cannot expect any taxonomies attached until we have them defined for this category
-                ],
-                'income' => [
-                    'custom' => 'created with custom income',
-                    'taxonomies' => [$taxonomyIDs['income']],
-                ],
-                'language' => [
-                    'custom' => 'created with custom language',
-                    'taxonomies' => [$taxonomyIDs['language']],
-                ],
-                'other' => [
-                    'custom' => 'created with custom other',
-                ],
+                'taxonomies' => $taxonomyIds,
             ],
         ];
 
@@ -5041,7 +4794,6 @@ class ServicesTest extends TestCase
 
     public function test_update_service_with_eligibility_taxonomies()
     {
-        $organisation = factory(Organisation::class)->create();
         $user = factory(User::class)->create()->makeGlobalAdmin();
         $service = factory(Service::class)
             ->states(
@@ -5049,137 +4801,43 @@ class ServicesTest extends TestCase
                 'withUsefulInfo',
                 'withSocialMedia',
                 'withCustomEligibilities',
-                'withEligibilityTaxonomies'
+                'withEligibilityTaxonomies',
+                'withCategoryTaxonomies'
             )
             ->create();
 
-        $service->syncTaxonomyRelationships(collect([Taxonomy::category()->children()->firstOrFail()]));
-        $service->save();
-
-        $taxonomies = Taxonomy::serviceEligibility()->children->mapWithKeys(function ($taxonomy) use ($service) {
+        $taxonomyIds = Taxonomy::serviceEligibility()->children->map(function ($taxonomy) {
             // ensure we assign a different taxonomy ID
-            $key = Str::snake($taxonomy->name);
-            $existingIds = $service->serviceEligibilities[$key]['taxonomies'];
-            return [
-                $key => $taxonomy->children()
-                    ->whereNotIn('id', $existingIds)
-                    ->inRandomOrder()
-                    ->first(),
-            ];
-        });
+            return $taxonomy->children()
+                ->inRandomOrder()
+                ->first()
+                ->id;
+        })
+        ->toArray();
 
-        $taxonomyIDs = $taxonomies->map(function ($taxonomy, $key) {
-            return $taxonomy ? $taxonomy->id : null;
-        });
+        sort($taxonomyIds, SORT_STRING);
 
         Passport::actingAs($user);
 
         $payload = [
-            'organisation_id' => $organisation->id,
-            'slug' => 'test-service',
-            'name' => 'Test Service',
-            'type' => Service::TYPE_SERVICE,
-            'status' => Service::STATUS_ACTIVE,
-            'intro' => 'This is a test intro',
-            'description' => 'Lorem ipsum',
-            'wait_time' => null,
-            'is_free' => true,
-            'fees_text' => null,
-            'fees_url' => null,
-            'testimonial' => null,
-            'video_embed' => null,
-            'url' => $this->faker->url,
-            'contact_name' => $this->faker->name,
-            'contact_phone' => random_uk_phone(),
-            'contact_email' => $this->faker->safeEmail,
-            'show_referral_disclaimer' => false,
-            'referral_method' => Service::REFERRAL_METHOD_NONE,
-            'referral_button_text' => null,
-            'referral_email' => null,
-            'referral_url' => null,
-            'criteria' => [
-                'age_group' => null,
-                'disability' => null,
-                'employment' => null,
-                'gender' => null,
-                'housing' => null,
-                'income' => null,
-                'language' => null,
-                'other' => null,
-            ],
-            'useful_infos' => [
-                [
-                    'title' => 'Did you know?',
-                    'description' => 'Lorem ipsum',
-                    'order' => 1,
-                ],
-            ],
-            'offerings' => [
-                [
-                    'offering' => 'Weekly club',
-                    'order' => 1,
-                ],
-            ],
-            'social_medias' => [
-                [
-                    'type' => SocialMedia::TYPE_INSTAGRAM,
-                    'url' => 'https://www.instagram.com/ayupdigital',
-                ],
-            ],
-            'gallery_items' => [],
-            'category_taxonomies' => [Taxonomy::category()->children()->firstOrFail()->id],
-        ];
-
-        $taxonomyPayload = [
             'eligibility_types' => [
-                'age_group' => [
-                    'custom' => null,
-                    'taxonomies' => [$taxonomyIDs['age_group']],
-                ],
-                'disability' => [
-                    'custom' => null,
-                    'taxonomies' => [$taxonomyIDs['disability']],
-                ],
-                'ethnicity' => [
-                    'custom' => null,
-                    'taxonomies' => [$taxonomyIDs['ethnicity']],
-                ],
-                'employment' => [
-                    'custom' => null,
-                    'taxonomies' => [], // @TODO: cannot expect any taxonomies attached until we have them defined for this category
-                ],
-                'gender' => [
-                    'custom' => null,
-                    'taxonomies' => [$taxonomyIDs['gender']],
-                ],
-                'housing' => [
-                    'custom' => null,
-                    'taxonomies' => [], // @TODO: cannot expect any taxonomies attached until we have them defined for this category
-                ],
-                'income' => [
-                    'custom' => null,
-                    'taxonomies' => [$taxonomyIDs['income']],
-                ],
-                'language' => [
-                    'custom' => null,
-                    'taxonomies' => [], // Change language to empty array as there is only one option
-                ],
-                'other' => [
-                    'custom' => null,
-                ],
+                'taxonomies' => $taxonomyIds,
             ],
         ];
-
-        $payload = array_merge($taxonomyPayload, $payload);
 
         $response = $this->json('PUT', "/core/v1/services/{$service->id}", $payload);
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonFragment($taxonomyPayload);
+        $response->assertJsonFragment($payload);
+
+        $service->load('serviceEligibilities');
+
+        foreach($service->serviceEligibilities['taxonomies'] as $taxonomyId) {
+            $this->assertTrue(in_array($taxonomyId, $taxonomyIds));
+        }
     }
 
-    public function test_update_service_with_custom_fields()
+    public function test_update_service_with_custom_eligibility_fields()
     {
-        $organisation = factory(Organisation::class)->create();
         $user = factory(User::class)->create()->makeGlobalAdmin();
         $service = factory(Service::class)
             ->states(
@@ -5187,121 +4845,37 @@ class ServicesTest extends TestCase
                 'withUsefulInfo',
                 'withSocialMedia',
                 'withCustomEligibilities',
-                'withEligibilityTaxonomies'
+                'withEligibilityTaxonomies',
+                'withCategoryTaxonomies'
             )
             ->create();
-
-        $service->syncTaxonomyRelationships(collect([Taxonomy::category()->children()->firstOrFail()]));
-        $service->save();
 
         Passport::actingAs($user);
 
         $payload = [
-            'organisation_id' => $organisation->id,
-            'slug' => 'test-service',
-            'name' => 'Test Service',
-            'type' => Service::TYPE_SERVICE,
-            'status' => Service::STATUS_ACTIVE,
-            'intro' => 'This is a test intro',
-            'description' => 'Lorem ipsum',
-            'wait_time' => null,
-            'is_free' => true,
-            'fees_text' => null,
-            'fees_url' => null,
-            'testimonial' => null,
-            'video_embed' => null,
-            'url' => $this->faker->url,
-            'contact_name' => $this->faker->name,
-            'contact_phone' => random_uk_phone(),
-            'contact_email' => $this->faker->safeEmail,
-            'show_referral_disclaimer' => false,
-            'referral_method' => Service::REFERRAL_METHOD_NONE,
-            'referral_button_text' => null,
-            'referral_email' => null,
-            'referral_url' => null,
-            'criteria' => [
-                'age_group' => null,
-                'disability' => null,
-                'employment' => null,
-                'gender' => null,
-                'housing' => null,
-                'income' => null,
-                'language' => null,
-                'other' => null,
-            ],
-            'useful_infos' => [
-                [
-                    'title' => 'Did you know?',
-                    'description' => 'Lorem ipsum',
-                    'order' => 1,
-                ],
-            ],
-            'offerings' => [
-                [
-                    'offering' => 'Weekly club',
-                    'order' => 1,
-                ],
-            ],
-            'social_medias' => [
-                [
-                    'type' => SocialMedia::TYPE_INSTAGRAM,
-                    'url' => 'https://www.instagram.com/ayupdigital',
-                ],
-            ],
-            'gallery_items' => [],
-            'category_taxonomies' => [Taxonomy::category()->children()->firstOrFail()->id],
-        ];
-
-        $taxonomyPayload = [
             'eligibility_types' => [
-                'age_group' => [
-                    'custom' => 'I am updating the custom age group',
-                    'taxonomies' => [],
-                ],
-                'disability' => [
-                    'custom' => 'I am updating the custom disability',
-                    'taxonomies' => [],
-                ],
-                'ethnicity' => [
-                    'custom' => 'I am updating the custom ethnicity',
-                    'taxonomies' => [],
-                ],
-                'employment' => [
-                    'custom' => 'I am updating the custom employment',
-                    'taxonomies' => [],
-                ],
-                'gender' => [
-                    'custom' => 'I am updating the custom gender',
-                    'taxonomies' => [],
-                ],
-                'housing' => [
-                    'custom' => 'I am updating the custom housing',
-                    'taxonomies' => [],
-                ],
-                'income' => [
-                    'custom' => 'I am updating the custom income',
-                    'taxonomies' => [],
-                ],
-                'language' => [
-                    'custom' => 'I am updating the custom language',
-                    'taxonomies' => [],
-                ],
-                'other' => [
-                    'custom' => 'I am updating the custom other',
+                'custom' => [
+                    'age_group' => 'I am updating custom age_group',
+                    'disability' => 'I am updating custom disability',
+                    'employment' => 'I am updating custom employment',
+                    'ethnicity' => 'I am updating custom ethnicity',
+                    'gender' => 'I am updating custom gender',
+                    'housing' => 'I am updating custom housing',
+                    'income' => 'I am updating custom income',
+                    'language' => 'I am updating custom language',
+                    'other' => 'I am updating custom other',
                 ],
             ],
         ];
 
-        $payload = array_merge($taxonomyPayload, $payload);
 
         $response = $this->json('PUT', "/core/v1/services/{$service->id}", $payload);
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonFragment($taxonomyPayload);
+        $response->assertJsonFragment($payload);
     }
 
     public function test_update_service_with_custom_fields_and_eligibility_taxonomies()
     {
-        $organisation = factory(Organisation::class)->create();
         $user = factory(User::class)->create()->makeGlobalAdmin();
         $service = factory(Service::class)
             ->states(
@@ -5309,137 +4883,59 @@ class ServicesTest extends TestCase
                 'withUsefulInfo',
                 'withSocialMedia',
                 'withCustomEligibilities',
-                'withEligibilityTaxonomies'
+                'withEligibilityTaxonomies',
+                'withCategoryTaxonomies'
             )
             ->create();
 
-        $service->syncTaxonomyRelationships(collect([Taxonomy::category()->children()->firstOrFail()]));
-        $service->save();
-
-        $taxonomies = Taxonomy::serviceEligibility()->children->mapWithKeys(function ($taxonomy) use ($service) {
+        $taxonomyIds = Taxonomy::serviceEligibility()->children->map(function ($taxonomy) {
             // ensure we assign a different taxonomy ID
-            $key = Str::snake($taxonomy->name);
-            $existingIds = $service->serviceEligibilities[$key]['taxonomies'];
-            return [
-                $key => $taxonomy->children()
-                    ->whereNotIn('id', $existingIds)
-                    ->inRandomOrder()
-                    ->first(),
-            ];
-        });
+            return $taxonomy->children()
+                ->inRandomOrder()
+                ->first()
+                ->id;
+        })
+        ->toArray();
 
-        $taxonomyIDs = $taxonomies->map(function ($taxonomy, $key) {
-            return $taxonomy ? $taxonomy->id : null;
-        });
+        sort($taxonomyIds, SORT_STRING);
 
         Passport::actingAs($user);
 
         $payload = [
-            'organisation_id' => $organisation->id,
-            'slug' => 'test-service',
-            'name' => 'Test Service',
-            'type' => Service::TYPE_SERVICE,
-            'status' => Service::STATUS_ACTIVE,
-            'intro' => 'This is a test intro',
-            'description' => 'Lorem ipsum',
-            'wait_time' => null,
-            'is_free' => true,
-            'fees_text' => null,
-            'fees_url' => null,
-            'testimonial' => null,
-            'video_embed' => null,
-            'url' => $this->faker->url,
-            'contact_name' => $this->faker->name,
-            'contact_phone' => random_uk_phone(),
-            'contact_email' => $this->faker->safeEmail,
-            'show_referral_disclaimer' => false,
-            'referral_method' => Service::REFERRAL_METHOD_NONE,
-            'referral_button_text' => null,
-            'referral_email' => null,
-            'referral_url' => null,
-            'criteria' => [
-                'age_group' => null,
-                'disability' => null,
-                'employment' => null,
-                'gender' => null,
-                'housing' => null,
-                'income' => null,
-                'language' => null,
-                'other' => null,
-            ],
-            'useful_infos' => [
-                [
-                    'title' => 'Did you know?',
-                    'description' => 'Lorem ipsum',
-                    'order' => 1,
-                ],
-            ],
-            'offerings' => [
-                [
-                    'offering' => 'Weekly club',
-                    'order' => 1,
-                ],
-            ],
-            'social_medias' => [
-                [
-                    'type' => SocialMedia::TYPE_INSTAGRAM,
-                    'url' => 'https://www.instagram.com/ayupdigital',
-                ],
-            ],
-            'gallery_items' => [],
-            'category_taxonomies' => [Taxonomy::category()->children()->firstOrFail()->id],
-        ];
-
-        $taxonomyPayload = [
             'eligibility_types' => [
-                'age_group' => [
-                    'custom' => 'I am updating the custom age group',
-                    'taxonomies' => [$taxonomyIDs['age_group']],
+                'custom' => [
+                    'age_group' => 'I am updating custom age_group',
+                    'disability' => 'I am updating custom disability',
+                    'employment' => 'I am updating custom employment',
+                    'ethnicity' => 'I am updating custom ethnicity',
+                    'gender' => 'I am updating custom gender',
+                    'housing' => 'I am updating custom housing',
+                    'income' => 'I am updating custom income',
+                    'language' => 'I am updating custom language',
+                    'other' => 'I am updating custom other',
                 ],
-                'disability' => [
-                    'custom' => 'I am updating the custom disability',
-                    'taxonomies' => [$taxonomyIDs['disability']],
-                ],
-                'ethnicity' => [
-                    'custom' => 'I am updating the custom ethnicity',
-                    'taxonomies' => [$taxonomyIDs['ethnicity']],
-                ],
-                'employment' => [
-                    'custom' => 'I am updating the custom employment',
-                    'taxonomies' => [], // @TODO: cannot expect any taxonomies attached until we have them defined for this category
-                ],
-                'gender' => [
-                    'custom' => 'I am updating the custom gender',
-                    'taxonomies' => [$taxonomyIDs['gender']],
-                ],
-                'housing' => [
-                    'custom' => 'I am updating the custom housing',
-                    'taxonomies' => [], // @TODO: cannot expect any taxonomies attached until we have them defined for this category
-                ],
-                'income' => [
-                    'custom' => 'I am updating the custom income',
-                    'taxonomies' => [$taxonomyIDs['income']],
-                ],
-                'language' => [
-                    'custom' => 'I am updating the custom language',
-                    'taxonomies' => [], // Change language to empty array as there is currently only one option; cant be "changed"
-                ],
-                'other' => [
-                    'custom' => 'I am updating the custom other',
-                ],
+                'taxonomies' => $taxonomyIds,
             ],
         ];
-
-        $payload = array_merge($taxonomyPayload, $payload);
 
         $response = $this->json('PUT', "/core/v1/services/{$service->id}", $payload);
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonFragment($taxonomyPayload);
+        $response->assertJsonFragment($payload);
+
+        $service = $service->fresh();
+        $service->load('serviceEligibilities');
+
+        foreach($service->serviceEligibilities['taxonomies'] as $taxonomyId) {
+            $this->assertTrue(in_array($taxonomyId, $taxonomyIds));
+        }
+
+        foreach ($payload['eligibility_types']['custom'] as $customFieldName => $customFieldValue) {
+            $this->assertEquals($customFieldValue, $service->{'eligibility_' . $customFieldName . '_custom'});
+        }
     }
 
-    public function test_delete_elgibility_custom_fields_from_service()
+    public function test_delete_custom_eligibility_fields_from_service()
     {
-        $organisation = factory(Organisation::class)->create();
         $user = factory(User::class)->create()->makeGlobalAdmin();
         $service = factory(Service::class)
             ->states(
@@ -5447,130 +4943,37 @@ class ServicesTest extends TestCase
                 'withUsefulInfo',
                 'withSocialMedia',
                 'withCustomEligibilities',
-                'withEligibilityTaxonomies'
+                'withEligibilityTaxonomies',
+                'withCategoryTaxonomies'
             )
             ->create();
 
-        $service->syncTaxonomyRelationships(collect([Taxonomy::category()->children()->firstOrFail()]));
-
-
-        $service->save();
-
-        $taxonomyIDs = $service->serviceEligibilities->map(function($category, $key) {
-            if ($key !== 'other') {
-                return $category['taxonomies'];
-            }
-        });
-        unset($taxonomyIDs['other']);
 
         Passport::actingAs($user);
 
         $payload = [
-            'organisation_id' => $organisation->id,
-            'slug' => 'test-service',
-            'name' => 'Test Service',
-            'type' => Service::TYPE_SERVICE,
-            'status' => Service::STATUS_ACTIVE,
-            'intro' => 'This is a test intro',
-            'description' => 'Lorem ipsum',
-            'wait_time' => null,
-            'is_free' => true,
-            'fees_text' => null,
-            'fees_url' => null,
-            'testimonial' => null,
-            'video_embed' => null,
-            'url' => $this->faker->url,
-            'contact_name' => $this->faker->name,
-            'contact_phone' => random_uk_phone(),
-            'contact_email' => $this->faker->safeEmail,
-            'show_referral_disclaimer' => false,
-            'referral_method' => Service::REFERRAL_METHOD_NONE,
-            'referral_button_text' => null,
-            'referral_email' => null,
-            'referral_url' => null,
-            'criteria' => [
-                'age_group' => null,
-                'disability' => null,
-                'employment' => null,
-                'gender' => null,
-                'housing' => null,
-                'income' => null,
-                'language' => null,
-                'other' => null,
-            ],
-            'useful_infos' => [
-                [
-                    'title' => 'Did you know?',
-                    'description' => 'Lorem ipsum',
-                    'order' => 1,
-                ],
-            ],
-            'offerings' => [
-                [
-                    'offering' => 'Weekly club',
-                    'order' => 1,
-                ],
-            ],
-            'social_medias' => [
-                [
-                    'type' => SocialMedia::TYPE_INSTAGRAM,
-                    'url' => 'https://www.instagram.com/ayupdigital',
-                ],
-            ],
-            'gallery_items' => [],
-            'category_taxonomies' => [Taxonomy::category()->children()->firstOrFail()->id],
-        ];
-
-        $taxonomyPayload = [
             'eligibility_types' => [
-                'age_group' => [
-                    'custom' => null,
-                    'taxonomies' => [$taxonomyIDs['age_group'][0]],
-                ],
-                'disability' => [
-                    'custom' => null,
-                    'taxonomies' => [$taxonomyIDs['disability'][0]],
-                ],
-                'ethnicity' => [
-                    'custom' => null,
-                    'taxonomies' => [$taxonomyIDs['ethnicity'][0]],
-                ],
-                'employment' => [
-                    'custom' => null,
-                    'taxonomies' => [], // @TODO: cannot expect any taxonomies attached until we have them defined for this category
-                ],
-                'gender' => [
-                    'custom' => null,
-                    'taxonomies' => [$taxonomyIDs['gender'][0]],
-                ],
-                'housing' => [
-                    'custom' => null,
-                    'taxonomies' => [], // @TODO: cannot expect any taxonomies attached until we have them defined for this category
-                ],
-                'income' => [
-                    'custom' => null,
-                    'taxonomies' => [$taxonomyIDs['income'][0]],
-                ],
-                'language' => [
-                    'custom' => null,
-                    'taxonomies' => [$taxonomyIDs['language'][0]],
-                ],
-                'other' => [
-                    'custom' => null,
+                'custom' => [
+                    'age_group' => null,
+                    'disability' => null,
+                    'employment' => null,
+                    'ethnicity' => null,
+                    'gender' => null,
+                    'housing' => null,
+                    'income' => null,
+                    'language' => null,
+                    'other' => null,
                 ],
             ],
         ];
-
-        $payload = array_merge($taxonomyPayload, $payload);
 
         $response = $this->json('PUT', "/core/v1/services/{$service->id}", $payload);
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonFragment($taxonomyPayload);
+        $response->assertJsonFragment($payload);
     }
 
     public function test_delete_eligibility_taxonomy_ids_from_service()
     {
-        $organisation = factory(Organisation::class)->create();
         $user = factory(User::class)->create()->makeGlobalAdmin();
         $service = factory(Service::class)
             ->states(
@@ -5578,123 +4981,25 @@ class ServicesTest extends TestCase
                 'withUsefulInfo',
                 'withSocialMedia',
                 'withCustomEligibilities',
-                'withEligibilityTaxonomies'
+                'withEligibilityTaxonomies',
+                'withCategoryTaxonomies'
             )
             ->create();
-
-        $service->syncTaxonomyRelationships(collect([Taxonomy::category()->children()->firstOrFail()]));
-
-
-        $service->save();
 
         Passport::actingAs($user);
 
         $payload = [
-            'organisation_id' => $organisation->id,
-            'slug' => 'test-service',
-            'name' => 'Test Service',
-            'type' => Service::TYPE_SERVICE,
-            'status' => Service::STATUS_ACTIVE,
-            'intro' => 'This is a test intro',
-            'description' => 'Lorem ipsum',
-            'wait_time' => null,
-            'is_free' => true,
-            'fees_text' => null,
-            'fees_url' => null,
-            'testimonial' => null,
-            'video_embed' => null,
-            'url' => $this->faker->url,
-            'contact_name' => $this->faker->name,
-            'contact_phone' => random_uk_phone(),
-            'contact_email' => $this->faker->safeEmail,
-            'show_referral_disclaimer' => false,
-            'referral_method' => Service::REFERRAL_METHOD_NONE,
-            'referral_button_text' => null,
-            'referral_email' => null,
-            'referral_url' => null,
-            'criteria' => [
-                'age_group' => null,
-                'disability' => null,
-                'employment' => null,
-                'gender' => null,
-                'housing' => null,
-                'income' => null,
-                'language' => null,
-                'other' => null,
-            ],
-            'useful_infos' => [
-                [
-                    'title' => 'Did you know?',
-                    'description' => 'Lorem ipsum',
-                    'order' => 1,
-                ],
-            ],
-            'offerings' => [
-                [
-                    'offering' => 'Weekly club',
-                    'order' => 1,
-                ],
-            ],
-            'social_medias' => [
-                [
-                    'type' => SocialMedia::TYPE_INSTAGRAM,
-                    'url' => 'https://www.instagram.com/ayupdigital',
-                ],
-            ],
-            'gallery_items' => [],
-            'category_taxonomies' => [Taxonomy::category()->children()->firstOrFail()->id],
-        ];
-
-        $taxonomyPayload = [
             'eligibility_types' => [
-                'age_group' => [
-                    'custom' => $service->eligibility_age_group_custom,
-                    'taxonomies' => [],
-                ],
-                'disability' => [
-                    'custom' => $service->eligibility_disability_custom,
-                    'taxonomies' => [],
-                ],
-                'ethnicity' => [
-                    'custom' => $service->eligibility_ethnicity_custom,
-                    'taxonomies' => [],
-                ],
-                'employment' => [
-                    'custom' => $service->eligibility_employment_custom,
-                    'taxonomies' => [], // @TODO: cannot expect any taxonomies attached until we have them defined for this category
-                ],
-                'gender' => [
-                    'custom' => $service->eligibility_gender_custom,
-                    'taxonomies' => [],
-                ],
-                'housing' => [
-                    'custom' => $service->eligibility_housing_custom,
-                    'taxonomies' => [], // @TODO: cannot expect any taxonomies attached until we have them defined for this category
-                ],
-                'income' => [
-                    'custom' => $service->eligibility_income_custom,
-                    'taxonomies' => [],
-                ],
-                'language' => [
-                    'custom' => $service->eligibility_language_custom,
-                    'taxonomies' => [],
-                ],
-                'other' => [
-                    'custom' => $service->eligibility_other_custom,
-                ],
+                'taxonomies' => [],
             ],
         ];
-
-        $payload = array_merge($taxonomyPayload, $payload);
-
         $response = $this->json('PUT', "/core/v1/services/{$service->id}", $payload);
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonFragment($taxonomyPayload);
+        $response->assertJsonFragment($payload);
     }
 
     public function test_delete_eligibility_taxonomy_ids_and_custom_fields_from_service()
     {
-        $organisation = factory(Organisation::class)->create();
         $user = factory(User::class)->create()->makeGlobalAdmin();
         $service = factory(Service::class)
             ->states(
@@ -5702,118 +5007,33 @@ class ServicesTest extends TestCase
                 'withUsefulInfo',
                 'withSocialMedia',
                 'withCustomEligibilities',
-                'withEligibilityTaxonomies'
+                'withEligibilityTaxonomies',
+                'withCategoryTaxonomies'
             )
             ->create();
-
-        $service->syncTaxonomyRelationships(collect([Taxonomy::category()->children()->firstOrFail()]));
-
-
-        $service->save();
 
         Passport::actingAs($user);
 
         $payload = [
-            'organisation_id' => $organisation->id,
-            'slug' => 'test-service',
-            'name' => 'Test Service',
-            'type' => Service::TYPE_SERVICE,
-            'status' => Service::STATUS_ACTIVE,
-            'intro' => 'This is a test intro',
-            'description' => 'Lorem ipsum',
-            'wait_time' => null,
-            'is_free' => true,
-            'fees_text' => null,
-            'fees_url' => null,
-            'testimonial' => null,
-            'video_embed' => null,
-            'url' => $this->faker->url,
-            'contact_name' => $this->faker->name,
-            'contact_phone' => random_uk_phone(),
-            'contact_email' => $this->faker->safeEmail,
-            'show_referral_disclaimer' => false,
-            'referral_method' => Service::REFERRAL_METHOD_NONE,
-            'referral_button_text' => null,
-            'referral_email' => null,
-            'referral_url' => null,
-            'criteria' => [
-                'age_group' => null,
-                'disability' => null,
-                'employment' => null,
-                'gender' => null,
-                'housing' => null,
-                'income' => null,
-                'language' => null,
-                'other' => null,
-            ],
-            'useful_infos' => [
-                [
-                    'title' => 'Did you know?',
-                    'description' => 'Lorem ipsum',
-                    'order' => 1,
-                ],
-            ],
-            'offerings' => [
-                [
-                    'offering' => 'Weekly club',
-                    'order' => 1,
-                ],
-            ],
-            'social_medias' => [
-                [
-                    'type' => SocialMedia::TYPE_INSTAGRAM,
-                    'url' => 'https://www.instagram.com/ayupdigital',
-                ],
-            ],
-            'gallery_items' => [],
-            'category_taxonomies' => [Taxonomy::category()->children()->firstOrFail()->id],
-        ];
-
-        $taxonomyPayload = [
             'eligibility_types' => [
-                'age_group' => [
-                    'custom' => null,
-                    'taxonomies' => [],
-                ],
-                'disability' => [
-                    'custom' => null,
-                    'taxonomies' => [],
-                ],
-                'ethnicity' => [
-                    'custom' => null,
-                    'taxonomies' => [],
-                ],
-                'employment' => [
-                    'custom' => null,
-                    'taxonomies' => [], // @TODO: cannot expect any taxonomies attached until we have them defined for this category
-                ],
-                'gender' => [
-                    'custom' => null,
-                    'taxonomies' => [],
-                ],
-                'housing' => [
-                    'custom' => null,
-                    'taxonomies' => [], // @TODO: cannot expect any taxonomies attached until we have them defined for this category
-                ],
-                'income' => [
-                    'custom' => null,
-                    'taxonomies' => [],
-                ],
-                'language' => [
-                    'custom' => null,
-                    'taxonomies' => [],
-                ],
-                'other' => [
-                    'custom' => null,
+                'taxonomies' => [],
+                'custom' => [
+                    'age_group' => null,
+                    'disability' => null,
+                    'employment' => null,
+                    'ethnicity' => null,
+                    'gender' => null,
+                    'housing' => null,
+                    'income' => null,
+                    'language' => null,
+                    'other' => null,
                 ],
             ],
         ];
-
-        $payload = array_merge($taxonomyPayload, $payload);
 
         $response = $this->json('PUT', "/core/v1/services/{$service->id}", $payload);
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonFragment($taxonomyPayload);
+        $response->assertJsonFragment($payload);
     }
 
     public function test_eligibility_taxonomy_can_not_be_added_if_top_level_child_of_incorrect_parent_taxonomy()
@@ -5825,23 +5045,17 @@ class ServicesTest extends TestCase
                 'withUsefulInfo',
                 'withSocialMedia',
                 'withCustomEligibilities',
-                'withEligibilityTaxonomies'
+                'withEligibilityTaxonomies',
+                'withCategoryTaxonomies'
             )
             ->create();
-
-        $service->syncTaxonomyRelationships(collect([Taxonomy::category()->children()->firstOrFail()]));
-
-
-        $service->save();
 
         // When I try to associate a taxonomy that is NOT a child of Service Eligibility
         $incorrectTaxonomyId = Taxonomy::category()->children->random()->id;
 
         $payload = [
             'eligibility_types' => [
-                'age_group' => [
-                    'taxonomies' => [$incorrectTaxonomyId],
-                ],
+                'taxonomies' => [$incorrectTaxonomyId],
             ],
         ];
 
