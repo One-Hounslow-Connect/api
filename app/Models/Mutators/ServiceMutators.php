@@ -2,10 +2,7 @@
 
 namespace App\Models\Mutators;
 
-use App\Models\Service;
-use App\Models\ServiceEligibility;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
 
 trait ServiceMutators
 {

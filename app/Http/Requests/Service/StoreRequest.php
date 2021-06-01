@@ -9,7 +9,6 @@ use App\Models\Service;
 use App\Models\SocialMedia;
 use App\Models\Taxonomy;
 use App\Models\UserRole;
-use App\Rules\CanUpdateServiceEligibilityTaxonomyRelationships;
 use App\Rules\FileIsMimeType;
 use App\Rules\FileIsPendingAssignment;
 use App\Rules\InOrder;

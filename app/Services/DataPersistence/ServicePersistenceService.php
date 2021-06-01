@@ -5,8 +5,6 @@ namespace App\Services\DataPersistence;
 use App\Models\File;
 use App\Models\Model;
 use App\Models\Service;
-use App\Models\ServiceEligibility;
-use App\Models\ServiceTaxonomy;
 use App\Models\Taxonomy;
 use App\Models\UpdateRequest as UpdateRequestModel;
 use App\Support\MissingValue;
