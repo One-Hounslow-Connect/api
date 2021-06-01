@@ -74,7 +74,6 @@ class ServicePersistenceService implements DataPersistenceService
                 'social_medias' => $request->has('social_medias') ? [] : new MissingValue(),
                 'gallery_items' => $request->has('gallery_items') ? [] : new MissingValue(),
                 'category_taxonomies' => $request->missing('category_taxonomies'),
-                // @FIXME: this is checking the incorrect field(s) in request
                 'eligibility_types' => $request->filled('eligibility_types') ? $request->eligibility_types : new MissingValue(),
                 'logo_file_id' => $request->missing('logo_file_id'),
             ]);
@@ -257,21 +256,13 @@ class ServicePersistenceService implements DataPersistenceService
             $service->syncTaxonomyRelationships($taxonomies);
 
             // Create the service eligibility taxonomy records and custom fields
-            $eligibilityIds = [];
-
-            if ($request->filled('eligibility_types')) {
-                foreach ($request->eligibility_types as $fieldName => $eligibilityData) {
-                    $service->{'eligibility_' . $fieldName . '_custom'} = $eligibilityData['custom'];
-                    // array key check cover scenarios like "other" where there is no taxonomy
-                    if (array_key_exists('taxonomies', $eligibilityData)) {
-                        foreach ($eligibilityData['taxonomies'] as $taxonomyId) {
-                            $eligibilityIds[] = $taxonomyId;
-                        }
-                    }
-                }
-            }
-            $eligibilityTypes = Taxonomy::whereIn('id', $eligibilityIds)->get();
+            $eligibilityTypes = Taxonomy::whereIn('id', $request->input('eligibility_types.taxonomies', []))->get();
             $service->syncEligibilityRelationships($eligibilityTypes);
+
+            foreach ($request->input('eligibility_types.custom', []) as $customEligibilityType => $value) {
+                $fieldName = 'eligibility_' . $customEligibilityType . '_custom';
+                $service->{$fieldName} = $value;
+            }
 
             return $service;
         });
