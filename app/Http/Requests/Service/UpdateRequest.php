@@ -291,9 +291,7 @@ class UpdateRequest extends FormRequest
 
             'eligibility_types.custom.age_group' => ['nullable', 'string', 'min:1', 'max:255'],
             'eligibility_types.custom.disability' => ['nullable', 'string', 'min:1', 'max:255'],
-            'eligibility_types.custom.employment' => ['nullable', 'string', 'min:1', 'max:255'],
             'eligibility_types.custom.gender' => ['nullable', 'string', 'min:1', 'max:255'],
-            'eligibility_types.custom.housing' => ['nullable', 'string', 'min:1', 'max:255'],
             'eligibility_types.custom.income' => ['nullable', 'string', 'min:1', 'max:255'],
             'eligibility_types.custom.language' => ['nullable', 'string', 'min:1', 'max:255'],
             'eligibility_types.custom.ethnicity' => ['nullable', 'string', 'min:1', 'max:255'],

@@ -12,10 +12,8 @@ trait ServiceMutators
             'custom' => [
                 'age_group' => $this->eligibility_age_group_custom,
                 'disability' => $this->eligibility_disability_custom,
-                'employment' => $this->eligibility_employment_custom,
                 'ethnicity' => $this->eligibility_ethnicity_custom,
                 'gender' => $this->eligibility_gender_custom,
-                'housing' => $this->eligibility_housing_custom,
                 'income' => $this->eligibility_income_custom,
                 'language' => $this->eligibility_language_custom,
                 'other' => $this->eligibility_other_custom,

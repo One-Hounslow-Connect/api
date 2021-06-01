@@ -70,9 +70,7 @@ $factory->afterCreatingState(Service::class, 'withSocialMedia', function (Servic
 $factory->afterCreatingState(Service::class, 'withCustomEligibilities', function (Service $service, Faker $faker) {
     $service->eligibility_age_group_custom = 'custom age group';
     $service->eligibility_disability_custom = 'custom disability';
-    $service->eligibility_employment_custom = 'custom employment';
     $service->eligibility_gender_custom = 'custom gender';
-    $service->eligibility_housing_custom = 'custom housing';
     $service->eligibility_income_custom = 'custom income';
     $service->eligibility_language_custom = 'custom language';
     $service->eligibility_ethnicity_custom = 'custom ethnicity';
