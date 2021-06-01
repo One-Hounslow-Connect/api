@@ -158,50 +158,19 @@ class UpdateServiceSchema extends Schema
                     ),
                 Schema::object('eligibility_types')
                     ->properties(
-                        Schema::object('age_group')
+                        Schema::object('custom')
                             ->properties(
-                                Schema::string('custom'),
-                                Schema::array('taxonomies')->items(Schema::string())
+                                Schema::string('age_group'),
+                                Schema::string('disability'),
+                                Schema::string('ethnicity'),
+                                Schema::string('gender'),
+                                Schema::string('income'),
+                                Schema::string('language'),
+                                Schema::string('other')
                             ),
-                        Schema::object('disability')
-                            ->properties(
-                                Schema::string('custom'),
-                                Schema::array('taxonomies')->items(Schema::string())
-                            ),
-                        Schema::object('employment')
-                            ->properties(
-                                Schema::string('custom'),
-                                Schema::array('taxonomies')->items(Schema::string())
-                            ),
-                        Schema::object('gender')
-                            ->properties(
-                                Schema::string('custom'),
-                                Schema::array('taxonomies')->items(Schema::string())
-                            ),
-                        Schema::object('housing')
-                            ->properties(
-                                Schema::string('custom'),
-                                Schema::array('taxonomies')->items(Schema::string())
-                            ),
-                        Schema::object('income')
-                            ->properties(
-                                Schema::string('custom'),
-                                Schema::array('taxonomies')->items(Schema::string())
-                            ),
-                        Schema::object('language')
-                            ->properties(
-                                Schema::string('custom'),
-                                Schema::array('taxonomies')->items(Schema::string())
-                            ),
-                        Schema::object('ethnicity')
-                            ->properties(
-                                Schema::string('custom'),
-                                Schema::array('taxonomies')->items(Schema::string())
-                            ),
-                        Schema::object('other')
-                            ->properties(
-                                Schema::string('custom'),
-                                Schema::array('taxonomies')->items(Schema::string())
+                        Schema::array('taxonomies')
+                            ->items(
+                                Schema::string()
                             )
                     )
             );
