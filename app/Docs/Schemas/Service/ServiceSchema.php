@@ -113,13 +113,13 @@ class ServiceSchema extends Schema
                     ->properties(
                         Schema::object('custom')
                             ->properties(
-                                Schema::string('age_group'),
-                                Schema::string('disability'),
-                                Schema::string('ethnicity'),
-                                Schema::string('gender'),
-                                Schema::string('income'),
-                                Schema::string('language'),
-                                Schema::string('other')
+                                Schema::string('age_group')->nullable(),
+                                Schema::string('disability')->nullable(),
+                                Schema::string('ethnicity')->nullable(),
+                                Schema::string('gender')->nullable(),
+                                Schema::string('income')->nullable(),
+                                Schema::string('language')->nullable(),
+                                Schema::string('other')->nullable()
                             ),
                         Schema::array('taxonomies')
                             ->items(
