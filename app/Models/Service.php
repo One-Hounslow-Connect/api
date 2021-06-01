@@ -243,6 +243,15 @@ class Service extends Model implements AppliesUpdateRequests, Notifiable, HasTax
             'logo_file_id' => Arr::get($data, 'logo_file_id', $this->logo_file_id),
             // This must always be updated regardless of the fields changed.
             'last_modified_at' => Date::now(),
+            'eligibility_age_group_custom' => Arr::get($data, 'eligibility_types.custom.age_group', $this->eligibility_age_group_custom),
+            'eligibility_disability_custom' => Arr::get($data, 'eligibility_types.custom.disability', $this->eligibility_disability_custom),
+            'eligibility_employment_custom' => Arr::get($data, 'eligibility_types.custom.employment', $this->eligibility_employment_custom),
+            'eligibility_gender_custom' => Arr::get($data, 'eligibility_types.custom.gender', $this->eligibility_gender_custom),
+            'eligibility_housing_custom' => Arr::get($data, 'eligibility_types.custom.housing', $this->eligibility_housing_custom),
+            'eligibility_income_custom' => Arr::get($data, 'eligibility_types.custom.income', $this->eligibility_income_custom),
+            'eligibility_language_custom' => Arr::get($data, 'eligibility_types.custom.language', $this->eligibility_language_custom),
+            'eligibility_ethnicity_custom' => Arr::get($data, 'eligibility_types.custom.ethnicity', $this->eligibility_ethnicity_custom),
+            'eligibility_other_custom' => Arr::get($data, 'eligibility_types.custom.other', $this->eligibility_other_custom),
         ]);
 
         // Update the service criterion record.
@@ -324,11 +333,6 @@ class Service extends Model implements AppliesUpdateRequests, Notifiable, HasTax
 
         if (array_key_exists('eligibility_types', $data)) {
             // Update the custom eligibility fields.
-            if (array_key_exists('custom', $data['eligibility_types'])) {
-                foreach ($data['eligibility_types']['custom'] as $fieldName => $value) {
-                    $this->{'eligibility_' . $fieldName . '_custom'} = $value;
-                }
-            }
             if (array_key_exists('taxonomies', $data['eligibility_types'])) {
                 $eligibilityTaxonomies = Taxonomy::whereIn('id', $data['eligibility_types']['taxonomies'])->get();
                 $this->syncEligibilityRelationships($eligibilityTaxonomies);
