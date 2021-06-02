@@ -17,7 +17,7 @@ trait UpdateServiceEligibilityTaxonomyRelationships
         // Delete all existing taxonomy relationships
         $this->serviceEligibilities()->delete();
 
-        $taxonomyIds = $taxonomies->map(function($taxonomyModel) {
+        $taxonomyIds = $taxonomies->map(function ($taxonomyModel) {
             return ['taxonomy_id' => $taxonomyModel->id];
         })->toArray();
 
