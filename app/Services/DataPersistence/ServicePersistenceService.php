@@ -154,9 +154,7 @@ class ServicePersistenceService implements DataPersistenceService
     private function processAsNewEntity($request)
     {
         return DB::transaction(function () use ($request) {
-            // Create the service record.
-            /** @var \App\Models\Service $service */
-            $service = Service::create([
+            $initialCreateData = [
                 'organisation_id' => $request->organisation_id,
                 'slug' => $this->uniqueSlug($request->slug),
                 'name' => $request->name,
@@ -181,7 +179,16 @@ class ServicePersistenceService implements DataPersistenceService
                 'referral_url' => $request->referral_url,
                 'logo_file_id' => $request->logo_file_id,
                 'last_modified_at' => Date::now(),
-            ]);
+            ];
+
+            foreach ($request->input('eligibility_types.custom', []) as $customEligibilityType => $value) {
+                $fieldName = 'eligibility_' . $customEligibilityType . '_custom';
+                $initialCreateData[$fieldName] = $value;
+            }
+
+            // Create the service record.
+            /** @var \App\Models\Service $service */
+            $service = Service::create($initialCreateData);
 
             if ($request->filled('gallery_items')) {
                 foreach ($request->gallery_items as $galleryItem) {
@@ -256,11 +263,6 @@ class ServicePersistenceService implements DataPersistenceService
             // Create the service eligibility taxonomy records and custom fields
             $eligibilityTypes = Taxonomy::whereIn('id', $request->input('eligibility_types.taxonomies', []))->get();
             $service->syncEligibilityRelationships($eligibilityTypes);
-
-            foreach ($request->input('eligibility_types.custom', []) as $customEligibilityType => $value) {
-                $fieldName = 'eligibility_' . $customEligibilityType . '_custom';
-                $service->{$fieldName} = $value;
-            }
 
             return $service;
         });
