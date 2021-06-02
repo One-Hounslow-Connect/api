@@ -714,7 +714,6 @@ class UpdateRequestsTest extends TestCase
                     'other' => $service->serviceCriterion->other,
                 ],
                 'useful_infos' => [],
-                'social_medias' => [],
                 'category_taxonomies' => $service->taxonomies()->pluck('taxonomies.id')->toArray(),
             ],
         ]);

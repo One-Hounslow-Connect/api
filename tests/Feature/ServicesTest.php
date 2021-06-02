@@ -482,6 +482,7 @@ class ServicesTest extends TestCase
                     'order' => 1,
                 ],
             ],
+            // @TODO: do we reject social media field when global admin creates one?§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§
             'social_medias' => [
                 [
                     'type' => SocialMedia::TYPE_INSTAGRAM,
@@ -1017,7 +1018,13 @@ class ServicesTest extends TestCase
                 'updated_at' => Taxonomy::category()->children()->firstOrFail()->updated_at->format(CarbonImmutable::ISO8601),
             ],
         ];
+
+        // CH-181: There shouldn't be a social medias field in the response.
+        unset($responsePayload['social_medias']);
+        $response->assertJsonMissing($payload['social_medias']);
+
         $response->assertJsonFragment($responsePayload);
+
     }
 
     public function test_global_admin_can_create_one_accepting_referrals()
@@ -1072,12 +1079,6 @@ class ServicesTest extends TestCase
                 [
                     'offering' => 'Weekly club',
                     'order' => 1,
-                ],
-            ],
-            'social_medias' => [
-                [
-                    'type' => SocialMedia::TYPE_INSTAGRAM,
-                    'url' => 'https://www.instagram.com/ayupdigital',
                 ],
             ],
             'gallery_items' => [],
@@ -4282,5 +4283,41 @@ class ServicesTest extends TestCase
         $this->assertDatabaseHas('service_criteria', [
             'service_id' => $serviceId,
         ]);
+    }
+
+    public function test_update_request_change_release_is_rejected_if_social_medias_field_is_changed()
+    {
+        // Given a global admin is logged in
+        $globalAdmin = factory(User::class)->create()->makeGlobalAdmin();
+
+        // And a pending update request exists for a service with changes to the social medias
+        $service = factory(Service::class)->create([
+            'slug' => 'test-service',
+            'status' => Service::STATUS_ACTIVE,
+        ]);
+
+        $taxonomy = Taxonomy::category()->children()->firstOrFail();
+        $service->syncTaxonomyRelationships(new Collection([$taxonomy]));
+        $serviceAdmin = factory(User::class)->create()->makeServiceAdmin($service);
+
+        Passport::actingAs($serviceAdmin);
+        $payload = [
+            'social_medias' => [
+                [
+                    'type' => SocialMedia::TYPE_FACEBOOK,
+                    'url' => 'https://www.facebook.com/randomPerson',
+                ],
+            ],
+        ];
+
+        // Create the update request as service admin
+        $response = $this->json('PUT', "/core/v1/services/{$service->id}", $payload);
+        $updateRequestResponseData = $response->json();
+        Passport::actingAs($globalAdmin);
+
+        // Attempt to approve the update request
+        $updateRequestId = $updateRequestResponseData['id'];
+        $response = $this->json('PUT', "/core/v1/update-requests/{$updateRequestId}/approve");
+        $response->assertStatus(422);
     }
 }
