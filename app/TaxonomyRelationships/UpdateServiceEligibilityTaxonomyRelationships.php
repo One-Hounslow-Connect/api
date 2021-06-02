@@ -17,10 +17,11 @@ trait UpdateServiceEligibilityTaxonomyRelationships
         // Delete all existing taxonomy relationships
         $this->serviceEligibilities()->delete();
 
-        // Create a taxonomy relationship record for each taxonomy and their parents.
-        foreach ($taxonomies as $taxonomy) {
-            $this->createEligibilityRelationship($taxonomy);
-        }
+        $taxonomyIds = $taxonomies->map(function($taxonomyModel) {
+            return ['taxonomy_id' => $taxonomyModel->id];
+        })->toArray();
+
+        $this->serviceEligibilities()->createMany($taxonomyIds);
 
         return $this;
     }
