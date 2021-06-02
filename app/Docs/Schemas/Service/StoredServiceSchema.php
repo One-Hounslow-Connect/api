@@ -2,50 +2,27 @@
 
 namespace App\Docs\Schemas\Service;
 
+use App\Docs\Schemas\Taxonomy\Category\TaxonomyCategorySchema;
 use App\Models\Service;
 use GoldSpecDigital\ObjectOrientedOAS\Objects\BaseObject;
 use GoldSpecDigital\ObjectOrientedOAS\Objects\Schema;
 
-class StoreServiceSchema extends UpdateServiceSchema
+class StoredServiceSchema extends Schema
 {
     /**
      * @param string|null $objectId
-     * @throws \GoldSpecDigital\ObjectOrientedOAS\Exceptions\InvalidArgumentException
      * @return static
      */
     public static function create(string $objectId = null): BaseObject
     {
         return parent::create($objectId)
             ->type(static::TYPE_OBJECT)
-            ->required(
-                'name',
-                'slug',
-                'type',
-                'status',
-                'intro',
-                'description',
-                'wait_time',
-                'is_free',
-                'fees_text',
-                'fees_url',
-                'testimonial',
-                'video_embed',
-                'url',
-                'contact_name',
-                'contact_phone',
-                'contact_email',
-                'show_referral_disclaimer',
-                'referral_method',
-                'referral_button_text',
-                'referral_email',
-                'referral_url',
-                'criteria',
-                'useful_infos',
-                'offerings',
-                'gallery_items',
-                'category_taxonomies'
-            )
             ->properties(
+                Schema::string('id')
+                    ->format(static::FORMAT_UUID),
+                Schema::string('organisation_id')
+                    ->format(static::FORMAT_UUID),
+                Schema::boolean('has_logo'),
                 Schema::string('name'),
                 Schema::string('slug'),
                 Schema::string('type')
@@ -95,21 +72,7 @@ class StoreServiceSchema extends UpdateServiceSchema
                     ->nullable(),
                 Schema::string('referral_url')
                     ->nullable(),
-                Schema::string('logo_file_id')
-                    ->format(Schema::FORMAT_UUID)
-                    ->description('The ID of the file uploaded')
-                    ->nullable(),
                 Schema::object('criteria')
-                    ->required(
-                        'age_group',
-                        'disability',
-                        'employment',
-                        'gender',
-                        'housing',
-                        'income',
-                        'language',
-                        'other'
-                    )
                     ->properties(
                         Schema::string('age_group')
                             ->nullable(),
@@ -129,27 +92,21 @@ class StoreServiceSchema extends UpdateServiceSchema
                             ->nullable()
                     ),
                 Schema::array('useful_infos')
-                    ->items(
-                        UsefulInfoSchema::create()
-                            ->required('title', 'description', 'order')
-                    ),
+                    ->items(UsefulInfoSchema::create()),
                 Schema::array('offerings')
-                    ->items(
-                        OfferingSchema::create()
-                            ->required('offering', 'order')
-                    ),
+                    ->items(OfferingSchema::create()),
                 Schema::array('gallery_items')
-                    ->items(
-                        Schema::object()->properties(
-                            Schema::string('file_id')
-                                ->format(Schema::FORMAT_UUID)
-                        )
-                    ),
+                    ->items(GalleryItemSchema::create()),
                 Schema::array('category_taxonomies')
-                    ->items(
-                        Schema::string()
-                            ->format(Schema::FORMAT_UUID)
-                    )
+                    ->items(TaxonomyCategorySchema::create()),
+                Schema::string('last_modified_at')
+                    ->format(Schema::FORMAT_DATE_TIME),
+                Schema::string('created_at')
+                    ->format(Schema::FORMAT_DATE_TIME)
+                    ->nullable(),
+                Schema::string('updated_at')
+                    ->format(Schema::FORMAT_DATE_TIME)
+                    ->nullable()
             );
     }
 }

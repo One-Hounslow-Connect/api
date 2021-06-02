@@ -4,6 +4,7 @@ namespace App\Docs\Operations\Services;
 
 use App\Docs\Schemas\ResourceSchema;
 use App\Docs\Schemas\Service\ServiceSchema;
+use App\Docs\Schemas\Service\StoredServiceSchema;
 use App\Docs\Schemas\Service\StoreServiceSchema;
 use App\Docs\Tags\ServicesTag;
 use GoldSpecDigital\ObjectOrientedOAS\Objects\BaseObject;
@@ -38,12 +39,12 @@ class StoreServiceOperation extends Operation
             ->responses(
                 Response::created()->content(
                     MediaType::json()->schema(
-                        ResourceSchema::create(null, ServiceSchema::create())
+                        ResourceSchema::create(null, StoredServiceSchema::create())
                     )
                 ),
                 Response::ok()->content(
                     MediaType::json()->schema(
-                        ResourceSchema::create(null, ServiceSchema::create())
+                        ResourceSchema::create(null, StoredServiceSchema::create())
                     )
                 )
             );
