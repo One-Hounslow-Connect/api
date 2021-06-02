@@ -200,6 +200,14 @@ class Service extends Model implements AppliesUpdateRequests, Notifiable, HasTax
             new FileIsMimeType(File::MIME_TYPE_PNG),
         ];
 
+        $rules['social_medias'] = [
+            function($attribute, $value, $fail) {
+                if (!is_null($value)) {
+                    $fail($attribute . ' is no longer accepted.');
+                }
+            }
+        ];
+
         return ValidatorFacade::make($updateRequest->data, $rules);
     }
 
