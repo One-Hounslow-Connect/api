@@ -43,7 +43,7 @@ class ServiceResource extends JsonResource
             'criteria' => new ServiceCriterionResource($this),
             'useful_infos' => UsefulInfoResource::collection($this->usefulInfos),
             'offerings' => OfferingResource::collection($this->offerings),
-            'social_medias' => SocialMediaResource::collection($this->socialMedias),
+            'social_medias' => SocialMediaResource::collection($this->whenLoaded('socialMedias')),
             'gallery_items' => ServiceGalleryItemResource::collection($this->serviceGalleryItems),
             'category_taxonomies' => TaxonomyResource::collection($this->taxonomies),
             'last_modified_at' => $this->last_modified_at->format(CarbonImmutable::ISO8601),

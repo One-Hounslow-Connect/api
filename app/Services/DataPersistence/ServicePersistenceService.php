@@ -70,7 +70,6 @@ class ServicePersistenceService implements DataPersistenceService
                 : new MissingValue(),
                 'useful_infos' => $request->has('useful_infos') ? [] : new MissingValue(),
                 'offerings' => $request->has('offerings') ? [] : new MissingValue(),
-                'social_medias' => $request->has('social_medias') ? [] : new MissingValue(),
                 'gallery_items' => $request->has('gallery_items') ? [] : new MissingValue(),
                 'category_taxonomies' => $request->missing('category_taxonomies'),
                 'logo_file_id' => $request->missing('logo_file_id'),
