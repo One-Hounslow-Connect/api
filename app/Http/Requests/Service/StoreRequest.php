@@ -6,7 +6,6 @@ use App\Http\Requests\HasMissingValues;
 use App\Models\File;
 use App\Models\Role;
 use App\Models\Service;
-use App\Models\SocialMedia;
 use App\Models\Taxonomy;
 use App\Models\UserRole;
 use App\Rules\FileIsMimeType;
@@ -191,17 +190,6 @@ class StoreRequest extends FormRequest
             'offerings.*' => ['array'],
             'offerings.*.offering' => ['required_with:offerings.*', 'string', 'min:1', 'max:255'],
             'offerings.*.order' => ['required_with:offerings.*', 'integer', 'min:1', new InOrder(array_pluck_multi($this->offerings, 'order'))],
-
-            'social_medias' => ['present', 'array'],
-            'social_medias.*' => ['array'],
-            'social_medias.*.type' => ['required_with:social_medias.*', Rule::in([
-                SocialMedia::TYPE_TWITTER,
-                SocialMedia::TYPE_FACEBOOK,
-                SocialMedia::TYPE_INSTAGRAM,
-                SocialMedia::TYPE_YOUTUBE,
-                SocialMedia::TYPE_OTHER,
-            ])],
-            'social_medias.*.url' => ['required_with:social_medias.*', 'url', 'max:255'],
 
             'gallery_items' => ['present', 'array'],
             'gallery_items.*' => ['array'],

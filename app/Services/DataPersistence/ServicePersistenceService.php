@@ -240,14 +240,6 @@ class ServicePersistenceService implements DataPersistenceService
                 ]);
             }
 
-            // Create the social media records.
-            foreach ($request->social_medias as $socialMedia) {
-                $service->socialMedias()->create([
-                    'type' => $socialMedia['type'],
-                    'url' => $socialMedia['url'],
-                ]);
-            }
-
             // Create the gallery item records.
             foreach ($request->gallery_items as $galleryItem) {
                 $service->serviceGalleryItems()->create([

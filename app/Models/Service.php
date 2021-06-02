@@ -202,11 +202,11 @@ class Service extends Model implements AppliesUpdateRequests, Notifiable, HasTax
         ];
 
         $rules['social_medias'] = [
-            function($attribute, $value, $fail) {
+            function ($attribute, $value, $fail) {
                 if (!is_null($value)) {
                     $fail($attribute . ' is no longer accepted.');
                 }
-            }
+            },
         ];
 
         return ValidatorFacade::make($updateRequest->data, $rules);

@@ -6,7 +6,6 @@ use App\Http\Requests\HasMissingValues;
 use App\Models\File;
 use App\Models\Role;
 use App\Models\Service;
-use App\Models\SocialMedia;
 use App\Models\Taxonomy;
 use App\Models\UserRole;
 use App\Rules\CanUpdateCategoryTaxonomyRelationships;
@@ -246,20 +245,6 @@ class UpdateRequest extends FormRequest
                     'order'
                 )),
             ],
-
-            'social_medias' => ['array'],
-            'social_medias.*' => ['array'],
-            'social_medias.*.type' => [
-                'required_with:social_medias.*',
-                Rule::in([
-                    SocialMedia::TYPE_TWITTER,
-                    SocialMedia::TYPE_FACEBOOK,
-                    SocialMedia::TYPE_INSTAGRAM,
-                    SocialMedia::TYPE_YOUTUBE,
-                    SocialMedia::TYPE_OTHER,
-                ]),
-            ],
-            'social_medias.*.url' => ['required_with:social_medias.*', 'url', 'max:255'],
 
             'gallery_items' => ['array'],
             'gallery_items.*' => ['array'],

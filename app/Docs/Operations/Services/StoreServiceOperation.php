@@ -3,7 +3,6 @@
 namespace App\Docs\Operations\Services;
 
 use App\Docs\Schemas\ResourceSchema;
-use App\Docs\Schemas\Service\ServiceSchema;
 use App\Docs\Schemas\Service\StoredServiceSchema;
 use App\Docs\Schemas\Service\StoreServiceSchema;
 use App\Docs\Tags\ServicesTag;
