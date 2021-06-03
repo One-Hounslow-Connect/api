@@ -43,7 +43,6 @@ class ServiceResource extends JsonResource
             'criteria' => new ServiceCriterionResource($this->serviceCriterion),
             'useful_infos' => UsefulInfoResource::collection($this->usefulInfos),
             'offerings' => OfferingResource::collection($this->offerings),
-            'social_medias' => SocialMediaResource::collection($this->socialMedias),
             'gallery_items' => ServiceGalleryItemResource::collection($this->serviceGalleryItems),
             'category_taxonomies' => TaxonomyResource::collection($this->taxonomies),
             'eligibility_types' => new ServiceEligibilityResource($this->serviceEligibilities),
