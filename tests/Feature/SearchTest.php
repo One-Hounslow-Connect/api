@@ -602,4 +602,124 @@ class SearchTest extends TestCase implements UsesElasticsearch
         $this->assertEquals($service2->id, $content[1]['id']);
         $this->assertEquals($service3->id, $content[2]['id']);
     }
+
+    public function test_query_matches_eligibility_name()
+    {
+        // Given a service has an eligibility age group taxonomy of 12 - 15 years
+        $service = factory(Service::class)
+            ->create();
+
+        $parentTaxonomy = Taxonomy::serviceEligibility()
+            ->children()
+            ->where(['name' => 'Age Group'])
+            ->first();
+
+        $taxonomy = $parentTaxonomy->children()
+            ->where(['name' => '12 - 15 years'])
+            ->first();
+
+        $service->serviceEligibilities()->create(['taxonomy_id' => $taxonomy->id]);
+
+        // When a search is performed with the age group taxonomies of 12 - 15 years and 16 - 18 years
+        $response = $this->json('POST', '/core/v1/search', [
+            'eligibilities' => [
+                '12 - 15 years',
+                '16 - 18 years',
+            ],
+        ]);
+
+        $response->assertStatus(Response::HTTP_OK);
+
+        // Then the results should include the service
+        $response->assertJsonFragment(['id' => $service->id]);
+    }
+
+    public function test_no_results_when_query_does_not_match_eligibility_name()
+    {
+        // Given a service has an eligibility age group taxonomy of 12 - 15 years
+        $service = factory(Service::class)
+            ->create();
+
+        $parentTaxonomy = Taxonomy::serviceEligibility()
+            ->children()
+            ->where(['name' => 'Age Group'])
+            ->first();
+
+        $taxonomy = $parentTaxonomy->children()
+            ->where(['name' => '12 - 15 years'])
+            ->first();
+
+        $service->serviceEligibilities()->create(['taxonomy_id' => $taxonomy->id]);
+
+        // When a search is performed with the age group taxonomies of 16 - 18 years and 19 - 20 years
+        $response = $this->json('POST', '/core/v1/search', [
+            'eligibilities' => [
+                '16 - 18 years',
+                '19 - 20 years',
+            ],
+        ]);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonMissing(['id' => $service->id]);
+    }
+
+    public function test_service_returned_in_result_if_it_has_no_eligibility_taxonomies_related_to_parent_of_searched_eligibility()
+    {
+        $service = factory(Service::class)
+            ->create();
+
+        $response = $this->json('POST', '/core/v1/search', [
+            'eligibilities' => [
+                '16 - 18 years',
+                '19 - 20 years',
+            ],
+        ]);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonFragment(['id' => $service->id]);
+    }
+
+    public function test_service_ranks_higher_if_eligibility_match()
+    {
+        // Given a service called Alpha Ltd has no eligibility age group taxonomies specified
+        $serviceA = factory(Service::class)
+            ->create([
+                'name' => 'Alpha Ltd',
+            ]);
+
+        // And a service called Beta Ltd has an eligibility age group taxonomy of 12 - 15 years
+        $serviceB = factory(Service::class)
+            ->create([
+                'name' => 'Beta Ltd',
+            ]);
+
+        $parentTaxonomy = Taxonomy::serviceEligibility()
+            ->children()
+            ->where(['name' => 'Age Group'])
+            ->first();
+
+        $taxonomy = $parentTaxonomy->children()
+            ->where(['name' => '12 - 15 years'])
+            ->first();
+
+        $serviceB->serviceEligibilities()->create([
+            'taxonomy_id' => $taxonomy->id,
+        ]);
+        // When a search is performed with the age group taxonomies of 12 - 15 years and 16 - 18 years
+        $response = $this->json('POST', '/core/v1/search', [
+            'eligibilities' => [
+                '12 - 15 years',
+                '16 - 18 years',
+            ],
+        ]);
+
+        $data = $this->getResponseContent($response)['data'];
+
+        // Then the results should include both services
+        $this->assertEquals(2, count($data));
+
+        // And Beta Ltd should rank higher in the results
+        $this->assertEquals($serviceB->id, $data[0]['id']);
+        $this->assertEquals($serviceA->id, $data[1]['id']);
+    }
 }
