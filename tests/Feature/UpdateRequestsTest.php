@@ -887,6 +887,12 @@ class UpdateRequestsTest extends TestCase
                             'order' => 1,
                         ],
                     ],
+                    'social_medias' => [
+                        [
+                            'type' => SocialMedia::TYPE_INSTAGRAM,
+                            'url' => 'https://www.instagram.com/ayupdigital',
+                        ],
+                    ],
                 ],
             ],
         ]);
