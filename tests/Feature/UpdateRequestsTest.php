@@ -714,7 +714,6 @@ class UpdateRequestsTest extends TestCase
                     'other' => $service->serviceCriterion->other,
                 ],
                 'useful_infos' => [],
-                'social_medias' => [],
                 'category_taxonomies' => $service->taxonomies()->pluck('taxonomies.id')->toArray(),
             ],
         ]);
@@ -788,12 +787,6 @@ class UpdateRequestsTest extends TestCase
                 [
                     'offering' => 'Weekly club',
                     'order' => 1,
-                ],
-            ],
-            'social_medias' => [
-                [
-                    'type' => SocialMedia::TYPE_INSTAGRAM,
-                    'url' => 'https://www.instagram.com/ayupdigital',
                 ],
             ],
             'gallery_items' => [],
@@ -892,12 +885,6 @@ class UpdateRequestsTest extends TestCase
                         [
                             'offering' => 'Weekly club',
                             'order' => 1,
-                        ],
-                    ],
-                    'social_medias' => [
-                        [
-                            'type' => SocialMedia::TYPE_INSTAGRAM,
-                            'url' => 'https://www.instagram.com/ayupdigital',
                         ],
                     ],
                 ],
