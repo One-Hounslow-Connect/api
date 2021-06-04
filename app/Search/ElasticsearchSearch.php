@@ -279,6 +279,21 @@ class ElasticsearchSearch implements Search
         return $this;
     }
 
+    public function applyEligibilities(array $eligibilityNames): Search
+    {
+        $this->query['query']['bool']['filter']['bool']['should'] = [
+            'terms' => [
+                'service_eligibilities' => [],
+            ],
+        ];
+
+        foreach ($eligibilityNames as $eligibilityName) {
+            $this->query['query']['bool']['filter']['bool']['should']['terms']['service_eligibilities'][] = $eligibilityName;
+        }
+
+        return $this;
+    }
+
     /**
      * @param int $distance
      * @param string $units
