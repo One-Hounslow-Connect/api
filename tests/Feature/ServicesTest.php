@@ -1029,6 +1029,7 @@ class ServicesTest extends TestCase
     public function test_global_admin_can_create_one_accepting_referrals()
     {
         $organisation = factory(Organisation::class)->create();
+        $taxonomy = factory(Taxonomy::class)->create();
         $user = factory(User::class)->create()->makeGlobalAdmin();
 
         Passport::actingAs($user);
@@ -1086,22 +1087,21 @@ class ServicesTest extends TestCase
                 ],
             ],
             'gallery_items' => [],
-            'category_taxonomies' => [Taxonomy::category()->children()->firstOrFail()->id],
+            'category_taxonomies' => [$taxonomy->id],
         ];
         $response = $this->json('POST', '/core/v1/services', $payload);
 
         $response->assertStatus(Response::HTTP_CREATED);
         $responsePayload = $payload;
-        $responsePayload['category_taxonomies'] = [
-            [
-                'id' => Taxonomy::category()->children()->firstOrFail()->id,
-                'parent_id' => Taxonomy::category()->children()->firstOrFail()->parent_id,
-                'name' => Taxonomy::category()->children()->firstOrFail()->name,
-                'created_at' => Taxonomy::category()->children()->firstOrFail()->created_at->format(CarbonImmutable::ISO8601),
-                'updated_at' => Taxonomy::category()->children()->firstOrFail()->updated_at->format(CarbonImmutable::ISO8601),
-            ],
-        ];
+        unset($responsePayload['category_taxonomies']);
         $response->assertJsonFragment($responsePayload);
+        $response->assertJsonFragment([
+            'id' => $taxonomy->id,
+            'parent_id' => $taxonomy->parent_id,
+            'name' => $taxonomy->name,
+            'created_at' => $taxonomy->created_at->format(CarbonImmutable::ISO8601),
+            'updated_at' => $taxonomy->updated_at->format(CarbonImmutable::ISO8601),
+        ]);
     }
 
     public function test_global_admin_cannot_create_one_with_referral_disclaimer_showing()
@@ -1178,9 +1178,7 @@ class ServicesTest extends TestCase
 
         Passport::actingAs($user);
 
-        $taxonomy = Taxonomy::category()
-            ->children()
-            ->firstOrFail();
+        $taxonomy = factory(Taxonomy::class)->create();
 
         $payload = [
             'organisation_id' => $organisation->id,
@@ -1250,6 +1248,7 @@ class ServicesTest extends TestCase
         $organisation2 = factory(Organisation::class)->create();
         $organisation3 = factory(Organisation::class)->create();
         $organisation4 = factory(Organisation::class)->create();
+        $taxonomy = factory(Taxonomy::class)->create();
         $user = factory(User::class)->create()->makeGlobalAdmin();
 
         //Given that a global admin is logged in
@@ -1308,7 +1307,7 @@ class ServicesTest extends TestCase
                 ],
             ],
             'gallery_items' => [],
-            'category_taxonomies' => [Taxonomy::category()->children()->firstOrFail()->id],
+            'category_taxonomies' => [$taxonomy->id],
         ];
 
         $response = $this->json('POST', '/core/v1/services', $payload);
@@ -1387,6 +1386,7 @@ class ServicesTest extends TestCase
     public function test_guest_can_view_one()
     {
         $service = factory(Service::class)->create();
+        $taxonomy = factory(Taxonomy::class)->create();
         $service->usefulInfos()->create([
             'title' => 'Did You Know?',
             'description' => 'This is a test description',
@@ -1401,7 +1401,7 @@ class ServicesTest extends TestCase
             'url' => 'https://www.instagram.com/ayupdigital/',
         ]);
         $service->serviceTaxonomies()->create([
-            'taxonomy_id' => Taxonomy::category()->children()->first()->id,
+            'taxonomy_id' => $taxonomy->id,
         ]);
 
         $response = $this->json('GET', "/core/v1/services/{$service->id}");
@@ -1463,11 +1463,11 @@ class ServicesTest extends TestCase
             ],
             'category_taxonomies' => [
                 [
-                    'id' => Taxonomy::category()->children()->first()->id,
-                    'parent_id' => Taxonomy::category()->children()->first()->parent_id,
-                    'name' => Taxonomy::category()->children()->first()->name,
-                    'created_at' => Taxonomy::category()->children()->first()->created_at->format(CarbonImmutable::ISO8601),
-                    'updated_at' => Taxonomy::category()->children()->first()->updated_at->format(CarbonImmutable::ISO8601),
+                    'id' => $taxonomy->id,
+                    'parent_id' => $taxonomy->parent_id,
+                    'name' => $taxonomy->name,
+                    'created_at' => $taxonomy->created_at->format(CarbonImmutable::ISO8601),
+                    'updated_at' => $taxonomy->updated_at->format(CarbonImmutable::ISO8601),
                 ],
             ],
             'gallery_items' => [],
@@ -1479,6 +1479,7 @@ class ServicesTest extends TestCase
     public function test_guest_can_view_one_by_slug()
     {
         $service = factory(Service::class)->create();
+        $taxonomy = factory(Taxonomy::class)->create();
         $service->usefulInfos()->create([
             'title' => 'Did You Know?',
             'description' => 'This is a test description',
@@ -1493,7 +1494,7 @@ class ServicesTest extends TestCase
             'url' => 'https://www.instagram.com/ayupdigital/',
         ]);
         $service->serviceTaxonomies()->create([
-            'taxonomy_id' => Taxonomy::category()->children()->first()->id,
+            'taxonomy_id' => $taxonomy->id,
         ]);
 
         $response = $this->json('GET', "/core/v1/services/{$service->slug}");
@@ -1555,11 +1556,11 @@ class ServicesTest extends TestCase
             ],
             'category_taxonomies' => [
                 [
-                    'id' => Taxonomy::category()->children()->first()->id,
-                    'parent_id' => Taxonomy::category()->children()->first()->parent_id,
-                    'name' => Taxonomy::category()->children()->first()->name,
-                    'created_at' => Taxonomy::category()->children()->first()->created_at->format(CarbonImmutable::ISO8601),
-                    'updated_at' => Taxonomy::category()->children()->first()->updated_at->format(CarbonImmutable::ISO8601),
+                    'id' => $taxonomy->id,
+                    'parent_id' => $taxonomy->parent_id,
+                    'name' => $taxonomy->name,
+                    'created_at' => $taxonomy->created_at->format(CarbonImmutable::ISO8601),
+                    'updated_at' => $taxonomy->updated_at->format(CarbonImmutable::ISO8601),
                 ],
             ],
             'gallery_items' => [],
@@ -1587,7 +1588,7 @@ class ServicesTest extends TestCase
             'url' => 'https://www.instagram.com/ayupdigital/',
         ]);
         $service->serviceTaxonomies()->create([
-            'taxonomy_id' => Taxonomy::category()->children()->first()->id,
+            'taxonomy_id' => factory(Taxonomy::class)->create()->id,
         ]);
 
         $this->json('GET', "/core/v1/services/{$service->id}");
@@ -1629,7 +1630,7 @@ class ServicesTest extends TestCase
             'slug' => 'test-service',
             'status' => Service::STATUS_ACTIVE,
         ]);
-        $taxonomy = Taxonomy::category()->children()->firstOrFail();
+        $taxonomy = factory(Taxonomy::class)->create();
         $service->syncTaxonomyRelationships(new Collection([$taxonomy]));
         $user = factory(User::class)->create()->makeServiceAdmin($service);
 
@@ -1706,7 +1707,7 @@ class ServicesTest extends TestCase
             'slug' => 'test-service',
             'status' => Service::STATUS_ACTIVE,
         ]);
-        $taxonomy = Taxonomy::category()->children()->firstOrFail();
+        $taxonomy = factory(Taxonomy::class)->create();
         $service->syncTaxonomyRelationships(new Collection([$taxonomy]));
         $user = factory(User::class)->create()->makeServiceAdmin($service);
 
@@ -1783,7 +1784,7 @@ class ServicesTest extends TestCase
             'slug' => 'test-service',
             'status' => Service::STATUS_ACTIVE,
         ]);
-        $taxonomy = Taxonomy::category()->children()->firstOrFail();
+        $taxonomy = factory(Taxonomy::class)->create();
         $service->syncTaxonomyRelationships(new Collection([$taxonomy]));
         $user = factory(User::class)->create()->makeGlobalAdmin();
 
@@ -1861,7 +1862,7 @@ class ServicesTest extends TestCase
             'slug' => 'test-service',
             'status' => Service::STATUS_ACTIVE,
         ]);
-        $taxonomy = Taxonomy::category()->children()->firstOrFail();
+        $taxonomy = factory(Taxonomy::class)->create();
         $service->syncTaxonomyRelationships(new Collection([$taxonomy]));
         $user = factory(User::class)->create()->makeGlobalAdmin();
 
@@ -1935,7 +1936,7 @@ class ServicesTest extends TestCase
             'slug' => 'test-service',
             'status' => Service::STATUS_ACTIVE,
         ]);
-        $taxonomy = Taxonomy::category()->children()->firstOrFail();
+        $taxonomy = factory(Taxonomy::class)->create();
         $service->syncTaxonomyRelationships(new Collection([$taxonomy]));
         $user = factory(User::class)->create()->makeServiceAdmin($service);
 
@@ -2007,7 +2008,7 @@ class ServicesTest extends TestCase
     public function test_service_admin_cannot_update_taxonomies()
     {
         $service = factory(Service::class)->create();
-        $taxonomy = Taxonomy::category()->children()->firstOrFail();
+        $taxonomy = factory(Taxonomy::class)->create();
         $service->syncTaxonomyRelationships(new Collection([$taxonomy]));
         $user = factory(User::class)->create()->makeServiceAdmin($service);
 
@@ -2081,7 +2082,7 @@ class ServicesTest extends TestCase
     public function test_global_admin_can_update_taxonomies()
     {
         $service = factory(Service::class)->create();
-        $taxonomy = Taxonomy::category()->children()->firstOrFail();
+        $taxonomy = factory(Taxonomy::class)->create();
         $service->syncTaxonomyRelationships(new Collection([$taxonomy]));
         $user = factory(User::class)->create()->makeGlobalAdmin();
 
@@ -2158,7 +2159,7 @@ class ServicesTest extends TestCase
             'slug' => 'test-service',
             'status' => Service::STATUS_ACTIVE,
         ]);
-        $taxonomy = Taxonomy::category()->children()->firstOrFail();
+        $taxonomy = factory(Taxonomy::class)->create();
         $service->syncTaxonomyRelationships(new Collection([$taxonomy]));
         $user = factory(User::class)->create()->makeServiceAdmin($service);
 
@@ -2214,7 +2215,7 @@ class ServicesTest extends TestCase
             'slug' => 'test-service',
             'status' => Service::STATUS_ACTIVE,
         ]);
-        $taxonomy = Taxonomy::category()->children()->firstOrFail();
+        $taxonomy = factory(Taxonomy::class)->create();
         $service->syncTaxonomyRelationships(new Collection([$taxonomy]));
         $user = factory(User::class)->create()->makeServiceAdmin($service);
 
@@ -2270,7 +2271,7 @@ class ServicesTest extends TestCase
             'slug' => 'test-service',
             'status' => Service::STATUS_ACTIVE,
         ]);
-        $taxonomy = Taxonomy::category()->children()->firstOrFail();
+        $taxonomy = factory(Taxonomy::class)->create();
         $service->syncTaxonomyRelationships(new Collection([$taxonomy]));
         $user = factory(User::class)->create()->makeGlobalAdmin();
 
@@ -2326,7 +2327,7 @@ class ServicesTest extends TestCase
             'slug' => 'test-service',
             'status' => Service::STATUS_ACTIVE,
         ]);
-        $taxonomy = Taxonomy::category()->children()->firstOrFail();
+        $taxonomy = factory(Taxonomy::class)->create();
         $service->syncTaxonomyRelationships(new Collection([$taxonomy]));
         $user = factory(User::class)->create()->makeGlobalAdmin();
 
@@ -2382,7 +2383,7 @@ class ServicesTest extends TestCase
             'slug' => 'test-service',
             'status' => Service::STATUS_ACTIVE,
         ]);
-        $taxonomy = Taxonomy::category()->children()->firstOrFail();
+        $taxonomy = factory(Taxonomy::class)->create();
         $service->syncTaxonomyRelationships(new Collection([$taxonomy]));
         $user = factory(User::class)->create()->makeGlobalAdmin();
 
@@ -2440,7 +2441,7 @@ class ServicesTest extends TestCase
             'status' => Service::STATUS_ACTIVE,
             'referral_method' => Service::REFERRAL_METHOD_INTERNAL,
         ]);
-        $taxonomy = Taxonomy::category()->children()->firstOrFail();
+        $taxonomy = factory(Taxonomy::class)->create();
         $service->syncTaxonomyRelationships(new Collection([$taxonomy]));
         $user = factory(User::class)->create()->makeServiceAdmin($service);
 
@@ -2500,7 +2501,7 @@ class ServicesTest extends TestCase
             'referral_method' => Service::REFERRAL_METHOD_INTERNAL,
             'referral_email' => $this->faker->safeEmail,
         ]);
-        $taxonomy = Taxonomy::category()->children()->firstOrFail();
+        $taxonomy = factory(Taxonomy::class)->create();
         $service->syncTaxonomyRelationships(new Collection([$taxonomy]));
         $user = factory(User::class)->create()->makeGlobalAdmin();
 
@@ -2558,7 +2559,7 @@ class ServicesTest extends TestCase
             'referral_method' => Service::REFERRAL_METHOD_INTERNAL,
             'referral_email' => $this->faker->safeEmail,
         ]);
-        $taxonomy = Taxonomy::category()->children()->firstOrFail();
+        $taxonomy = factory(Taxonomy::class)->create();
         $service->syncTaxonomyRelationships(new Collection([$taxonomy]));
         $user = factory(User::class)->create()->makeGlobalAdmin();
         $image = Storage::disk('local')->get('/test-data/image.png');
@@ -2588,7 +2589,7 @@ class ServicesTest extends TestCase
             'slug' => 'test-service',
             'status' => Service::STATUS_ACTIVE,
         ]);
-        $taxonomy = Taxonomy::category()->children()->firstOrFail();
+        $taxonomy = factory(Taxonomy::class)->create();
         $service->syncTaxonomyRelationships(new Collection([$taxonomy]));
         $user = factory(User::class)->create()->makeGlobalAdmin();
 
@@ -2609,7 +2610,7 @@ class ServicesTest extends TestCase
             'slug' => 'test-service',
             'status' => Service::STATUS_ACTIVE,
         ]);
-        $taxonomy = Taxonomy::category()->children()->firstOrFail();
+        $taxonomy = factory(Taxonomy::class)->create();
         $service->syncTaxonomyRelationships(new Collection([$taxonomy]));
         $user = factory(User::class)->create()->makeServiceAdmin($service);
 
@@ -2664,7 +2665,7 @@ class ServicesTest extends TestCase
             'referral_method' => Service::REFERRAL_METHOD_EXTERNAL,
             'referral_url' => $this->faker->url,
         ]);
-        $taxonomy = Taxonomy::category()->children()->firstOrFail();
+        $taxonomy = factory(Taxonomy::class)->create();
         $service->syncTaxonomyRelationships(new Collection([$taxonomy]));
         $user = factory(User::class)->create()->makeGlobalAdmin();
 
@@ -2683,7 +2684,7 @@ class ServicesTest extends TestCase
             'slug' => 'test-service',
             'status' => Service::STATUS_ACTIVE,
         ]);
-        $taxonomy = Taxonomy::category()->children()->firstOrFail();
+        $taxonomy = factory(Taxonomy::class)->create();
         $service->syncTaxonomyRelationships(new Collection([$taxonomy]));
         $user = factory(User::class)->create()->makeOrganisationAdmin($service->organisation);
 
@@ -2702,7 +2703,7 @@ class ServicesTest extends TestCase
             'slug' => 'test-service',
             'status' => Service::STATUS_ACTIVE,
         ]);
-        $taxonomy = Taxonomy::category()->children()->firstOrFail();
+        $taxonomy = factory(Taxonomy::class)->create();
         $service->syncTaxonomyRelationships(new Collection([$taxonomy]));
         $user = factory(User::class)->create()->makeGlobalAdmin();
 
@@ -2723,7 +2724,7 @@ class ServicesTest extends TestCase
             'slug' => 'test-service',
             'status' => Service::STATUS_ACTIVE,
         ]);
-        $taxonomy = Taxonomy::category()->children()->firstOrFail();
+        $taxonomy = factory(Taxonomy::class)->create();
         $service->syncTaxonomyRelationships(new Collection([$taxonomy]));
         $user = factory(User::class)->create()->makeGlobalAdmin();
 
@@ -2748,7 +2749,7 @@ class ServicesTest extends TestCase
             'slug' => 'test-service',
             'status' => Service::STATUS_ACTIVE,
         ]);
-        $taxonomy = Taxonomy::category()->children()->firstOrFail();
+        $taxonomy = factory(Taxonomy::class)->create();
         $service->syncTaxonomyRelationships(new Collection([$taxonomy]));
         $user = factory(User::class)->create()->makeGlobalAdmin();
 
@@ -2937,9 +2938,9 @@ class ServicesTest extends TestCase
 
     public function test_guest_can_list_related()
     {
-        $taxonomyOne = Taxonomy::category()->children()->first()->children()->skip(0)->take(1)->first();
-        $taxonomyTwo = Taxonomy::category()->children()->first()->children()->skip(1)->take(1)->first();
-        $taxonomyThree = Taxonomy::category()->children()->first()->children()->skip(2)->take(1)->first();
+        $taxonomyOne = factory(Taxonomy::class)->create();
+        $taxonomyTwo = factory(Taxonomy::class)->create();
+        $taxonomyThree = factory(Taxonomy::class)->create();
 
         $service = factory(Service::class)->create();
         $service->serviceTaxonomies()->create(['taxonomy_id' => $taxonomyOne->id]);
@@ -3086,17 +3087,18 @@ class ServicesTest extends TestCase
     public function test_related_services_order_by_taxonomy_depth()
     {
         // Create taxonomies.
-        $taxonomyOneDepthOne = Taxonomy::category()->children()->create([
+        $taxonomy = factory(Taxonomy::class)->create();
+        $taxonomyOneDepthOne = $taxonomy->children()->create([
             'name' => 'Taxonomy One',
             'order' => 1,
             'depth' => 1,
         ]);
-        $taxonomyTwoDepthOne = Taxonomy::category()->children()->create([
+        $taxonomyTwoDepthOne = $taxonomy->children()->create([
             'name' => 'Taxonomy Two',
             'order' => 1,
             'depth' => 1,
         ]);
-        $taxonomyThreeDepthOne = Taxonomy::category()->children()->create([
+        $taxonomyThreeDepthOne = $taxonomy->children()->create([
             'name' => 'Taxonomy Three',
             'order' => 1,
             'depth' => 1,
@@ -4441,7 +4443,6 @@ class ServicesTest extends TestCase
 
         $taxonomyIds = $service->serviceEligibilities()->pluck('taxonomy_id')->all();
 
-
         $response = $this->get(route('core.v1.services.show', $service->id));
 
         $response->assertJsonFragment([
@@ -4473,9 +4474,7 @@ class ServicesTest extends TestCase
             )
             ->create();
 
-
         $taxonomyIds = $service->serviceEligibilities()->pluck('taxonomy_id')->all();
-
 
         $response = $this->get(route('core.v1.services.show', $service->id));
 
@@ -4796,7 +4795,7 @@ class ServicesTest extends TestCase
                 ->first()
                 ->id;
         })
-        ->toArray();
+            ->toArray();
 
         sort($taxonomyIds, SORT_STRING);
 
@@ -4814,7 +4813,7 @@ class ServicesTest extends TestCase
 
         $service->load('serviceEligibilities');
 
-        foreach($service->serviceEligibilities['taxonomies'] as $taxonomyId) {
+        foreach ($service->serviceEligibilities['taxonomies'] as $taxonomyId) {
             $this->assertTrue(in_array($taxonomyId, $taxonomyIds));
         }
     }
@@ -4849,7 +4848,6 @@ class ServicesTest extends TestCase
             ],
         ];
 
-
         $response = $this->json('PUT', "/core/v1/services/{$service->id}", $payload);
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonFragment($payload);
@@ -4883,7 +4881,7 @@ class ServicesTest extends TestCase
                 ->first()
                 ->id;
         })
-        ->toArray();
+            ->toArray();
 
         sort($taxonomyIds, SORT_STRING);
 
@@ -4911,7 +4909,7 @@ class ServicesTest extends TestCase
         $service = $service->fresh();
         $service->load('serviceEligibilities');
 
-        foreach($service->serviceEligibilities['taxonomies'] as $taxonomyId) {
+        foreach ($service->serviceEligibilities['taxonomies'] as $taxonomyId) {
             $this->assertTrue(in_array($taxonomyId, $taxonomyIds));
         }
 
@@ -4933,7 +4931,6 @@ class ServicesTest extends TestCase
                 'withCategoryTaxonomies'
             )
             ->create();
-
 
         Passport::actingAs($user);
 
