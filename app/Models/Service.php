@@ -126,6 +126,12 @@ class Service extends Model implements AppliesUpdateRequests, Notifiable, HasTax
                     'location' => ['type' => 'geo_point'],
                 ],
             ],
+            'service_eligibilities' => [
+                'type' => 'text',
+                'fields' => [
+                    'keyword' => ['type' => 'keyword'],
+                ],
+            ],
         ],
     ];
 
@@ -159,6 +165,10 @@ class Service extends Model implements AppliesUpdateRequests, Notifiable, HasTax
                             'lon' => $serviceLocation->location->lon,
                         ],
                     ];
+                })->toArray(),
+            'service_eligibilities' => collect($this->serviceEligibilities['taxonomies'])
+                ->map(function (string $taxonomyId) {
+                    return Taxonomy::find($taxonomyId)->name;
                 })->toArray(),
         ];
     }
