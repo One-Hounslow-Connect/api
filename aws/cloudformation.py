@@ -227,8 +227,7 @@ elasticsearch_resource = create_elasticsearch_resource(template, elasticsearch_d
                                                        elasticsearch_instance_count_parameter,
                                                        elasticsearch_instance_class_parameter,
                                                        elasticsearch_security_group_resource,
-                                                       subnets_parameter,
-                                                       elasticsearch_log_group_resource)
+                                                       subnets_parameter)
 
 # Outputs.
 create_database_name_output(template, database_username_variable)

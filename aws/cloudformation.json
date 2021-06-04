@@ -243,7 +243,7 @@
             "Type": "List<AWS::EC2::Subnet::Id>"
         },
         "Uuid": {
-            "Default": "04b1bd58-4859-4fb7-a970-005b5a463e8d",
+            "Default": "572f7017-9eb0-48e3-a9ce-8442ee59345c",
             "Description": "The unique ID for this stack.",
             "MaxLength": "36",
             "MinLength": "36",
@@ -861,17 +861,15 @@
                     ]
                 },
                 "CWLOGS_NAME": {
-                    "Ref": {
-                        "Fn::Join": [
-                            "-",
-                            [
-                                "search",
-                                {
-                                    "Ref": "Environment"
-                                }
-                            ]
+                    "Fn::Join": [
+                        "-",
+                        [
+                            "search",
+                            {
+                                "Ref": "Environment"
+                            }
                         ]
-                    }
+                    ]
                 },
                 "ServiceToken": {
                     "Fn::GetAtt": [
@@ -969,18 +967,16 @@
                     }
                 },
                 "FunctionName": {
-                    "Ref": {
-                        "Fn::Join": [
-                            "-",
-                            [
-                                "search",
-                                "lambda",
-                                {
-                                    "Ref": "Environment"
-                                }
-                            ]
+                    "Fn::Join": [
+                        "-",
+                        [
+                            "search",
+                            "lambda",
+                            {
+                                "Ref": "Environment"
+                            }
                         ]
-                    }
+                    ]
                 },
                 "Handler": "index.handler",
                 "Role": {

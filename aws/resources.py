@@ -838,7 +838,7 @@ def create_elasticsearch_lambda_log_group_policy_function_resource(template, lam
     return template.add_resource(
         awslambda.Function(
             "ElasticsearchLambdaLogGroupPolicyFunction",
-            FunctionName=Ref(lambda_function_name_variable),
+            FunctionName=lambda_function_name_variable,
             Code=awslambda.Code(ZipFile=Join("", [
                 "import urllib3",
                 "import json",
@@ -929,7 +929,7 @@ def create_elasticsearch_log_group_policy_custom_resource(template, elasticsearc
             'ElasticsearchCustomLogGroupPolicy',
             ServiceToken=GetAtt(
                 elasticsearch_lambda_log_group_policy_function_resource, 'Arn'),
-            CWLOGS_NAME=Ref(elasticsearch_log_group_name_variable),
+            CWLOGS_NAME=elasticsearch_log_group_name_variable,
             CWLOGS_ARN=GetAtt(elasticsearch_log_group_resource, 'Arn')
         )
     )
@@ -937,7 +937,7 @@ def create_elasticsearch_log_group_policy_custom_resource(template, elasticsearc
 
 def create_elasticsearch_resource(template, elasticsearch_domain_name_variable,
                                   elasticsearch_instance_count_parameter, elasticsearch_instance_class_parameter,
-                                  elasticsearch_security_group_resource, subnets_parameter, elasticsearch_log_group_resource):
+                                  elasticsearch_security_group_resource, subnets_parameter):
     return template.add_resource(
         elasticsearch.Domain(
             'Elasticsearch',
