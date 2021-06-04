@@ -620,6 +620,9 @@ class SearchTest extends TestCase implements UsesElasticsearch
 
         $service->serviceEligibilities()->create(['taxonomy_id' => $taxonomy->id]);
 
+        // Trigger a reindex
+        $service->save();
+
         // When a search is performed with the age group taxonomies of 12 - 15 years and 16 - 18 years
         $response = $this->json('POST', '/core/v1/search', [
             'eligibilities' => [
@@ -650,6 +653,9 @@ class SearchTest extends TestCase implements UsesElasticsearch
             ->first();
 
         $service->serviceEligibilities()->create(['taxonomy_id' => $taxonomy->id]);
+
+        // Trigger a reindex
+        $service->save();
 
         // When a search is performed with the age group taxonomies of 16 - 18 years and 19 - 20 years
         $response = $this->json('POST', '/core/v1/search', [
@@ -705,6 +711,11 @@ class SearchTest extends TestCase implements UsesElasticsearch
         $serviceB->serviceEligibilities()->create([
             'taxonomy_id' => $taxonomy->id,
         ]);
+
+        // Trigger a reindex
+        $serviceA->save();
+        $serviceB->save();
+
         // When a search is performed with the age group taxonomies of 12 - 15 years and 16 - 18 years
         $response = $this->json('POST', '/core/v1/search', [
             'eligibilities' => [
