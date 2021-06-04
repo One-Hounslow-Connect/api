@@ -19,8 +19,8 @@ class CustomLogGroupPolicy(AWSCustomObject):
     resource_type = "Custom::LogGroupPolicy"
     props = {
         "ServiceToken": (str, True),
-        CWLOGS_NAME: (str, True),
-        CWLOGS_ARN: (str, True)
+        "CWLOGS_NAME": (str, True),
+        "CWLOGS_ARN": (str, True)
     }
 
 
@@ -834,9 +834,10 @@ def create_elasticsearch_security_group_resource(template, api_security_group_re
     )
 
 
-def create_elasticsearch_lambda_log_group_policy_function_resource(template, lambda_function_name_variable,):
+def create_elasticsearch_lambda_log_group_policy_function_resource(template, lambda_function_name_variable, elasticsearch_lambda_execution_role_resource):
     return template.add_resource(
         awslambda.Function(
+            "ElasticsearchLambdaLogGroupPolicyFunction",
             FunctionName=Ref(lambda_function_name_variable),
             Code=awslambda.Code(ZipFile=Join("", [
                 "import urllib3",
@@ -916,7 +917,7 @@ def create_elasticsearch_lambda_log_group_policy_function_resource(template, lam
                 "            send(event, context, FAILED, responseData)",
             ])),
             Handler="index.handler",
-            Role=GetAtt(LambdaExecutionRole, 'Arn'),
+            Role=GetAtt(elasticsearch_lambda_execution_role_resource, 'Arn'),
             Runtime="python3.6"
         )
     )
@@ -925,7 +926,7 @@ def create_elasticsearch_lambda_log_group_policy_function_resource(template, lam
 def create_elasticsearch_log_group_policy_custom_resource(template, elasticsearch_lambda_log_group_policy_function_resource, elasticsearch_log_group_name_variable, elasticsearch_log_group_resource):
     return template.add_resource(
         CustomLogGroupPolicy(
-            'Elasticsearch Custom Log Group Policy',
+            'ElasticsearchCustomLogGroupPolicy',
             ServiceToken=GetAtt(
                 elasticsearch_lambda_log_group_policy_function_resource, 'Arn'),
             CWLOGS_NAME=Ref(elasticsearch_log_group_name_variable),
@@ -969,12 +970,6 @@ def create_elasticsearch_resource(template, elasticsearch_domain_name_variable,
                 SecurityGroupIds=[
                     GetAtt(elasticsearch_security_group_resource, 'GroupId')],
                 SubnetIds=[Select(0, Ref(subnets_parameter))]
-            ),
-            LogPublishingOptions={
-                "ES_APPLICATION_LOGS": {
-                    "CloudWatchLogsLogGroupArn": GetAtt(elasticsearch_log_group_resource, 'Arn'),
-                    "Enabled": True
-                }
-            }
+            )
         )
     )
