@@ -89,5 +89,5 @@ $factory->afterCreatingState(Service::class, 'withEligibilityTaxonomies', functi
 });
 
 $factory->afterCreatingState(Service::class, 'withCategoryTaxonomies', function (Service $service) {
-    $service->syncTaxonomyRelationships(collect([factory(Taxonomy::class)->create()->id]));
+    $service->syncTaxonomyRelationships(collect([factory(Taxonomy::class)->create()]));
 });

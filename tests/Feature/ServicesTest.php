@@ -1689,6 +1689,7 @@ class ServicesTest extends TestCase
             ],
             'category_taxonomies' => [
                 $taxonomy->id,
+                $taxonomy->parent_id,
             ],
             'eligibility_types' => [
                 'custom' => [],
@@ -1766,6 +1767,7 @@ class ServicesTest extends TestCase
             ],
             'category_taxonomies' => [
                 $taxonomy->id,
+                $taxonomy->parent_id,
             ],
             'eligibility_types' => [
                 'custom' => [],
@@ -1995,6 +1997,7 @@ class ServicesTest extends TestCase
             ],
             'category_taxonomies' => [
                 $taxonomy->id,
+                $taxonomy->parent_id,
             ],
         ]);
 
@@ -2484,6 +2487,7 @@ class ServicesTest extends TestCase
             'social_medias' => [],
             'category_taxonomies' => [
                 $taxonomy->id,
+                $taxonomy->parent_id,
             ],
         ];
         $response = $this->json('PUT', "/core/v1/services/{$service->id}", $payload);
