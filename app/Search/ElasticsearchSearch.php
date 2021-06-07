@@ -284,10 +284,11 @@ class ElasticsearchSearch implements Search
         $this->query['query']['bool']['filter']['bool']['must'] = [
             'bool' => [
                 'should' => [],
-            ]
+            ],
         ];
 
         foreach ($eligibilityNames as $eligibilityName) {
+            $this->query['query']['bool']['must']['bool']['should'][] = $this->matchPhrase('service_eligibilities', $eligibilityName);
             $this->query['query']['bool']['filter']['bool']['must']['bool']['should'][] = $this->matchPhrase('service_eligibilities', $eligibilityName);
         }
 
