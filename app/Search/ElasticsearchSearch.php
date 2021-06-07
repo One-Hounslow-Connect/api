@@ -281,14 +281,14 @@ class ElasticsearchSearch implements Search
 
     public function applyEligibilities(array $eligibilityNames): Search
     {
-        $this->query['query']['bool']['filter']['bool']['should'] = [
-            'terms' => [
-                'service_eligibilities' => [],
-            ],
+        $this->query['query']['bool']['filter']['bool']['must'] = [
+            'bool' => [
+                'should' => [],
+            ]
         ];
 
         foreach ($eligibilityNames as $eligibilityName) {
-            $this->query['query']['bool']['filter']['bool']['should']['terms']['service_eligibilities'][] = $eligibilityName;
+            $this->query['query']['bool']['filter']['bool']['must']['bool']['should'][] = $this->matchPhrase('service_eligibilities', $eligibilityName);
         }
 
         return $this;
