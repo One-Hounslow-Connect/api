@@ -166,10 +166,7 @@ class Service extends Model implements AppliesUpdateRequests, Notifiable, HasTax
                         ],
                     ];
                 })->toArray(),
-            'service_eligibilities' => collect($this->serviceEligibilities['taxonomies'])
-                ->map(function (string $taxonomyId) {
-                    return Taxonomy::find($taxonomyId)->name;
-                })->toArray(),
+            'service_eligibilities' => $this->generateSearchableEligibilities(),
         ];
     }
 
@@ -475,8 +472,8 @@ class Service extends Model implements AppliesUpdateRequests, Notifiable, HasTax
 
     /**
      * @param int|null $maxDimension
-     * @throws \Illuminate\Contracts\Filesystem\FileNotFoundException|\InvalidArgumentException
      * @return \App\Models\File|\Illuminate\Http\Response|\Illuminate\Contracts\Support\Responsable
+     * @throws \Illuminate\Contracts\Filesystem\FileNotFoundException|\InvalidArgumentException
      */
     public static function placeholderLogo(int $maxDimension = null)
     {
@@ -489,5 +486,32 @@ class Service extends Model implements AppliesUpdateRequests, Notifiable, HasTax
             Response::HTTP_OK,
             ['Content-Type' => File::MIME_TYPE_PNG]
         );
+    }
+
+    private function generateSearchableEligibilities()
+    {
+        $topLevelParentCategories = Taxonomy::serviceEligibility()
+            ->children()
+            ->get();
+
+        $attachedTaxonomies = $this->serviceEligibilities()->get();
+        $attachedTaxonomyNames = $attachedTaxonomies->map(function(ServiceEligibility $eligibility) {
+            return $eligibility->taxonomy->name;
+        });
+
+        $attachedParents = $attachedTaxonomies->map(function (ServiceEligibility $eligibility) {
+            return $eligibility->taxonomy->parent_id;
+        })
+        ->unique();
+
+        $searchableTaxonomies = $topLevelParentCategories->flatMap(function(Taxonomy $topLevelParent) use ($attachedParents) {
+            if (!in_array($topLevelParent->id, $attachedParents->toArray())) {
+                return $topLevelParent->children()->get()->map(function(Taxonomy $child) {
+                    return $child->name;
+                })->toArray();
+            }
+        });
+
+        return $searchableTaxonomies->merge($attachedTaxonomyNames)->toArray();
     }
 }

@@ -665,6 +665,8 @@ class SearchTest extends TestCase implements UsesElasticsearch
             ],
         ]);
 
+
+
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonMissing(['id' => $service->id]);
     }
@@ -673,6 +675,8 @@ class SearchTest extends TestCase implements UsesElasticsearch
     {
         $service = factory(Service::class)
             ->create();
+
+        $service->save();
 
         $response = $this->json('POST', '/core/v1/search', [
             'eligibilities' => [
@@ -704,12 +708,12 @@ class SearchTest extends TestCase implements UsesElasticsearch
             ->where(['name' => 'Age Group'])
             ->first();
 
-        $taxonomy = $parentTaxonomy->children()
+        $taxonomyB = $parentTaxonomy->children()
             ->where(['name' => '12 - 15 years'])
             ->first();
 
         $serviceB->serviceEligibilities()->create([
-            'taxonomy_id' => $taxonomy->id,
+            'taxonomy_id' => $taxonomyB->id,
         ]);
 
         // Trigger a reindex
@@ -723,6 +727,8 @@ class SearchTest extends TestCase implements UsesElasticsearch
                 '16 - 18 years',
             ],
         ]);
+
+
 
         $data = $this->getResponseContent($response)['data'];
 
