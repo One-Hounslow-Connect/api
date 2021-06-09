@@ -243,7 +243,7 @@
             "Type": "List<AWS::EC2::Subnet::Id>"
         },
         "Uuid": {
-            "Default": "572f7017-9eb0-48e3-a9ce-8442ee59345c",
+            "Default": "63c3de33-48b8-489f-b1a1-8a6f5c9f1385",
             "Description": "The unique ID for this stack.",
             "MaxLength": "36",
             "MinLength": "36",
@@ -881,6 +881,7 @@
             "Type": "Custom::LogGroupPolicy"
         },
         "ElasticsearchLambdaLogGroupPolicyFunction": {
+            "DependsOn": "SearchLambdaLogGroup",
             "Properties": {
                 "Code": {
                     "ZipFile": {
@@ -891,8 +892,8 @@
                                 "import json",
                                 "import boto3",
                                 "http = urllib3.PoolManager()",
-                                "SUCCESS = \"SUCCESS\"",
-                                "FAILED = \"FAILED\"",
+                                "SUCCESS = 'SUCCESS'",
+                                "FAILED = 'FAILED'",
                                 "def send(event, context, responseStatus, responseData, physicalResourceId=None, noEcho=False):",
                                 "    responseUrl = event['ResponseURL']",
                                 "    print(responseUrl)",
@@ -913,30 +914,30 @@
                                 "    }",
                                 "    try:",
                                 "        response = http.request('PUT',responseUrl,body=json_responseBody.encode('utf-8'),headers=headers)",
-                                "        print(\"Status code: \" + response.reason)",
+                                "        print('Status code: ' + response.reason)",
                                 "    except Exception as e:",
-                                "        print(\"send(..) failed executing requests.put(..): \" + str(e))",
+                                "        print('send(..) failed executing requests.put(..): ' + str(e))",
                                 "def handler(event, context):",
                                 "    logsgroup_policy_name=event['ResourceProperties']['CWLOGS_NAME']",
-                                "    cw_log_group_arn=event['ResourceProperties']['CWLOG_ARN']",
+                                "    cw_log_group_arn=event['ResourceProperties']['CWLOGS_ARN']",
                                 "    cwlogs = boto3.client('logs')",
                                 "    loggroup_policy={",
-                                "        \"Version\": \"2012-10-17\",",
-                                "        \"Statement\": [{",
-                                "        \"Sid\": \"\",",
-                                "        \"Effect\": \"Allow\",",
-                                "        \"Principal\": { \"Service\": \"es.amazonaws.com\"},",
-                                "        \"Action\":[",
-                                "        \"logs:PutLogEvents\",",
-                                "        \"logs:PutLogEventsBatch\",",
-                                "        \"logs:CreateLogStream\"",
+                                "        'Version': '2012-10-17',",
+                                "        'Statement': [{",
+                                "        'Sid': '',",
+                                "        'Effect': 'Allow',",
+                                "        'Principal': { 'Service': 'es.amazonaws.com'},",
+                                "        'Action':[",
+                                "        'logs:PutLogEvents',",
+                                "        'logs:PutLogEventsBatch',",
+                                "        'logs:CreateLogStream'",
                                 "            ],",
                                 "        'Resource': f'{cw_log_group_arn}'",
                                 "        }]",
                                 "        }",
                                 "    loggroup_policy = json.dumps(loggroup_policy)",
                                 "    if(event['RequestType'] == 'Delete'):",
-                                "        print(\"Request Type:\",event['RequestType'])",
+                                "        print('Request Type:',event['RequestType'])",
                                 "        cwlogs.delete_resource_policy(",
                                 "        policyName=logsgroup_policy_name",
                                 "        )",
@@ -949,7 +950,7 @@
                                 "            policyDocument = loggroup_policy",
                                 "            )",
                                 "            responseData={}",
-                                "            print(\"Sending response to custom resource\")",
+                                "            print('Sending response to custom resource')",
                                 "            send(event, context, SUCCESS, responseData)",
                                 "        except Exception as  e:",
                                 "            print('Failed to process:', e)",
@@ -957,7 +958,7 @@
                                 "    elif(event['RequestType'] == 'Update'):",
                                 "        try:",
                                 "            responseData={}",
-                                "            print(\"Update is not supported on this resource\")",
+                                "            print('Update is not supported on this resource')",
                                 "            send(event, context, SUCCESS, responseData)",
                                 "        except Exception as  e:",
                                 "            print('Failed to process:', e)",
@@ -1065,7 +1066,7 @@
                                     "Resource": [
                                         {
                                             "Fn::Sub": [
-                                                "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${LambdaFunctionName}:log-stream:*",
+                                                "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${LambdaFunctionName}",
                                                 {
                                                     "LambdaFunctionName": {
                                                         "Fn::Join": [
@@ -1084,7 +1085,7 @@
                                         },
                                         {
                                             "Fn::Sub": [
-                                                "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${LogGroupName}:log-stream:*",
+                                                "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:${LogGroupName}",
                                                 {
                                                     "LogGroupName": {
                                                         "Fn::Join": [

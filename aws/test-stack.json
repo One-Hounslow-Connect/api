@@ -1,0 +1,474 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Parameters": {
+        "ElasticsearchInstanceClass": {
+            "AllowedValues": [
+                "t2.small.elasticsearch",
+                "t2.medium.elasticsearch"
+            ],
+            "ConstraintDescription": "Must select a valid Elasticsearch instance type.",
+            "Default": "t2.small.elasticsearch",
+            "Description": "The Elasticseach instance class.",
+            "Type": "String"
+        },
+        "ElasticsearchInstanceCount": {
+            "ConstraintDescription": "Must be 1 or more.",
+            "Default": "1",
+            "Description": "The number of Elasticsearch nodes to run.",
+            "MinValue": "1",
+            "Type": "Number"
+        },
+        "Environment": {
+            "Description": "The environment this stack is for (e.g. production or staging).",
+            "MinLength": "1",
+            "Type": "String"
+        },
+        "Subnets": {
+            "Description": "The list of subnet IDs, for at least two Availability Zones in the region in your Virtual Private Cloud (VPC).",
+            "Type": "List<AWS::EC2::Subnet::Id>"
+        }
+    },
+    "Resources": {
+        "ApiSecurityGroup": {
+            "Properties": {
+                "GroupDescription": "For connecting to the API containers",
+                "SecurityGroupIngress": [
+                    {
+                        "Description": "Full access from the load balancer",
+                        "FromPort": "0",
+                        "IpProtocol": "tcp",
+                        "SourceSecurityGroupName": {
+                            "Ref": "LoadBalancerSecurityGroup"
+                        },
+                        "ToPort": "65535"
+                    }
+                ]
+            },
+            "Type": "AWS::EC2::SecurityGroup"
+        },
+        "Elasticsearch": {
+            "Properties": {
+                "AccessPolicies": {
+                    "Statement": [
+                        {
+                            "Action": "es:*",
+                            "Effect": "Allow",
+                            "Principal": {
+                                "AWS": "*"
+                            },
+                            "Resource": {
+                                "Fn::Sub": [
+                                    "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/${DomainName}/*",
+                                    {
+                                        "DomainName": {
+                                            "Fn::Join": [
+                                                "-",
+                                                [
+                                                    "search",
+                                                    {
+                                                        "Ref": "Environment"
+                                                    }
+                                                ]
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    "Version": "2012-10-17"
+                },
+                "DomainName": {
+                    "Fn::Join": [
+                        "-",
+                        [
+                            "search",
+                            {
+                                "Ref": "Environment"
+                            }
+                        ]
+                    ]
+                },
+                "EBSOptions": {
+                    "EBSEnabled": "true",
+                    "VolumeSize": 10,
+                    "VolumeType": "gp2"
+                },
+                "ElasticsearchClusterConfig": {
+                    "InstanceCount": {
+                        "Ref": "ElasticsearchInstanceCount"
+                    },
+                    "InstanceType": {
+                        "Ref": "ElasticsearchInstanceClass"
+                    }
+                },
+                "ElasticsearchVersion": "7.9",
+                "VPCOptions": {
+                    "SecurityGroupIds": [
+                        {
+                            "Fn::GetAtt": [
+                                "ElasticsearchSecurityGroup",
+                                "GroupId"
+                            ]
+                        }
+                    ],
+                    "SubnetIds": [
+                        {
+                            "Fn::Select": [
+                                0,
+                                {
+                                    "Ref": "Subnets"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "LogPublishingOptions": {
+                    "ES_APPLICATION_LOGS": {
+                        "CloudWatchLogsLogGroupArn": {
+                            "Fn::GetAtt": [
+                                "SearchLogGroup",
+                                "Arn"
+                            ]
+                        },
+                        "Enabled": true
+                    }
+                }
+            },
+            "Type": "AWS::Elasticsearch::Domain"
+        },
+        "ElasticsearchCustomLogGroupPolicy": {
+            "Properties": {
+                "CWLOGS_ARN": {
+                    "Fn::GetAtt": [
+                        "SearchLogGroup",
+                        "Arn"
+                    ]
+                },
+                "CWLOGS_NAME": {
+                    "Fn::Join": [
+                        "-",
+                        [
+                            "search",
+                            {
+                                "Ref": "Environment"
+                            }
+                        ]
+                    ]
+                },
+                "ServiceToken": {
+                    "Fn::GetAtt": [
+                        "ElasticsearchLambdaLogGroupPolicyFunction",
+                        "Arn"
+                    ]
+                }
+            },
+            "Type": "Custom::LogGroupPolicy"
+        },
+        "ElasticsearchLambdaLogGroupPolicyFunction": {
+            "DependsOn": "SearchLambdaLogGroup",
+            "Properties": {
+                "Code": {
+                    "ZipFile": {
+                        "Fn::Join": [
+                            "\n",
+                            [
+                                "import urllib3",
+                                "import json",
+                                "import boto3",
+                                "http = urllib3.PoolManager()",
+                                "SUCCESS = 'SUCCESS'",
+                                "FAILED = 'FAILED'",
+                                "def send(event, context, responseStatus, responseData, physicalResourceId=None, noEcho=False):",
+                                "    responseUrl = event['ResponseURL']",
+                                "    print(responseUrl)",
+                                "    responseBody = {}",
+                                "    responseBody['Status'] = responseStatus",
+                                "    responseBody['Reason'] = 'See the details in CloudWatch Log Stream: ' + context.log_stream_name",
+                                "    responseBody['PhysicalResourceId'] = physicalResourceId or context.log_stream_name",
+                                "    responseBody['StackId'] = event['StackId']",
+                                "    responseBody['RequestId'] = event['RequestId']",
+                                "    responseBody['LogicalResourceId'] = event['LogicalResourceId']",
+                                "    responseBody['NoEcho'] = noEcho",
+                                "    responseBody['Data'] = responseData",
+                                "    json_responseBody = json.dumps(responseBody)",
+                                "    print(\"Response body:\\n\" + json_responseBody)",
+                                "    headers = {",
+                                "        'content-type' : '',",
+                                "        'content-length' : str(len(json_responseBody))",
+                                "    }",
+                                "    try:",
+                                "        response = http.request('PUT',responseUrl,body=json_responseBody.encode('utf-8'),headers=headers)",
+                                "        print('Status code: ' + response.reason)",
+                                "    except Exception as e:",
+                                "        print('send(..) failed executing requests.put(..): ' + str(e))",
+                                "def handler(event, context):",
+                                "    logsgroup_policy_name=event['ResourceProperties']['CWLOGS_NAME']",
+                                "    cw_log_group_arn=event['ResourceProperties']['CWLOGS_ARN']",
+                                "    cwlogs = boto3.client('logs')",
+                                "    loggroup_policy={",
+                                "        'Version': '2012-10-17',",
+                                "        'Statement': [{",
+                                "        'Sid': '',",
+                                "        'Effect': 'Allow',",
+                                "        'Principal': { 'Service': 'es.amazonaws.com'},",
+                                "        'Action':[",
+                                "        'logs:PutLogEvents',",
+                                "        'logs:PutLogEventsBatch',",
+                                "        'logs:CreateLogStream'",
+                                "            ],",
+                                "        'Resource': f'{cw_log_group_arn}'",
+                                "        }]",
+                                "        }",
+                                "    loggroup_policy = json.dumps(loggroup_policy)",
+                                "    if(event['RequestType'] == 'Delete'):",
+                                "        print('Request Type:',event['RequestType'])",
+                                "        cwlogs.delete_resource_policy(",
+                                "        policyName=logsgroup_policy_name",
+                                "        )",
+                                "        responseData={}",
+                                "        send(event, context, SUCCESS, responseData)",
+                                "    elif(event['RequestType'] == 'Create'):",
+                                "        try:",
+                                "            cwlogs.put_resource_policy(",
+                                "            policyName = logsgroup_policy_name,",
+                                "            policyDocument = loggroup_policy",
+                                "            )",
+                                "            responseData={}",
+                                "            print('Sending response to custom resource')",
+                                "            send(event, context, SUCCESS, responseData)",
+                                "        except Exception as  e:",
+                                "            print('Failed to process:', e)",
+                                "            send(event, context, FAILED, responseData)",
+                                "    elif(event['RequestType'] == 'Update'):",
+                                "        try:",
+                                "            responseData={}",
+                                "            print('Update is not supported on this resource')",
+                                "            send(event, context, SUCCESS, responseData)",
+                                "        except Exception as  e:",
+                                "            print('Failed to process:', e)",
+                                "            send(event, context, FAILED, responseData)"
+                            ]
+                        ]
+                    }
+                },
+                "FunctionName": {
+                    "Fn::Join": [
+                        "-",
+                        [
+                            "search",
+                            "lambda",
+                            {
+                                "Ref": "Environment"
+                            }
+                        ]
+                    ]
+                },
+                "Handler": "index.handler",
+                "Role": {
+                    "Fn::GetAtt": [
+                        "LambdaExecutionRole",
+                        "Arn"
+                    ]
+                },
+                "Runtime": "python3.6"
+            },
+            "Type": "AWS::Lambda::Function"
+        },
+        "ElasticsearchSecurityGroup": {
+            "Properties": {
+                "GroupDescription": "For connecting to the Elasticsearch service",
+                "SecurityGroupIngress": [
+                    {
+                        "Description": "HTTPS access from the API containers",
+                        "FromPort": "443",
+                        "IpProtocol": "tcp",
+                        "SourceSecurityGroupName": {
+                            "Ref": "ApiSecurityGroup"
+                        },
+                        "ToPort": "443"
+                    }
+                ]
+            },
+            "Type": "AWS::EC2::SecurityGroup"
+        },
+        "LambdaExecutionRole": {
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Statement": [
+                        {
+                            "Action": "sts:AssumeRole",
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": "lambda.amazonaws.com"
+                            }
+                        }
+                    ],
+                    "Version": "2012-10-17"
+                },
+                "Policies": [
+                    {
+                        "PolicyDocument": {
+                            "Statement": [
+                                {
+                                    "Action": [
+                                        "logs:CreateLogStream",
+                                        "logs:PutLogEvents"
+                                    ],
+                                    "Effect": "Allow",
+                                    "Resource": {
+                                        "Fn::Sub": [
+                                            "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${LambdaFunctionName}:log-stream:*",
+                                            {
+                                                "LambdaFunctionName": {
+                                                    "Fn::Join": [
+                                                        "-",
+                                                        [
+                                                            "search",
+                                                            "lambda",
+                                                            {
+                                                                "Ref": "Environment"
+                                                            }
+                                                        ]
+                                                    ]
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        "PolicyName": "LambdaExecutionRoleCreateLogStreamPolicy"
+                    },
+                    {
+                        "PolicyDocument": {
+                            "Statement": [
+                                {
+                                    "Action": [
+                                        "logs:CreateLogGroup"
+                                    ],
+                                    "Effect": "Allow",
+                                    "Resource": [
+                                        {
+                                            "Fn::Sub": [
+                                                "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${LambdaFunctionName}",
+                                                {
+                                                    "LambdaFunctionName": {
+                                                        "Fn::Join": [
+                                                            "-",
+                                                            [
+                                                                "search",
+                                                                "lambda",
+                                                                {
+                                                                    "Ref": "Environment"
+                                                                }
+                                                            ]
+                                                        ]
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "Fn::Sub": [
+                                                "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:${LogGroupName}",
+                                                {
+                                                    "LogGroupName": {
+                                                        "Fn::Join": [
+                                                            "-",
+                                                            [
+                                                                "search",
+                                                                {
+                                                                    "Ref": "Environment"
+                                                                }
+                                                            ]
+                                                        ]
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "Action": [
+                                        "logs:PutResourcePolicy",
+                                        "logs:DeleteResourcePolicy"
+                                    ],
+                                    "Effect": "Allow",
+                                    "Resource": {
+                                        "Fn::Sub": "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*"
+                                    }
+                                }
+                            ]
+                        },
+                        "PolicyName": "LambdaExecutionRoleCreateLogGroupPolicy"
+                    }
+                ]
+            },
+            "Type": "AWS::IAM::Role"
+        },
+        "LoadBalancerSecurityGroup": {
+            "Properties": {
+                "GroupDescription": "For connecting to the API load balancer",
+                "SecurityGroupIngress": [
+                    {
+                        "CidrIp": "0.0.0.0/0",
+                        "Description": "HTTP access from the public",
+                        "FromPort": "80",
+                        "IpProtocol": "tcp",
+                        "ToPort": "80"
+                    },
+                    {
+                        "CidrIp": "0.0.0.0/0",
+                        "Description": "HTTPS access from the public",
+                        "FromPort": "443",
+                        "IpProtocol": "tcp",
+                        "ToPort": "443"
+                    }
+                ]
+            },
+            "Type": "AWS::EC2::SecurityGroup"
+        },
+        "SearchLambdaLogGroup": {
+            "Properties": {
+                "LogGroupName": {
+                    "Fn::Sub": [
+                        "/aws/lambda/${LambdaFunctionName}",
+                        {
+                            "LambdaFunctionName": {
+                                "Fn::Join": [
+                                    "-",
+                                    [
+                                        "search",
+                                        "lambda",
+                                        {
+                                            "Ref": "Environment"
+                                        }
+                                    ]
+                                ]
+                            }
+                        }
+                    ]
+                },
+                "RetentionInDays": 7
+            },
+            "Type": "AWS::Logs::LogGroup"
+        },
+        "SearchLogGroup": {
+            "Properties": {
+                "LogGroupName": {
+                    "Fn::Join": [
+                        "-",
+                        [
+                            "search",
+                            {
+                                "Ref": "Environment"
+                            }
+                        ]
+                    ]
+                },
+                "RetentionInDays": 7
+            },
+            "Type": "AWS::Logs::LogGroup"
+        }
+    }
+}
