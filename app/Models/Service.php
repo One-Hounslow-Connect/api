@@ -494,12 +494,12 @@ class Service extends Model implements AppliesUpdateRequests, Notifiable, HasTax
             ->children()
             ->get();
 
-        $attachedTaxonomies = $this->serviceEligibilities()->get();
-        $attachedTaxonomyNames = $attachedTaxonomies->map(function(ServiceEligibility $eligibility) {
+        $attachedEligibilities = $this->serviceEligibilities()->get();
+        $attachedEligibilityNames = $attachedEligibilities->map(function(ServiceEligibility $eligibility) {
             return $eligibility->taxonomy->name;
         });
 
-        $attachedParents = $attachedTaxonomies->map(function (ServiceEligibility $eligibility) {
+        $attachedParents = $attachedEligibilities->map(function (ServiceEligibility $eligibility) {
             return $eligibility->taxonomy->parent_id;
         })
         ->unique();
@@ -512,6 +512,6 @@ class Service extends Model implements AppliesUpdateRequests, Notifiable, HasTax
             }
         });
 
-        return $searchableTaxonomies->merge($attachedTaxonomyNames)->toArray();
+        return $searchableTaxonomies->merge($attachedEligibilityNames)->toArray();
     }
 }
