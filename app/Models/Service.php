@@ -392,39 +392,6 @@ class Service extends Model implements AppliesUpdateRequests, Notifiable, HasTax
     }
 
     /**
-     * @param \Illuminate\Database\Eloquent\Collection $taxonomies
-     * @return \App\Models\Service
-     */
-    // public function syncServiceTaxonomies(EloquentCollection $taxonomies): Service
-    // {
-    //     // Delete all existing service taxonomies.
-    //     $this->serviceTaxonomies()->delete();
-
-    //     // Create a service taxonomy record for each taxonomy and their parents.
-    //     foreach ($taxonomies as $taxonomy) {
-    //         $this->createServiceTaxonomy($taxonomy);
-    //     }
-
-    //     return $this;
-    // }
-
-    /**
-     * @param \App\Models\Taxonomy $taxonomy
-     * @return \App\Models\ServiceTaxonomy
-     */
-    // protected function createServiceTaxonomy(Taxonomy $taxonomy): ServiceTaxonomy
-    // {
-    //     $hasParent = $taxonomy->parent !== null;
-    //     $parentIsNotTopLevel = $taxonomy->parent->id !== Taxonomy::category()->id;
-
-    //     if ($hasParent && $parentIsNotTopLevel) {
-    //         $this->createServiceTaxonomy($taxonomy->parent);
-    //     }
-
-    //     return $this->serviceTaxonomies()->updateOrCreate(['taxonomy_id' => $taxonomy->id]);
-    // }
-
-    /**
      * @param \App\Emails\Email $email
      */
     public function sendEmailToContact(Email $email)
