@@ -127,10 +127,7 @@ class Service extends Model implements AppliesUpdateRequests, Notifiable, HasTax
                 ],
             ],
             'service_eligibilities' => [
-                'type' => 'text',
-                'fields' => [
-                    'keyword' => ['type' => 'keyword'],
-                ],
+                'type' => 'keyword',
             ],
         ],
     ];
@@ -166,7 +163,7 @@ class Service extends Model implements AppliesUpdateRequests, Notifiable, HasTax
                         ],
                     ];
                 })->toArray(),
-            'service_eligibilities' => $this->generateSearchableEligibilities(),
+            'service_eligibilities' => $this->eligibilities()->pluck('name')->toArray(),
         ];
     }
 
@@ -495,18 +492,18 @@ class Service extends Model implements AppliesUpdateRequests, Notifiable, HasTax
             ->get();
 
         $attachedEligibilities = $this->serviceEligibilities()->get();
-        $attachedEligibilityNames = $attachedEligibilities->map(function(ServiceEligibility $eligibility) {
+        $attachedEligibilityNames = $attachedEligibilities->map(function (ServiceEligibility $eligibility) {
             return $eligibility->taxonomy->name;
         });
 
         $attachedParents = $attachedEligibilities->map(function (ServiceEligibility $eligibility) {
             return $eligibility->taxonomy->parent_id;
         })
-        ->unique();
+            ->unique();
 
-        $searchableTaxonomies = $topLevelParentCategories->flatMap(function(Taxonomy $topLevelParent) use ($attachedParents) {
+        $searchableTaxonomies = $topLevelParentCategories->flatMap(function (Taxonomy $topLevelParent) use ($attachedParents) {
             if (!in_array($topLevelParent->id, $attachedParents->toArray())) {
-                return $topLevelParent->children()->get()->map(function(Taxonomy $child) {
+                return $topLevelParent->children()->get()->map(function (Taxonomy $child) {
                     return $child->name;
                 })->toArray();
             }

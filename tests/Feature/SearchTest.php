@@ -665,8 +665,6 @@ class SearchTest extends TestCase implements UsesElasticsearch
             ],
         ]);
 
-
-
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonMissing(['id' => $service->id]);
     }
@@ -728,9 +726,9 @@ class SearchTest extends TestCase implements UsesElasticsearch
             ],
         ]);
 
-
-
         $data = $this->getResponseContent($response)['data'];
+
+        // dump($data);
 
         // Then the results should include both services
         $this->assertEquals(2, count($data));

@@ -8,6 +8,7 @@ use App\Models\Collection as CollectionModel;
 use App\Models\SearchHistory;
 use App\Models\Service;
 use App\Models\ServiceLocation;
+use App\Models\Taxonomy;
 use App\Support\Coordinate;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -281,16 +282,35 @@ class ElasticsearchSearch implements Search
 
     public function applyEligibilities(array $eligibilityNames): Search
     {
-        $this->query['query']['bool']['filter']['bool']['must'] = [
-            'bool' => [
-                'should' => [],
+        $otherEligibilityNames = (new Taxonomy())->getAllServiceEligibilities()
+            ->pluck('name')
+            ->diff($eligibilityNames)
+            ->all();
+
+        // $this->query['query']['bool']['must_not'] = [
+        //     'exists' => [
+        //         'field' => 'service_eligibilities',
+        //     ],
+        // ];
+        // $this->query['query']['bool']['filter']['bool']['must'] = [
+        //     'bool' => [
+        //         'should' => [],
+        //     ],
+        // ];
+
+        // foreach ($eligibilityNames as $eligibilityName) {
+        $this->query['query']['bool']['should'][] = [
+            'terms' => [
+                'service_eligibilities' => $eligibilityNames,
             ],
         ];
-
-        foreach ($eligibilityNames as $eligibilityName) {
-            $this->query['query']['bool']['must']['bool']['should'][] = $this->matchPhrase('service_eligibilities', $eligibilityName);
-            $this->query['query']['bool']['filter']['bool']['must']['bool']['should'][] = $this->matchPhrase('service_eligibilities', $eligibilityName);
-        }
+        $this->query['query']['bool']['must_not'] = [
+            'terms' => [
+                'service_eligibilities' => $otherEligibilityNames,
+            ],
+        ];
+        //     // $this->query['query']['bool']['filter']['bool']['must']['bool']['should'][] = $this->matchPhrase('service_eligibilities', $eligibilityName);
+        // }
 
         return $this;
     }
