@@ -254,33 +254,6 @@ class Service extends Model implements AppliesUpdateRequests, Notifiable, HasTax
             'eligibility_other_custom' => Arr::get($data, 'eligibility_types.custom.other', $this->eligibility_other_custom),
         ]);
 
-        // Update the service criterion record.
-        if (array_key_exists('criteria.age_group', Arr::dot($data))) {
-            $this->serviceCriterion->age_group = Arr::get($data, 'criteria.age_group');
-        }
-        if (array_key_exists('criteria.disability', Arr::dot($data))) {
-            $this->serviceCriterion->disability = Arr::get($data, 'criteria.disability');
-        }
-        if (array_key_exists('criteria.employment', Arr::dot($data))) {
-            $this->serviceCriterion->employment = Arr::get($data, 'criteria.employment');
-        }
-        if (array_key_exists('criteria.gender', Arr::dot($data))) {
-            $this->serviceCriterion->gender = Arr::get($data, 'criteria.gender');
-        }
-        if (array_key_exists('criteria.housing', Arr::dot($data))) {
-            $this->serviceCriterion->housing = Arr::get($data, 'criteria.housing');
-        }
-        if (array_key_exists('criteria.income', Arr::dot($data))) {
-            $this->serviceCriterion->income = Arr::get($data, 'criteria.income');
-        }
-        if (array_key_exists('criteria.language', Arr::dot($data))) {
-            $this->serviceCriterion->language = Arr::get($data, 'criteria.language');
-        }
-        if (array_key_exists('criteria.other', Arr::dot($data))) {
-            $this->serviceCriterion->other = Arr::get($data, 'criteria.other');
-        }
-        $this->serviceCriterion->save();
-
         // Update the useful info records.
         if (array_key_exists('useful_infos', $data)) {
             $this->usefulInfos()->delete();
