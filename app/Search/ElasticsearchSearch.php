@@ -296,8 +296,8 @@ class ElasticsearchSearch implements Search
                                 'bool' => [
                                     'should' => [
 
-                                    ]
-                                ]
+                                    ],
+                                ],
                             ],
                             'filter' => [
                                 'bool' => [
@@ -309,8 +309,8 @@ class ElasticsearchSearch implements Search
                                         ],
                                     ],
                                 ],
-                            ]
-                        ]
+                            ],
+                        ],
                     ],
                     'negative' => [
                         'bool' => [
@@ -318,8 +318,8 @@ class ElasticsearchSearch implements Search
                                 'bool' => [
                                     'should' => [
 
-                                    ]
-                                ]
+                                    ],
+                                ],
                             ],
                             'filter' => [
                                 'bool' => [
@@ -331,12 +331,12 @@ class ElasticsearchSearch implements Search
                                         ],
                                     ],
                                 ],
-                            ]
-                        ]
+                            ],
+                        ],
                     ],
                     'negative_boost' => 0.5,
-                ]
-            ]
+                ],
+            ],
         ];
 
         foreach ($eligibilityNames as $eligibilityName) {
@@ -344,7 +344,7 @@ class ElasticsearchSearch implements Search
         }
 
         $this->query['query']['boosting']['positive']['bool']['must']['bool']['should'][] = [
-            'bool' => ['must_not' => [ 'exists' => ['field' => 'service_eligibilities']]],
+            'bool' => ['must_not' => ['exists' => ['field' => 'service_eligibilities']]],
         ];
 
         foreach ($otherEligibilityNames as $otherEligibilityName) {

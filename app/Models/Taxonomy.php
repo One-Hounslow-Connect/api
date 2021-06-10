@@ -101,11 +101,12 @@ class Taxonomy extends Model
     }
 
     /**
-     * Return an array of all Taxonomies below the Service Eligibility root
+     * Return an array of all Taxonomies below the Service Eligibility root.
      *
      * @param App\Models\Taxonomy $taxonomy
+     * @param mixed $allTaxonomies
      * @return Illuminate\Support\Collection
-     **/
+     */
     public function getAllServiceEligibilities($taxonomy = null, &$allTaxonomies = [])
     {
         if (!$taxonomy) {
