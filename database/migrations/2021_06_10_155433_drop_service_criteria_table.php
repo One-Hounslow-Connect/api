@@ -11,6 +11,10 @@ class DropServiceCriteriaTable extends Migration
      */
     public function up()
     {
+        Schema::table('service_criteria', function (Blueprint $table) {
+            $table->dropForeign(['service_id']);
+        });
+
         Schema::dropIfExists('service_criteria');
     }
 
