@@ -298,7 +298,6 @@ class ElasticsearchSearch implements Search
         //     ],
         // ];
 
-        // foreach ($eligibilityNames as $eligibilityName) {
         $this->query['query']['bool']['should'][] = [
             'terms' => [
                 'service_eligibilities' => $eligibilityNames,
@@ -309,8 +308,6 @@ class ElasticsearchSearch implements Search
                 'service_eligibilities' => $otherEligibilityNames,
             ],
         ];
-        //     // $this->query['query']['bool']['filter']['bool']['must']['bool']['should'][] = $this->matchPhrase('service_eligibilities', $eligibilityName);
-        // }
 
         return $this;
     }
