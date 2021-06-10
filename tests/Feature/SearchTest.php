@@ -793,11 +793,22 @@ class SearchTest extends TestCase implements UsesElasticsearch
 
         $serviceD->serviceEligibilities()->createMany($taxonomyIdsD->toArray());
 
+        // And a Service called Inactive Service that matches all of the eligiblity taxonomies but is inactive
+        $serviceIA = factory(Service::class)
+            ->create([
+                'name' => 'Inactive Service',
+                'status' => Service::STATUS_INACTIVE,
+            ]);
+
+        $serviceIA->serviceEligibilities()->createMany($taxonomyIdsD->toArray());
+
+
         // Trigger reindex in a different order to ensure it's not just sorted by updated_at or something
         $serviceB->save();
         $serviceA->save();
         $serviceD->save();
         $serviceC->save();
+        $serviceIA->save();
 
         $response = $this->json('POST', '/core/v1/search', [
             'eligibilities' => ['Bipolar disorder', 'Multiple sclerosis', 'Schizophrenia']
@@ -805,10 +816,16 @@ class SearchTest extends TestCase implements UsesElasticsearch
 
         $data = $this->getResponseContent($response)['data'];
 
+        // There should be 4 results
         $this->assertEquals(4, count($data));
+
+        // In this order
         $this->assertEquals($serviceD->id, $data[0]['id']);
         $this->assertEquals($serviceC->id, $data[1]['id']);
         $this->assertEquals($serviceB->id, $data[2]['id']);
         $this->assertEquals($serviceA->id, $data[3]['id']);
+
+        // And the inactive one is filtered out
+        $response->assertJsonMissing(['id' => $serviceIA->id]);
     }
 }
