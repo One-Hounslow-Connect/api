@@ -287,27 +287,53 @@ class ElasticsearchSearch implements Search
             ->diff($eligibilityNames)
             ->all();
 
-        // $this->query['query']['bool']['must_not'] = [
-        //     'exists' => [
-        //         'field' => 'service_eligibilities',
-        //     ],
-        // ];
-        // $this->query['query']['bool']['filter']['bool']['must'] = [
-        //     'bool' => [
-        //         'should' => [],
-        //     ],
-        // ];
-
         $this->query['query']['bool']['should'][] = [
             'terms' => [
                 'service_eligibilities' => $eligibilityNames,
             ],
         ];
-        $this->query['query']['bool']['must_not'] = [
-            'terms' => [
-                'service_eligibilities' => $otherEligibilityNames,
-            ],
+
+        $this->query = [
+            'query' => [
+                'boosting' => [
+                    'positive' => [
+                        'bool' => [
+                            'must' => [
+                                'bool' => [
+                                    'should' => [
+
+                                    ]
+                                ]
+                            ],
+                        ]
+                    ],
+                    'negative' => [
+                        'bool' => [
+                            'must' => [
+                                'bool' => [
+                                    'should' => [
+
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ],
+                    'negative_boost' => 0.5,
+                ]
+            ]
         ];
+
+        foreach ($eligibilityNames as $eligibilityName) {
+            $this->query['query']['boosting']['positive']['bool']['must']['bool']['should'][] = $this->matchPhrase('service_eligibilities', $eligibilityName);
+        }
+
+        $this->query['query']['boosting']['positive']['bool']['must']['bool']['should'][] = [
+            'bool' => ['must_not' => [ 'exists' => ['field' => 'service_eligibilities']]],
+        ];
+
+        foreach ($otherEligibilityNames as $otherEligibilityName) {
+            $this->query['query']['boosting']['negative']['bool']['must']['bool']['should'][] = $this->matchPhrase('service_eligibilities', $otherEligibilityName);
+        }
 
         return $this;
     }
