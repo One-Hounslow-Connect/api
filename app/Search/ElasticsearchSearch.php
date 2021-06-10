@@ -299,6 +299,17 @@ class ElasticsearchSearch implements Search
                                     ]
                                 ]
                             ],
+                            'filter' => [
+                                'bool' => [
+                                    'must' => [
+                                        [
+                                            'term' => [
+                                                'status' => Service::STATUS_ACTIVE,
+                                            ],
+                                        ],
+                                    ],
+                                ],
+                            ]
                         ]
                     ],
                     'negative' => [
@@ -309,6 +320,17 @@ class ElasticsearchSearch implements Search
 
                                     ]
                                 ]
+                            ],
+                            'filter' => [
+                                'bool' => [
+                                    'must' => [
+                                        [
+                                            'term' => [
+                                                'status' => Service::STATUS_ACTIVE,
+                                            ],
+                                        ],
+                                    ],
+                                ],
                             ]
                         ]
                     ],
