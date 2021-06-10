@@ -287,12 +287,6 @@ class ElasticsearchSearch implements Search
             ->diff($eligibilityNames)
             ->all();
 
-        $this->query['query']['bool']['should'][] = [
-            'terms' => [
-                'service_eligibilities' => $eligibilityNames,
-            ],
-        ];
-
         $this->query = [
             'query' => [
                 'boosting' => [
