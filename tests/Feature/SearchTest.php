@@ -728,13 +728,87 @@ class SearchTest extends TestCase implements UsesElasticsearch
 
         $data = $this->getResponseContent($response)['data'];
 
-        // dump($data);
-
         // Then the results should include both services
         $this->assertEquals(2, count($data));
 
         // And Beta Ltd should rank higher in the results
         $this->assertEquals($serviceB->id, $data[0]['id']);
         $this->assertEquals($serviceA->id, $data[1]['id']);
+    }
+
+    public function test_search_ranking_given_more_relevant_matches_versus_less_hits_or_no_eligibilities_attached()
+    {
+        $parentTaxonomy = Taxonomy::serviceEligibility()
+            ->children()
+            ->where(['name' => 'Disability'])
+            ->first();
+
+        // Given a service called Alpha Ltd has no eligibility taxonomies specified
+        $serviceA = factory(Service::class)
+            ->create([
+                'name' => 'Alpha Ltd',
+            ]);
+
+        // And a service called Bravo Ltd has matches one of the eligibility taxonomy terms that we will search for
+        $serviceB = factory(Service::class)
+            ->create([
+                'name' => 'Bravo Ltd',
+            ]);
+
+        $taxonomyIdsB = $parentTaxonomy
+            ->children()
+            ->where(['name' => 'Bipolar disorder'])
+            ->first()
+            ->id;
+
+        $serviceB->serviceEligibilities()->create(['taxonomy_id' => $taxonomyIdsB]);
+
+        // And a service called Charlie Ltd matches two of the eligibility taxonomy terms that we will search for
+        $serviceC = factory(Service::class)
+            ->create([
+                'name' => 'Charlie Ltd',
+            ]);
+
+        $taxonomyIdsC = $parentTaxonomy->children()
+            ->whereIn('name', ['Bipolar disorder', 'Multiple sclerosis'])
+            ->get()
+            ->map(function($taxonomy) {
+                return ['taxonomy_id' => $taxonomy->id];
+            });
+
+        $serviceC->serviceEligibilities()->createMany($taxonomyIdsC->toArray());
+
+        // And a service called Delta Ltd matches all of the eligibility taxonomy terms that we will search for
+        $serviceD = factory(Service::class)
+            ->create([
+                'name' => 'Delta Ltd',
+            ]);
+
+        $taxonomyIdsD = $parentTaxonomy->children()
+            ->whereIn('name', ['Bipolar disorder', 'Multiple sclerosis', 'Schizophrenia'])
+            ->get()
+            ->map(function($taxonomy) {
+                return ['taxonomy_id' => $taxonomy->id];
+            });
+
+        $serviceD->serviceEligibilities()->createMany($taxonomyIdsD->toArray());
+
+        // Trigger reindex in a different order to ensure it's not just sorted by updated_at or something
+        $serviceB->save();
+        $serviceA->save();
+        $serviceD->save();
+        $serviceC->save();
+
+        $response = $this->json('POST', '/core/v1/search', [
+            'eligibilities' => ['Bipolar disorder', 'Multiple sclerosis', 'Schizophrenia']
+        ]);
+
+        $data = $this->getResponseContent($response)['data'];
+
+        $this->assertEquals(4, count($data));
+        $this->assertEquals($serviceD->id, $data[0]['id']);
+        $this->assertEquals($serviceC->id, $data[1]['id']);
+        $this->assertEquals($serviceB->id, $data[2]['id']);
+        $this->assertEquals($serviceA->id, $data[3]['id']);
     }
 }
