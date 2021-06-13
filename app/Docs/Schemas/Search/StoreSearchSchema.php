@@ -47,7 +47,7 @@ class StoreSearchSchema extends Schema
                     ),
                 Schema::integer('distance')
                     ->default(config('ck.search_distance')),
-                Schema::array('service_eligibilities')
+                Schema::array('eligibilities')
                     ->items(
                         Schema::string()
                     )
