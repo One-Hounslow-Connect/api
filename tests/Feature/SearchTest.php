@@ -828,4 +828,38 @@ class SearchTest extends TestCase implements UsesElasticsearch
         // And the inactive one is filtered out
         $response->assertJsonMissing(['id' => $serviceIA->id]);
     }
+
+    public function test_search_works_when_combining_eligibility_search_with_query_field()
+    {
+        // Given a service has an eligibility age group taxonomy of 12 - 15 years
+        $serviceWithEligibility = factory(Service::class)
+            ->create();
+
+        $parentTaxonomy = Taxonomy::serviceEligibility()
+            ->children()
+            ->where(['name' => 'Age Group'])
+            ->first();
+
+        $taxonomy = $parentTaxonomy->children()
+            ->where(['name' => '12 - 15 years'])
+            ->first();
+
+        $serviceWithEligibility->serviceEligibilities()->create(['taxonomy_id' => $taxonomy->id]);
+
+        // Trigger a reindex
+        $serviceWithEligibility->save();
+
+        $serviceWithSearchTermMatch = factory(Service::class)->create();
+
+        // When a search is performed with the age group taxonomies of 12 - 15 years and a query string
+        $response = $this->json('POST', '/core/v1/search', [
+            'eligibilities' => [
+                '12 - 15 years',
+            ],
+            'query' => $serviceWithSearchTermMatch->name,
+        ]);
+
+        // The search works
+        $response->assertStatus(Response::HTTP_OK);
+    }
 }
