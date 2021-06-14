@@ -2,6 +2,8 @@
 namespace App\Services\OpenActiveTaxonomy;
 use App\Models\Taxonomy;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 
 class Importer
 {
@@ -14,12 +16,6 @@ class Importer
 
     public function runImport()
     {
-//        $table->uuid('id')->primary();
-//        $table->uuid('parent_id')->nullable();
-//        $table->string('name');
-//        $table->unsignedInteger('order');
-//        $table->timestamps();
-
         $response = $this->client->get('https://openactive.io/activity-list/activity-list.jsonld');
         $data = json_decode((string) $response->getBody(), true);
         $allTaxonomyData = collect($data['concept']);
@@ -42,6 +38,8 @@ class Importer
 //        dump(count($topLevelTaxonomyData));
 //        dump(count($childTaxonomyData));
 
+        // @FIXME: we're looping through the same set of data  and not filtering out children from parents, so
+        // this will just cause a bunch of unique ID collisions once the child taxonomies collection is processed.
         $mappedTopLevelTaxonomies = $topLevelTaxonomyData->map(function($taxonomy) {
             return $this->mapOpenActiveTaxonomyToTaxonomyModelSchema($taxonomy);
         });
@@ -52,14 +50,17 @@ class Importer
 
 //        dump($mappedTopLevelTaxonomies);
 
-        // @TODO: create OpenActiveTaxonomies taxonomy as CHILD of LGA standards via migration
         $openActiveTopLevelTaxonomy = Taxonomy::where(['name' => 'OpenActive Taxonomy'])->first();
 
         $openActiveTopLevelTaxonomy->children()->createMany($mappedTopLevelTaxonomies->toArray());
 
         dump($openActiveTopLevelTaxonomy->children);
 
-        Taxonomy::createMany($mappedTopLevelTaxonomies->toArray());
+        DB::transaction(function() use ($mappedChildTaxonomies) {
+            foreach ($mappedChildTaxonomies as $childTaxonomy) {
+                Taxonomy::updateOrCreate($childTaxonomy);
+            }
+        });
     }
 
     private function parseIdentifier(string $identifierUrl)
