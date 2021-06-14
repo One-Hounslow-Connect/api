@@ -484,31 +484,4 @@ class Service extends Model implements AppliesUpdateRequests, Notifiable, HasTax
             ['Content-Type' => File::MIME_TYPE_PNG]
         );
     }
-
-    private function generateSearchableEligibilities()
-    {
-        $topLevelParentCategories = Taxonomy::serviceEligibility()
-            ->children()
-            ->get();
-
-        $attachedEligibilities = $this->serviceEligibilities()->get();
-        $attachedEligibilityNames = $attachedEligibilities->map(function (ServiceEligibility $eligibility) {
-            return $eligibility->taxonomy->name;
-        });
-
-        $attachedParents = $attachedEligibilities->map(function (ServiceEligibility $eligibility) {
-            return $eligibility->taxonomy->parent_id;
-        })
-            ->unique();
-
-        $searchableTaxonomies = $topLevelParentCategories->flatMap(function (Taxonomy $topLevelParent) use ($attachedParents) {
-            if (!in_array($topLevelParent->id, $attachedParents->toArray())) {
-                return $topLevelParent->children()->get()->map(function (Taxonomy $child) {
-                    return $child->name;
-                })->toArray();
-            }
-        });
-
-        return $searchableTaxonomies->merge($attachedEligibilityNames)->toArray();
-    }
 }
