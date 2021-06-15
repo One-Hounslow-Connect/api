@@ -125,8 +125,8 @@ return [
     */
 
     'custom' => [
-        'attribute-name' => [
-            'rule-name' => 'custom-message',
+        'social_medias' => [
+            'size' => 'This field is no longer accepted for services and should be set in the Organisation.',
         ],
     ],
 
@@ -134,8 +134,7 @@ return [
     |--------------------------------------------------------------------------
     | Custom Validation Attributes
     |--------------------------------------------------------------------------
-    |
-    | The following language lines are used to swap attribute place-holders
+    |    | The following language lines are used to swap attribute place-holders
     | with something more reader friendly such as E-Mail Address instead
     | of "email". This simply helps us make messages a little cleaner.
     |
