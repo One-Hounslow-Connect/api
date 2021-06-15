@@ -1,5 +1,5 @@
 # Set base image.
-FROM ubuntu:18.04
+FROM ubuntu:18.04 as base
 
 # Set maintainer to Ayup Digital.
 LABEL maintainer="Ayup Digital"
