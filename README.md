@@ -91,6 +91,39 @@ To run only the code style tests:
 Deployment is fully automated by pushing a commit to `develop` or
 `master`. More information on this process can be [found in the wiki](https://github.com/One-Hounslow-Connect/api/wiki/Branching-and-Release-Strategy#continuous-delivery).
 
+## Xdebug
+Xdebug can be installed/activated for local development purposes.
+In `docker-compose.override.yml` (create this file if one does not exist already), add the following under `services.app`:
+
+```yaml
+    environment:
+      - XDEBUG_SESSION=PHPSTORM
+      - PHP_IDE_CONFIG=serverName=ohc_api
+    build:
+      target: dev
+```
+
+The target can be changed between `base` (production-like, no xdebug) and `dev` (xdebug installed).
+
+When switching between build targets, the stack should be rebuilt and brought back up:
+
+```shell
+./develop up -d --build
+```
+
+> Xdebug is significantly detrimental to performance and should be used sparingly/when appropriate.
+> It is *strongly* recommended to use `base` when running tests as they take far too long to run with xdebug enabled.
+
+These values should be merged, take care not to overwrite existing values where relevant.
+
+The base `docker-compose` file should **not** be modified, `docker-compose.override.yml` is gitignored so it will only affect
+the local development stack.
+
+Using PHPStorm as an example, a server should be configured with the name `ohc_api`, port `80`, and the `api` root dir 
+mapped to `/var/www/html` 
+
+Other supported IDEs will need to be configured in a similar method, as documented by that IDE.
+
 ## Built with
 
 - [Laravel](https://laravel.com/docs/) - The Web Framework Used
