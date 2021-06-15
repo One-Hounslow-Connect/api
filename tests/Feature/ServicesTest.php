@@ -660,7 +660,7 @@ class ServicesTest extends TestCase
 
     public function test_taxonomy_hierarchy_works_when_creating()
     {
-        $taxonomy = Taxonomy::category()->children()->firstOrFail()->children()->firstOrFail();
+        $taxonomy = factory(Taxonomy::class)->states('lga-standards')->create();
 
         $organisation = factory(Organisation::class)->create();
         $user = factory(User::class)->create()->makeGlobalAdmin();
@@ -4866,16 +4866,6 @@ class ServicesTest extends TestCase
                 'referral_button_text' => $service->referral_button_text,
                 'referral_email' => $service->referral_email,
                 'referral_url' => $service->referral_url,
-                'criteria' => [
-                    'age_group' => $service->serviceCriterion->age_group,
-                    'disability' => $service->serviceCriterion->disability,
-                    'employment' => $service->serviceCriterion->employment,
-                    'gender' => $service->serviceCriterion->gender,
-                    'housing' => $service->serviceCriterion->housing,
-                    'income' => $service->serviceCriterion->income,
-                    'language' => $service->serviceCriterion->language,
-                    'other' => $service->serviceCriterion->other,
-                ],
                 'useful_infos' => [],
                 'social_medias' => [
                     [

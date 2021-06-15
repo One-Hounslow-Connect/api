@@ -138,9 +138,24 @@ class TaxonomyCategoriesTest extends TestCase
     public function test_order_is_updated_when_created_at_beginning()
     {
         $user = factory(User::class)->create()->makeSuperAdmin();
-        $topLevelCategories = Taxonomy::category()->children()->first()->children()->orderBy('order')->get();
+
+        $categoryRoot = factory(Taxonomy::class)->create([
+            'parent_id' => function () {
+                return Taxonomy::category()->id;
+            },
+        ]);
+        $topLevelCategories = [];
+        for ($i = 1; $i < 6; $i++) {
+            $topLevelCategories[] = factory(Taxonomy::class)->create([
+                'parent_id' => $categoryRoot,
+                'order' => $i,
+            ]);
+        }
+
+        $topLevelCategories = Taxonomy::category()->children()->where('name', 'LGA Standards')->orderBy('order')->get();
+
         $payload = [
-            'parent_id' => $topLevelCategories->first()->parent_id,
+            'parent_id' => $categoryRoot,
             'name' => 'PHPUnit Taxonomy Category Test',
             'order' => 1,
         ];
@@ -148,18 +163,22 @@ class TaxonomyCategoriesTest extends TestCase
         Passport::actingAs($user);
         $response = $this->json('POST', '/core/v1/taxonomies/categories', $payload);
 
+        dump($response->json());
+
         $response->assertStatus(Response::HTTP_CREATED);
         $response->assertJsonFragment($payload);
         foreach ($topLevelCategories as $category) {
-            $this->assertDatabaseHas((new Taxonomy())->getTable(),
-                ['id' => $category->id, 'order' => $category->order + 1]);
+            $this->assertDatabaseHas(
+                (new Taxonomy())->getTable(),
+                ['id' => $category->id, 'order' => $category->order + 1]
+            );
         }
     }
 
     public function test_order_is_updated_when_created_at_middle()
     {
         $user = factory(User::class)->create()->makeSuperAdmin();
-        $topLevelCategories = Taxonomy::category()->children()->first()->children()->orderBy('order')->get();
+        $topLevelCategories = Taxonomy::category()->children()->orderBy('order')->get();
         $payload = [
             'parent_id' => $topLevelCategories->first()->parent_id,
             'name' => 'PHPUnit Taxonomy Category Test',
@@ -173,11 +192,15 @@ class TaxonomyCategoriesTest extends TestCase
         $response->assertJsonFragment($payload);
         foreach ($topLevelCategories as $category) {
             if ($category->order < 2) {
-                $this->assertDatabaseHas((new Taxonomy())->getTable(),
-                    ['id' => $category->id, 'order' => $category->order]);
+                $this->assertDatabaseHas(
+                    (new Taxonomy())->getTable(),
+                    ['id' => $category->id, 'order' => $category->order]
+                );
             } else {
-                $this->assertDatabaseHas((new Taxonomy())->getTable(),
-                    ['id' => $category->id, 'order' => $category->order + 1]);
+                $this->assertDatabaseHas(
+                    (new Taxonomy())->getTable(),
+                    ['id' => $category->id, 'order' => $category->order + 1]
+                );
             }
         }
     }
@@ -185,7 +208,7 @@ class TaxonomyCategoriesTest extends TestCase
     public function test_order_is_updated_when_created_at_end()
     {
         $user = factory(User::class)->create()->makeSuperAdmin();
-        $topLevelCategories = Taxonomy::category()->children()->first()->children()->orderBy('order')->get();
+        $topLevelCategories = Taxonomy::category()->children()->orderBy('order')->get();
         $payload = [
             'parent_id' => $topLevelCategories->first()->parent_id,
             'name' => 'PHPUnit Taxonomy Category Test',
@@ -198,8 +221,10 @@ class TaxonomyCategoriesTest extends TestCase
         $response->assertStatus(Response::HTTP_CREATED);
         $response->assertJsonFragment($payload);
         foreach ($topLevelCategories as $category) {
-            $this->assertDatabaseHas((new Taxonomy())->getTable(),
-                ['id' => $category->id, 'order' => $category->order]);
+            $this->assertDatabaseHas(
+                (new Taxonomy())->getTable(),
+                ['id' => $category->id, 'order' => $category->order]
+            );
         }
     }
 
