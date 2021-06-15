@@ -57,3 +57,22 @@ WORKDIR /var/www/html
 
 # Set default command to the bootstrap script.
 CMD ["start-container.sh"]
+
+# This installs xdebug and is for LOCAL DEV USE ONLY
+FROM base AS dev
+RUN touch /tmp/xdebug.log && chmod -R 777 /tmp/xdebug.log
+RUN apt-get update && apt-get install -y php7.2-dev php7.2-xdebug \
+    && echo "xdebug.mode=develop,debug" >> /etc/php/7.2/fpm/conf.d/20-xdebug.ini \
+    && echo "xdebug.client_host=host.docker.internal" >> /etc/php/7.2/fpm/conf.d/20-xdebug.ini \
+    && echo "xdebug.start_with_request=yes" >> /etc/php/7.2/fpm/conf.d/20-xdebug.ini \
+    && echo "xdebug.log=/tmp/xdebug.log" >> /etc/php/7.2/fpm/conf.d/20-xdebug.ini \
+    && echo "xdebug.idekey=PHPSTORM" >> /etc/php/7.2/fpm/conf.d/20-xdebug.ini
+
+# Expose port 80 for HTTP access.
+EXPOSE 80
+
+# Set the working directory to the project root.
+WORKDIR /var/www/html
+
+# Set default command to the bootstrap script.
+CMD ["start-container.sh"]
