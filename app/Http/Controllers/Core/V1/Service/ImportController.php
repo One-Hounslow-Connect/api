@@ -104,8 +104,8 @@ class ImportController extends Controller
             /**
              * Cast Boolean rows to boolean value.
              */
-            $row['is_free'] = null === ($row['is_free'] ?? null) ?: (bool) $row['is_free'];
-            $row['show_referral_disclaimer'] = null === ($row['show_referral_disclaimer'] ?? null) ?: (bool) $row['show_referral_disclaimer'];
+            $row['is_free'] = null === ($row['is_free'] ?? null) ?: (bool)$row['is_free'];
+            $row['show_referral_disclaimer'] = null === ($row['show_referral_disclaimer'] ?? null) ?: (bool)$row['show_referral_disclaimer'];
 
             $validator = Validator::make($row, [
                 'id' => ['required', 'string', 'uuid', 'unique:services,id'],
@@ -270,8 +270,8 @@ class ImportController extends Controller
                 /**
                  * Cast Boolean rows to boolean value.
                  */
-                $serviceRow['is_free'] = (bool) $serviceRow['is_free'];
-                $serviceRow['show_referral_disclaimer'] = (bool) $serviceRow['show_referral_disclaimer'];
+                $serviceRow['is_free'] = (bool)$serviceRow['is_free'];
+                $serviceRow['show_referral_disclaimer'] = (bool)$serviceRow['show_referral_disclaimer'];
 
                 /**
                  * Create the Service Admin roles for each of the service organisation admins.

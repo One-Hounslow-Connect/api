@@ -1,4 +1,5 @@
 <?php
+
 namespace App\BatchImport;
 
 use App\Models\Taxonomy;
@@ -11,37 +12,40 @@ use Illuminate\Support\Facades\Schema;
 class OpenActiveTaxonomyImporter
 {
     /**
-     * The URL for the Open Active taxonomy in jsonld format
+     * The URL for the Open Active taxonomy in jsonld format.
      *
      * @var string
-     **/
+     */
     protected $openActiveDirectoryUrl = 'https://openactive.io/activity-list/activity-list.jsonld';
 
     /**
-     * Fetch the Open Active taxonomy data and store it as a collection
+     * Fetch the Open Active taxonomy data and store it as a collection.
      *
+     * @param mixed $openActiveDirectoryUrl
      * @return array
-     **/
+     */
     public function fetchTaxonomies($openActiveDirectoryUrl)
     {
         $client = new Client();
         try {
             $response = $client->get($openActiveDirectoryUrl);
             if (200 === $response->getStatusCode() && $response->getBody()->isReadable()) {
-                $data = json_decode((string) $response->getBody(), true);
+                $data = json_decode((string)$response->getBody(), true);
+
                 return $data['concept'];
             }
         } catch (\Exception $e) {
             Log::error($e->getMessage());
+
             throw $e;
         }
     }
 
     /**
-     * Get the root Open Active category
+     * Get the root Open Active category.
      *
      * @return \App\Models\Taxonomy
-     **/
+     */
     public function getOpenActiveCategory()
     {
         return Taxonomy::category()
@@ -66,17 +70,15 @@ class OpenActiveTaxonomyImporter
     }
 
     /**
-     * Import the formatted taxonomies into the database
+     * Import the formatted taxonomies into the database.
      *
      * @param \App\Models\Taxonomy $rootTaxonomy
      * @param array $taxonomyImports
-     * @return null
-     **/
+     */
     public function importTaxonomies(Taxonomy $openActiveCategory, array $taxonomyImports)
     {
         // Import the data
         DB::transaction(function () use ($openActiveCategory, $taxonomyImports) {
-
             Schema::disableForeignKeyConstraints();
 
             DB::table((new Taxonomy())->getTable())->insert($taxonomyImports);
@@ -86,20 +88,21 @@ class OpenActiveTaxonomyImporter
             $openActiveCategory->refresh();
 
             $openActiveCategory->updateDepth();
-
         });
     }
 
     /**
-     * Map the imported data into an import friendly format
+     * Map the imported data into an import friendly format.
      *
      * @param \App\Models\Taxonomy $rootTaxonomy
      * @param array openActiveTaxonomyData
+     * @param mixed $openActiveTaxonomyData
      * @return array
-     **/
+     */
     public function mapOpenActiveTaxonomyImport(Taxonomy $rootTaxonomy, $openActiveTaxonomyData)
     {
         $nowDateTimeString = Carbon::now()->toDateTimeString();
+
         return array_map(function ($taxonomy) use ($rootTaxonomy, $nowDateTimeString) {
             return array_merge(
                 $this->mapOpenActiveTaxonomyToTaxonomyModelSchema($rootTaxonomy, $taxonomy),
@@ -112,23 +115,23 @@ class OpenActiveTaxonomyImporter
     }
 
     /**
-     * Return the uuid component from an Open Active directory url
+     * Return the uuid component from an Open Active directory url.
      *
      * @param string $identifierUrl
      * @return string
      */
     private function parseIdentifier(string $identifierUrl)
     {
-        return substr($identifierUrl, strpos($identifierUrl, "#") + 1);
+        return mb_substr($identifierUrl, mb_strpos($identifierUrl, '#') + 1);
     }
 
     /**
-     * Convert Open Active taxonomies into Taxonomy model data
+     * Convert Open Active taxonomies into Taxonomy model data.
      *
      * @param \App\Models\Taxonomy $rootTaxonomy
      * @param array openActiveTaxonomyData
      * @return array
-     **/
+     */
     private function mapOpenActiveTaxonomyToTaxonomyModelSchema(Taxonomy $rootTaxonomy, array $taxonomyData)
     {
         return [

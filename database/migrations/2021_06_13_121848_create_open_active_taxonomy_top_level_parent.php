@@ -12,8 +12,6 @@ class CreateOpenActiveTaxonomyTopLeveLParent extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
     public function up()
     {
@@ -45,13 +43,10 @@ class CreateOpenActiveTaxonomyTopLeveLParent extends Migration
         $openActiveImporter->importTaxonomies($openActiveCategory, $taxonomyImports);
 
         Taxonomy::category()->updateDepth();
-
     }
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
     public function down()
     {
