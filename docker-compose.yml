@@ -6,6 +6,7 @@ services:
     build:
       context: ./docker/app
       dockerfile: Dockerfile
+      target: base
     volumes:
       - .:/var/www/html
     depends_on:
