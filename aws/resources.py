@@ -840,7 +840,7 @@ def create_elasticsearch_lambda_log_group_policy_function_resource(template, lam
             "ElasticsearchLambdaLogGroupPolicyFunction",
             FunctionName=lambda_function_name_variable,
             DependsOn=elasticsearch_lambda_log_group_resource,
-            Code=awslambda.Code(ZipFile=Join("", [
+            Code=awslambda.Code(ZipFile=Join("\n", [
                 "import urllib3",
                 "import json",
                 "import boto3",
@@ -860,7 +860,7 @@ def create_elasticsearch_lambda_log_group_policy_function_resource(template, lam
                 "    responseBody['NoEcho'] = noEcho",
                 "    responseBody['Data'] = responseData",
                 "    json_responseBody = json.dumps(responseBody)",
-                "    print(\"Response body:\n\" + json_responseBody)",
+                "    print(\"Response body:\\n\" + json_responseBody)",
                 "    headers = {",
                 "        'content-type' : '',",
                 "        'content-length' : str(len(json_responseBody))",

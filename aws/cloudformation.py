@@ -1,4 +1,5 @@
 import uuid
+import json
 from template import create_template
 
 from parameters import create_uuid_parameter, create_environment_parameter, create_certificate_arn_parameter, create_vpc_parameter, \
@@ -243,5 +244,19 @@ create_elasticsearch_host_output(template, elasticsearch_resource)
 create_docker_repository_uri_output(template, docker_repository_resource)
 create_docker_cluster_name_output(template, ecs_cluster_resource)
 
+# Troposhere cannot set LogPublishingOptions on Elasticsearch, so we do it via JSON here
+json_template = json.loads(template.to_json())
+json_template["Resources"]["Elasticsearch"]["Properties"]["LogPublishingOptions"] = {
+    "ES_APPLICATION_LOGS": {
+        "CloudWatchLogsLogGroupArn": {
+            "Fn::GetAtt": [
+                "SearchLogGroup",
+                "Arn"
+            ]
+        },
+        "Enabled": True
+    }
+}
+
 # Print the generated template in JSON.
-print(template.to_json())
+print(json.dumps(json_template, indent=4))
