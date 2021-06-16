@@ -13,7 +13,10 @@ class OpenActiveTaxonomyImporterTest extends TestCase
     {
         parent::setUp();
 
-        $this->openActiveCategory = Taxonomy::category()->children()->where('name', 'OpenActive')->firstOrFail();
+        $this->openActiveCategory = Taxonomy::where([
+            'name' => 'OpenActive',
+            'parent_id' => Taxonomy::category()->id,
+        ])->firstOrFail();
 
         $this->openActiveTaxonomyImport = [
             [
@@ -122,7 +125,7 @@ class OpenActiveTaxonomyImporterTest extends TestCase
         $importer = new OpenActiveTaxonomyImporter();
         $importer->getOpenActiveCategory();
 
-        $importTaxonomies = $importer->mapOpenActiveTaxonomyImport($this->openActiveTaxonomyImport);
+        $importTaxonomies = $importer->mapOpenActiveTaxonomyImport($this->openActiveCategory, $this->openActiveTaxonomyImport);
 
         foreach ($importTaxonomies as $taxonomy) {
             if ($taxonomy['id'] == 'f5d6e765-28d7-4aff-8bde-74baaa1da1dd') {
@@ -133,6 +136,8 @@ class OpenActiveTaxonomyImporterTest extends TestCase
                         'parent_id' => $this->openActiveCategory->id,
                         'order' => 0,
                         'depth' => 2,
+                        'created_at' => $taxonomy['created_at'],
+                        'updated_at' => $taxonomy['updated_at'],
                     ]),
                     json_encode($taxonomy)
                 );
@@ -146,6 +151,8 @@ class OpenActiveTaxonomyImporterTest extends TestCase
                         'parent_id' => 'f5d6e765-28d7-4aff-8bde-74baaa1da1dd',
                         'order' => 0,
                         'depth' => 2,
+                        'created_at' => $taxonomy['created_at'],
+                        'updated_at' => $taxonomy['updated_at'],
                     ]),
                     json_encode($taxonomy)
                 );
@@ -159,6 +166,8 @@ class OpenActiveTaxonomyImporterTest extends TestCase
                         'parent_id' => '8ea70826-d1c6-461f-97fc-b4195e08994b',
                         'order' => 0,
                         'depth' => 2,
+                        'created_at' => $taxonomy['created_at'],
+                        'updated_at' => $taxonomy['updated_at'],
                     ]),
                     json_encode($taxonomy)
                 );
@@ -175,9 +184,9 @@ class OpenActiveTaxonomyImporterTest extends TestCase
         $importer = new OpenActiveTaxonomyImporter();
         $importer->getOpenActiveCategory();
 
-        $importTaxonomies = $importer->mapOpenActiveTaxonomyImport($this->openActiveTaxonomyImport);
+        $importTaxonomies = $importer->mapOpenActiveTaxonomyImport($this->openActiveCategory, $this->openActiveTaxonomyImport);
 
-        $importer->importTaxonomies($importTaxonomies);
+        $importer->importTaxonomies($this->openActiveCategory, $importTaxonomies);
 
         $this->assertDatabaseHas($taxonomyTable, [
             'id' => 'f5d6e765-28d7-4aff-8bde-74baaa1da1dd',

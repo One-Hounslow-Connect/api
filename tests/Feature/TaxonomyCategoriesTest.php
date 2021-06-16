@@ -17,6 +17,18 @@ use Tests\TestCase;
 
 class TaxonomyCategoriesTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->testCategoryRoot = factory(Taxonomy::class)->create([
+            'name' => 'Test Root Category Taxonomy',
+            'parent_id' => function () {
+                return Taxonomy::category()->id;
+            },
+        ]);
+    }
+
     /*
      * List all the category taxonomies.
      */
@@ -139,31 +151,22 @@ class TaxonomyCategoriesTest extends TestCase
     {
         $user = factory(User::class)->create()->makeSuperAdmin();
 
-        $categoryRoot = factory(Taxonomy::class)->create([
-            'parent_id' => function () {
-                return Taxonomy::category()->id;
-            },
-        ]);
         $topLevelCategories = [];
         for ($i = 1; $i < 6; $i++) {
             $topLevelCategories[] = factory(Taxonomy::class)->create([
-                'parent_id' => $categoryRoot,
+                'parent_id' => $this->testCategoryRoot->id,
                 'order' => $i,
             ]);
         }
 
-        $topLevelCategories = Taxonomy::category()->children()->where('name', 'LGA Standards')->orderBy('order')->get();
-
         $payload = [
-            'parent_id' => $categoryRoot,
+            'parent_id' => $this->testCategoryRoot->id,
             'name' => 'PHPUnit Taxonomy Category Test',
             'order' => 1,
         ];
 
         Passport::actingAs($user);
         $response = $this->json('POST', '/core/v1/taxonomies/categories', $payload);
-
-        dump($response->json());
 
         $response->assertStatus(Response::HTTP_CREATED);
         $response->assertJsonFragment($payload);
@@ -178,9 +181,17 @@ class TaxonomyCategoriesTest extends TestCase
     public function test_order_is_updated_when_created_at_middle()
     {
         $user = factory(User::class)->create()->makeSuperAdmin();
-        $topLevelCategories = Taxonomy::category()->children()->orderBy('order')->get();
+
+        $topLevelCategories = [];
+        for ($i = 1; $i < 6; $i++) {
+            $topLevelCategories[] = factory(Taxonomy::class)->create([
+                'parent_id' => $this->testCategoryRoot->id,
+                'order' => $i,
+            ]);
+        }
+
         $payload = [
-            'parent_id' => $topLevelCategories->first()->parent_id,
+            'parent_id' => $this->testCategoryRoot->id,
             'name' => 'PHPUnit Taxonomy Category Test',
             'order' => 2,
         ];
@@ -208,11 +219,19 @@ class TaxonomyCategoriesTest extends TestCase
     public function test_order_is_updated_when_created_at_end()
     {
         $user = factory(User::class)->create()->makeSuperAdmin();
-        $topLevelCategories = Taxonomy::category()->children()->orderBy('order')->get();
+
+        $topLevelCategories = [];
+        for ($i = 1; $i < 6; $i++) {
+            $topLevelCategories[] = factory(Taxonomy::class)->create([
+                'parent_id' => $this->testCategoryRoot->id,
+                'order' => $i,
+            ]);
+        }
+
         $payload = [
-            'parent_id' => $topLevelCategories->first()->parent_id,
+            'parent_id' => $this->testCategoryRoot->id,
             'name' => 'PHPUnit Taxonomy Category Test',
-            'order' => $topLevelCategories->count() + 1,
+            'order' => count($topLevelCategories) + 1,
         ];
 
         Passport::actingAs($user);
@@ -386,11 +405,14 @@ class TaxonomyCategoriesTest extends TestCase
     public function test_global_admin_can_update_one()
     {
         $user = factory(User::class)->create()->makeGlobalAdmin();
-        $category = $this->getRandomCategoryWithoutChildren();
+        $category = factory(Taxonomy::class)->create([
+            'parent_id' => $this->testCategoryRoot->id,
+            'order' => 1,
+        ]);
         $payload = [
-            'parent_id' => $category->parent_id,
+            'parent_id' => $this->testCategoryRoot->id,
             'name' => 'PHPUnit Test Category',
-            'order' => $category->order,
+            'order' => 1,
         ];
 
         Passport::actingAs($user);
@@ -798,7 +820,10 @@ class TaxonomyCategoriesTest extends TestCase
         $this->fakeEvents();
 
         $user = factory(User::class)->create()->makeSuperAdmin();
-        $category = $this->getRandomCategoryWithoutChildren();
+        $category = factory(Taxonomy::class)->create([
+            'parent_id' => $this->testCategoryRoot->id,
+            'order' => 1,
+        ]);
 
         Passport::actingAs($user);
         $this->json('PUT', "/core/v1/taxonomies/categories/{$category->id}", [
