@@ -243,7 +243,7 @@
             "Type": "List<AWS::EC2::Subnet::Id>"
         },
         "Uuid": {
-            "Default": "63c3de33-48b8-489f-b1a1-8a6f5c9f1385",
+            "Default": "44cebe8d-1f74-4fc3-9104-db0dcf805131",
             "Description": "The unique ID for this stack.",
             "MaxLength": "36",
             "MinLength": "36",
@@ -762,6 +762,7 @@
             "Type": "AWS::IAM::Role"
         },
         "Elasticsearch": {
+            "DependsOn": "ElasticsearchCustomLogGroupPolicy",
             "Properties": {
                 "AccessPolicies": {
                     "Statement": [

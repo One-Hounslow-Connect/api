@@ -942,6 +942,7 @@ def create_elasticsearch_resource(template, elasticsearch_domain_name_variable,
     return template.add_resource(
         elasticsearch.Domain(
             'Elasticsearch',
+            DependsOn='ElasticsearchCustomLogGroupPolicy',
             AccessPolicies={
                 'Version': '2012-10-17',
                 'Statement': [

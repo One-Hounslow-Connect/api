@@ -47,6 +47,7 @@
             "Type": "AWS::EC2::SecurityGroup"
         },
         "Elasticsearch": {
+            "DependsOn": "ElasticsearchCustomLogGroupPolicy",
             "Properties": {
                 "AccessPolicies": {
                     "Statement": [
