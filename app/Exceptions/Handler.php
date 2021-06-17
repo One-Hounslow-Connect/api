@@ -49,7 +49,7 @@ class Handler extends ExceptionHandler
         if ($exception instanceof AddressNotFoundException) {
             return response()->json([
                 'errors' => [
-                    'address_not_found' => __('validation.custom.address.not_found', ['address' => $exception->getMessage()]),
+                    'address_not_found' => [__('validation.custom.address.not_found', ['address' => $exception->getMessage()])],
                 ],
             ], 422);
         }
