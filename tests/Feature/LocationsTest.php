@@ -176,7 +176,7 @@ class LocationsTest extends TestCase
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
         $response->assertJsonFragment([
             'errors' => [
-                'address_not_found' => 'Address not found: xx12 3xx, united kingdom',
+                'address_not_found' => ['Address not found: xx12 3xx, united kingdom'],
             ],
         ]);
     }
