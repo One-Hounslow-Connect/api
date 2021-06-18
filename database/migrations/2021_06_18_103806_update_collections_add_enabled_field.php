@@ -8,8 +8,6 @@ class UpdateCollectionsAddEnabledField extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
     public function up()
     {
@@ -20,8 +18,6 @@ class UpdateCollectionsAddEnabledField extends Migration
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
     public function down()
     {

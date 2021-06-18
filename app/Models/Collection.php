@@ -19,10 +19,10 @@ class Collection extends Model
     const TYPE_PERSONA = 'persona';
 
     /**
-     * Attributes that need to be cast to native types
+     * Attributes that need to be cast to native types.
      *
      * @var array
-     **/
+     */
     protected $casts = [
         'enabled' => 'boolean',
     ];
@@ -73,24 +73,26 @@ class Collection extends Model
     }
 
     /**
-     * Enable the Collection
+     * Enable the Collection.
      *
      * @return \App\Models\Collection
-     **/
+     */
     public function enable()
     {
         $this->enabled = true;
+
         return $this;
     }
 
     /**
-     * Disable the Collection
+     * Disable the Collection.
      *
      * @return \App\Models\Collection
-     **/
+     */
     public function disable()
     {
         $this->enabled = false;
+
         return $this;
     }
 }

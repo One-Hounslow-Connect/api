@@ -83,7 +83,7 @@ class CollectionPersonaController extends Controller
                     'sideboxes' => $sideboxes,
                 ],
                 'order' => $request->order,
-                'enabled' => $request->enabled
+                'enabled' => $request->enabled,
             ]);
 
             if ($request->filled('image_file_id')) {
@@ -153,7 +153,7 @@ class CollectionPersonaController extends Controller
                     'sideboxes' => $sideboxes,
                 ],
                 'order' => $request->order,
-                'enabled' => $request->enabled
+                'enabled' => $request->enabled,
             ]);
 
             if ($request->filled('image_file_id')) {
