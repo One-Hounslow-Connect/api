@@ -105,7 +105,7 @@ class CollectionPersonasTest extends TestCase
 
         $disabledCollection->disable()->save();
 
-        $enabledCollection = Collection::where('type', 'persona')->last();
+        $enabledCollection = Collection::where('type', 'persona')->latest()->first();
 
         $enabledCollection->enable()->save();
 
@@ -129,7 +129,7 @@ class CollectionPersonasTest extends TestCase
 
         $disabledCollection->disable()->save();
 
-        $enabledCollection = Collection::where('type', 'persona')->last();
+        $enabledCollection = Collection::where('type', 'persona')->latest()->first();
 
         $enabledCollection->enable()->save();
 
@@ -309,7 +309,7 @@ class CollectionPersonasTest extends TestCase
         $response = $this->json('POST', '/core/v1/collections/personas', [
             'name' => 'Test Persona',
             'intro' => 'Lorem ipsum',
-            'icon' => 'info',
+            'subtitle' => 'Subtitle here',
             'order' => 1,
             'enabled' => false,
             'sideboxes' => [
@@ -326,7 +326,7 @@ class CollectionPersonasTest extends TestCase
         $response->assertJsonFragment([
             'name' => 'Test Persona',
             'intro' => 'Lorem ipsum',
-            'icon' => 'info',
+            'subtitle' => 'Subtitle here',
             'order' => 1,
             'enabled' => false,
             'sideboxes' => [
@@ -854,7 +854,7 @@ class CollectionPersonasTest extends TestCase
          * @var \App\Models\User $user
          */
         $user = factory(User::class)->create();
-        $user->makeGlobalAdmin();
+        $user->makeSuperAdmin();
         $persona = Collection::personas()->inRandomOrder()->firstOrFail();
         $persona->enable()->save();
         $taxonomy = Taxonomy::category()->children()->inRandomOrder()->firstOrFail();
