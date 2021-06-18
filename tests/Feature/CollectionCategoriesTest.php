@@ -103,7 +103,7 @@ class CollectionCategoriesTest extends TestCase
 
         $disabledCollection->disable()->save();
 
-        $enabledCollection = Collection::where('type', 'category')->last();
+        $enabledCollection = Collection::where('type', 'category')->latest()->first();
 
         $enabledCollection->enable()->save();
 
@@ -127,7 +127,7 @@ class CollectionCategoriesTest extends TestCase
 
         $disabledCollection->disable()->save();
 
-        $enabledCollection = Collection::where('type', 'category')->last();
+        $enabledCollection = Collection::where('type', 'category')->latest()->first();
 
         $enabledCollection->enable()->save();
 
@@ -843,9 +843,10 @@ class CollectionCategoriesTest extends TestCase
 
         Passport::actingAs($user);
 
-        $response = $this->json('PUT', "/core/v1/collections/categorys/{$category->id}", [
+        $response = $this->json('PUT', "/core/v1/collections/categories/{$category->id}", [
             'name' => 'Test Category',
             'intro' => 'Lorem ipsum',
+            'icon' => 'info',
             'subtitle' => 'Subtitle here',
             'order' => 1,
             'enabled' => false,
@@ -862,16 +863,17 @@ class CollectionCategoriesTest extends TestCase
          * @var \App\Models\User $user
          */
         $user = factory(User::class)->create();
-        $user->makeGlobalAdmin();
+        $user->makeSuperAdmin();
         $category = Collection::categories()->inRandomOrder()->firstOrFail();
         $category->enable()->save();
         $taxonomy = Taxonomy::category()->children()->inRandomOrder()->firstOrFail();
 
         Passport::actingAs($user);
 
-        $response = $this->json('PUT', "/core/v1/collections/categorys/{$category->id}", [
+        $response = $this->json('PUT', "/core/v1/collections/categories/{$category->id}", [
             'name' => 'Test Category',
             'intro' => 'Lorem ipsum',
+            'icon' => 'info',
             'subtitle' => 'Subtitle here',
             'order' => 1,
             'enabled' => false,
@@ -884,7 +886,7 @@ class CollectionCategoriesTest extends TestCase
             'id',
             'name',
             'intro',
-            'subtitle',
+            'icon',
             'order',
             'enabled',
             'sideboxes' => [
@@ -908,7 +910,7 @@ class CollectionCategoriesTest extends TestCase
         $response->assertJsonFragment([
             'name' => 'Test Category',
             'intro' => 'Lorem ipsum',
-            'subtitle' => 'Subtitle here',
+            'icon' => 'info',
             'order' => 1,
             'enabled' => false,
             'sideboxes' => [],
