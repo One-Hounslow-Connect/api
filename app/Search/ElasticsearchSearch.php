@@ -44,13 +44,9 @@ class ElasticsearchSearch implements Search
             'query' => [
                 'bool' => [
                     'filter' => [
-                        'bool' => [
-                            'must' => [
-                                [
-                                    'term' => [
-                                        'status' => Service::STATUS_ACTIVE,
-                                    ],
-                                ],
+                        [
+                            'term' => [
+                                'status' => Service::STATUS_ACTIVE,
                             ],
                         ],
                     ],
@@ -96,6 +92,7 @@ class ElasticsearchSearch implements Search
                 $field => [
                     'query' => $term,
                     'boost' => $boost,
+                    'fuzziness' => 'AUTO',
                 ],
             ],
         ];
@@ -137,7 +134,7 @@ class ElasticsearchSearch implements Search
             $should[] = $this->match('taxonomy_categories', $taxonomy->name);
         }
 
-        $this->query['query']['bool']['filter']['bool']['must'][] = [
+        $this->query['query']['bool']['filter'][] = [
             'term' => [
                 'collection_categories' => $category,
             ],
@@ -164,7 +161,7 @@ class ElasticsearchSearch implements Search
             $should[] = $this->match('taxonomy_categories', $taxonomy->name);
         }
 
-        $this->query['query']['bool']['filter']['bool']['must'][] = [
+        $this->query['query']['bool']['filter'][] = [
             'term' => [
                 'collection_personas' => $persona,
             ],
@@ -187,35 +184,35 @@ class ElasticsearchSearch implements Search
 
         switch ($waitTime) {
             case Service::WAIT_TIME_ONE_WEEK:
-                $criteria[] = ['term' => ['wait_time' => Service::WAIT_TIME_ONE_WEEK]];
+                $criteria[] = Service::WAIT_TIME_ONE_WEEK;
                 break;
             case Service::WAIT_TIME_TWO_WEEKS:
-                $criteria[] = ['term' => ['wait_time' => Service::WAIT_TIME_ONE_WEEK]];
-                $criteria[] = ['term' => ['wait_time' => Service::WAIT_TIME_TWO_WEEKS]];
+                $criteria[] = Service::WAIT_TIME_ONE_WEEK;
+                $criteria[] = Service::WAIT_TIME_TWO_WEEKS;
                 break;
             case Service::WAIT_TIME_THREE_WEEKS:
-                $criteria[] = ['term' => ['wait_time' => Service::WAIT_TIME_ONE_WEEK]];
-                $criteria[] = ['term' => ['wait_time' => Service::WAIT_TIME_TWO_WEEKS]];
-                $criteria[] = ['term' => ['wait_time' => Service::WAIT_TIME_THREE_WEEKS]];
+                $criteria[] = Service::WAIT_TIME_ONE_WEEK;
+                $criteria[] = Service::WAIT_TIME_TWO_WEEKS;
+                $criteria[] = Service::WAIT_TIME_THREE_WEEKS;
                 break;
             case Service::WAIT_TIME_MONTH:
-                $criteria[] = ['term' => ['wait_time' => Service::WAIT_TIME_ONE_WEEK]];
-                $criteria[] = ['term' => ['wait_time' => Service::WAIT_TIME_TWO_WEEKS]];
-                $criteria[] = ['term' => ['wait_time' => Service::WAIT_TIME_THREE_WEEKS]];
-                $criteria[] = ['term' => ['wait_time' => Service::WAIT_TIME_MONTH]];
+                $criteria[] = Service::WAIT_TIME_ONE_WEEK;
+                $criteria[] = Service::WAIT_TIME_TWO_WEEKS;
+                $criteria[] = Service::WAIT_TIME_THREE_WEEKS;
+                $criteria[] = Service::WAIT_TIME_MONTH;
                 break;
             case Service::WAIT_TIME_LONGER:
-                $criteria[] = ['term' => ['wait_time' => Service::WAIT_TIME_ONE_WEEK]];
-                $criteria[] = ['term' => ['wait_time' => Service::WAIT_TIME_TWO_WEEKS]];
-                $criteria[] = ['term' => ['wait_time' => Service::WAIT_TIME_THREE_WEEKS]];
-                $criteria[] = ['term' => ['wait_time' => Service::WAIT_TIME_MONTH]];
-                $criteria[] = ['term' => ['wait_time' => Service::WAIT_TIME_LONGER]];
+                $criteria[] = Service::WAIT_TIME_ONE_WEEK;
+                $criteria[] = Service::WAIT_TIME_TWO_WEEKS;
+                $criteria[] = Service::WAIT_TIME_THREE_WEEKS;
+                $criteria[] = Service::WAIT_TIME_MONTH;
+                $criteria[] = Service::WAIT_TIME_LONGER;
                 break;
         }
 
-        $this->query['query']['bool']['filter']['bool']['must'][] = [
-            'bool' => [
-                'should' => $criteria,
+        $this->query['query']['bool']['filter'][] = [
+            'terms' => [
+                'wait_time' => $criteria,
             ],
         ];
 
@@ -228,7 +225,7 @@ class ElasticsearchSearch implements Search
      */
     public function applyIsFree(bool $isFree): Search
     {
-        $this->query['query']['bool']['filter']['bool']['must'][] = [
+        $this->query['query']['bool']['filter'][] = [
             'term' => [
                 'is_free' => $isFree,
             ],
@@ -265,7 +262,7 @@ class ElasticsearchSearch implements Search
      */
     public function applyRadius(Coordinate $location, int $radius): Search
     {
-        $this->query['query']['bool']['filter']['bool']['must'][] = [
+        $this->query['query']['bool']['filter'][] = [
             'nested' => [
                 'path' => 'service_locations',
                 'query' => [
@@ -282,21 +279,22 @@ class ElasticsearchSearch implements Search
 
     public function applyEligibilities(array $eligibilityNames): Search
     {
-        $otherEligibilityNames = (new Taxonomy())->getAllServiceEligibilities()
-            ->pluck('name')
-            ->diff($eligibilityNames)
-            ->all();
+        $eligibilities = Taxonomy::whereIn('name', $eligibilityNames)->get();
+        $eligibilityIds = $eligibilities->pluck('id')->all();
 
-        foreach ($eligibilityNames as $eligibilityName) {
-            $this->query['query']['bool']['must']['bool']['should'][] = $this->matchPhrase('service_eligibilities', $eligibilityName);
-        }
+        foreach (Taxonomy::serviceEligibility()->children as $serviceEligibilityType) {
+            if ($serviceEligibilityTypeOptionIds = $serviceEligibilityType->filterDescendants($eligibilityIds)) {
+                $serviceEligibilityTypeNames = $eligibilities->filter(function ($eligibility) use ($serviceEligibilityTypeOptionIds) {
+                    return in_array($eligibility->id, $serviceEligibilityTypeOptionIds);
+                })->pluck('name');
+                $serviceEligibilityTypeNames[] = $serviceEligibilityType->name . ' All';
 
-        $this->query['query']['bool']['must']['bool']['should'][] = [
-            'bool' => ['must_not' => ['exists' => ['field' => 'service_eligibilities']]],
-        ];
-
-        foreach ($otherEligibilityNames as $otherEligibilityName) {
-            $this->query['query']['bool']['must']['bool']['must_not'][] = $this->matchPhrase('service_eligibilities', $otherEligibilityName);
+                $this->query['query']['bool']['filter'][] = [
+                    'terms' => [
+                        'service_eligibilities.keyword' => $serviceEligibilityTypeNames,
+                    ],
+                ];
+            }
         }
 
         return $this;
@@ -336,6 +334,7 @@ class ElasticsearchSearch implements Search
         $this->query['size'] = $perPage;
 
         $response = Service::searchRaw($this->query);
+
         $this->logMetrics($response);
 
         return $this->toResource($response, true, $page);
