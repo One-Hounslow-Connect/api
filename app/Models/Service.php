@@ -143,14 +143,15 @@ class Service extends Model implements AppliesUpdateRequests, Notifiable, HasTax
     public function toSearchableArray()
     {
         $serviceEligibilities = $this->eligibilities;
-        $serviceEligibilityIds = $serviceEligibilities->pluck('taxonomies.id')->toArray();
-        $serviceEligibilityNames = $serviceEligibilities->pluck('taxonomies.name')->toArray();
+        $serviceEligibilityIds = $serviceEligibilities->pluck('id')->toArray();
+        $serviceEligibilityNames = $serviceEligibilities->pluck('name')->toArray();
         $serviceEligibilityRoot = Taxonomy::serviceEligibility();
         foreach ($serviceEligibilityRoot->children as $serviceEligibilityType) {
             if (!$serviceEligibilityType->filterDescendants($serviceEligibilityIds)) {
                 $serviceEligibilityNames[] = $serviceEligibilityType->name . ' All';
             }
         }
+
         return [
             'id' => $this->id,
             'name' => $this->name,

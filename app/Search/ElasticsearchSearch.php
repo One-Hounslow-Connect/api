@@ -83,16 +83,17 @@ class ElasticsearchSearch implements Search
      * @param string $field
      * @param string $term
      * @param int $boost
+     * @param mixed $fuzziness
      * @return array
      */
-    protected function match(string $field, string $term, int $boost = 1): array
+    protected function match(string $field, string $term, int $boost = 1, $fuzziness = 'AUTO'): array
     {
         return [
             'match' => [
                 $field => [
                     'query' => $term,
                     'boost' => $boost,
-                    'fuzziness' => 'AUTO',
+                    'fuzziness' => $fuzziness,
                 ],
             ],
         ];
@@ -286,12 +287,32 @@ class ElasticsearchSearch implements Search
             if ($serviceEligibilityTypeOptionIds = $serviceEligibilityType->filterDescendants($eligibilityIds)) {
                 $serviceEligibilityTypeNames = $eligibilities->filter(function ($eligibility) use ($serviceEligibilityTypeOptionIds) {
                     return in_array($eligibility->id, $serviceEligibilityTypeOptionIds);
-                })->pluck('name');
-                $serviceEligibilityTypeNames[] = $serviceEligibilityType->name . ' All';
+                })->pluck('name')->all();
+
+                $serviceEligibilityTypeAllName = $serviceEligibilityType->name . ' All';
 
                 $this->query['query']['bool']['filter'][] = [
                     'terms' => [
-                        'service_eligibilities.keyword' => $serviceEligibilityTypeNames,
+                        'service_eligibilities.keyword' => array_merge($serviceEligibilityTypeNames, [$serviceEligibilityTypeAllName]),
+                    ],
+                ];
+
+                foreach ($serviceEligibilityTypeNames as $serviceEligibilityTypeName) {
+                    $this->query['query']['bool']['must']['bool']['should'][] = [
+                        'term' => [
+                            'service_eligibilities.keyword' => [
+                                'value' => $serviceEligibilityTypeName,
+                            ],
+                        ],
+                    ];
+                }
+
+                $this->query['query']['bool']['must']['bool']['should'][] = [
+                    'match' => [
+                        'service_eligibilities' => [
+                            'query' => $serviceEligibilityTypeAllName,
+                            'boost' => 0.2,
+                        ],
                     ],
                 ];
             }

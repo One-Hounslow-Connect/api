@@ -127,11 +127,11 @@ class Taxonomy extends Model
     }
 
     /**
-     * Filter the passed taxonomy IDs for descendants of this taxonomy
+     * Filter the passed taxonomy IDs for descendants of this taxonomy.
      *
-     * @param Array $taxonomyIds
-     * @return Array|Boolean
-     **/
+     * @param array $taxonomyIds
+     * @return array|bool
+     */
     public function filterDescendants(array $taxonomyIds)
     {
         $descendantTaxonomyIds = $this
