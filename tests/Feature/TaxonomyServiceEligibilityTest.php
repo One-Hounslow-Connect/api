@@ -74,7 +74,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
 
     public function test_guest_cannot_create_one()
     {
-        $response = $this->json('POST', '/core/v1/taxonomies/service-eligibility');
+        $response = $this->json('POST', '/core/v1/taxonomies/service-eligibilities');
 
         $response->assertStatus(Response::HTTP_UNAUTHORIZED);
     }
@@ -86,7 +86,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
 
         Passport::actingAs($user);
 
-        $response = $this->json('POST', '/core/v1/taxonomies/service-eligibility');
+        $response = $this->json('POST', '/core/v1/taxonomies/service-eligibilities');
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
@@ -98,7 +98,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
 
         Passport::actingAs($user);
 
-        $response = $this->json('POST', '/core/v1/taxonomies/service-eligibility');
+        $response = $this->json('POST', '/core/v1/taxonomies/service-eligibilities');
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
@@ -110,7 +110,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
 
         Passport::actingAs($user);
 
-        $response = $this->json('POST', '/core/v1/taxonomies/service-eligibility');
+        $response = $this->json('POST', '/core/v1/taxonomies/service-eligibilities');
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
@@ -126,10 +126,14 @@ class TaxonomyServiceEligibilityTest extends TestCase
         ];
 
         Passport::actingAs($user);
-        $response = $this->json('POST', '/core/v1/taxonomies/service-eligibility', $payload);
+        $response = $this->json('POST', '/core/v1/taxonomies/service-eligibilities', $payload);
 
         $response->assertStatus(Response::HTTP_CREATED);
-        $response->assertJsonFragment($payload);
+        $response->assertJsonFragment([
+            'parent_id' => Taxonomy::serviceEligibility()->id,
+            'name' => 'PHPUnit Service Eligibility Test',
+            'order' => $siblingCount + 1,
+        ]);
     }
 
     public function test_order_is_updated_when_created_at_beginning()
@@ -151,7 +155,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
         ];
 
         Passport::actingAs($user);
-        $response = $this->json('POST', '/core/v1/taxonomies/service-eligibility', $payload);
+        $response = $this->json('POST', '/core/v1/taxonomies/service-eligibilities', $payload);
 
         $response->assertStatus(Response::HTTP_CREATED);
         $response->assertJsonFragment($payload);
@@ -182,7 +186,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
         ];
 
         Passport::actingAs($user);
-        $response = $this->json('POST', '/core/v1/taxonomies/service-eligibility', $payload);
+        $response = $this->json('POST', '/core/v1/taxonomies/service-eligibilities', $payload);
 
         $response->assertStatus(Response::HTTP_CREATED);
         $response->assertJsonFragment($payload);
@@ -220,7 +224,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
         ];
 
         Passport::actingAs($user);
-        $response = $this->json('POST', '/core/v1/taxonomies/service-eligibility', $payload);
+        $response = $this->json('POST', '/core/v1/taxonomies/service-eligibilities', $payload);
 
         $response->assertStatus(Response::HTTP_CREATED);
         $response->assertJsonFragment($payload);
@@ -242,7 +246,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
         ];
 
         Passport::actingAs($user);
-        $response = $this->json('POST', '/core/v1/taxonomies/service-eligibility', $payload);
+        $response = $this->json('POST', '/core/v1/taxonomies/service-eligibilities', $payload);
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
@@ -250,7 +254,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
     public function test_order_cannot_be_greater_than_count_plus_1_when_created()
     {
         $user = factory(User::class)->create()->makeGlobalAdmin();
-        $siblingCount = Taxonomy::category()->children()->count();
+        $siblingCount = Taxonomy::serviceEligibility()->children()->count();
         $payload = [
             'parent_id' => null,
             'name' => 'PHPUnit Service Eligibility Test',
@@ -258,7 +262,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
         ];
 
         Passport::actingAs($user);
-        $response = $this->json('POST', '/core/v1/taxonomies/service-eligibility', $payload);
+        $response = $this->json('POST', '/core/v1/taxonomies/service-eligibilities', $payload);
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
@@ -268,10 +272,10 @@ class TaxonomyServiceEligibilityTest extends TestCase
         $this->fakeEvents();
 
         $user = factory(User::class)->create()->makeGlobalAdmin();
-        $siblingCount = Taxonomy::category()->children()->count();
+        $siblingCount = Taxonomy::serviceEligibility()->children()->count();
 
         Passport::actingAs($user);
-        $response = $this->json('POST', '/core/v1/taxonomies/service-eligibility', [
+        $response = $this->json('POST', '/core/v1/taxonomies/service-eligibilities', [
             'parent_id' => null,
             'name' => 'PHPUnit Service Eligibility Test',
             'order' => $siblingCount + 1,
@@ -294,7 +298,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
             'parent_id' => $this->testserviceEligibilityType->id,
         ]);
 
-        $response = $this->json('GET', "/core/v1/taxonomies/service-eligibility/{$testEligibilityTypeTaxonomy->id}");
+        $response = $this->json('GET', "/core/v1/taxonomies/service-eligibilities/{$testEligibilityTypeTaxonomy->id}");
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonFragment([
@@ -318,7 +322,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
             'parent_id' => $this->testserviceEligibilityType->id,
         ]);
 
-        $this->json('GET', "/core/v1/taxonomies/service-eligibility/{$testEligibilityTypeTaxonomy->id}");
+        $this->json('GET', "/core/v1/taxonomies/service-eligibilities/{$testEligibilityTypeTaxonomy->id}");
 
         Event::assertDispatched(EndpointHit::class, function (EndpointHit $event) use ($testEligibilityTypeTaxonomy) {
             return ($event->getAction() === Audit::ACTION_READ) &&
@@ -336,7 +340,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
             'parent_id' => $this->testserviceEligibilityType->id,
         ]);
 
-        $response = $this->json('PUT', "/core/v1/taxonomies/service-eligibility/{$testEligibilityTypeTaxonomy->id}");
+        $response = $this->json('PUT', "/core/v1/taxonomies/service-eligibilities/{$testEligibilityTypeTaxonomy->id}");
 
         $response->assertStatus(Response::HTTP_UNAUTHORIZED);
     }
@@ -350,7 +354,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
         ]);
 
         Passport::actingAs($user);
-        $response = $this->json('PUT', "/core/v1/taxonomies/service-eligibility/{$testEligibilityTypeTaxonomy->id}");
+        $response = $this->json('PUT', "/core/v1/taxonomies/service-eligibilities/{$testEligibilityTypeTaxonomy->id}");
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
@@ -364,7 +368,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
         ]);
 
         Passport::actingAs($user);
-        $response = $this->json('PUT', "/core/v1/taxonomies/service-eligibility/{$testEligibilityTypeTaxonomy->id}");
+        $response = $this->json('PUT', "/core/v1/taxonomies/service-eligibilities/{$testEligibilityTypeTaxonomy->id}");
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
@@ -378,7 +382,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
         ]);
 
         Passport::actingAs($user);
-        $response = $this->json('PUT', "/core/v1/taxonomies/service-eligibility/{$testEligibilityTypeTaxonomy->id}");
+        $response = $this->json('PUT', "/core/v1/taxonomies/service-eligibilities/{$testEligibilityTypeTaxonomy->id}");
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
@@ -392,11 +396,11 @@ class TaxonomyServiceEligibilityTest extends TestCase
         $payload = [
             'parent_id' => $testEligibilityTypeTaxonomy->parent_id,
             'name' => 'PHPUnit Test Service Eligibility',
-            'order' => $testEligibilityTypeTaxonomy->order,
+            'order' => 1,
         ];
 
         Passport::actingAs($user);
-        $response = $this->json('PUT', "/core/v1/taxonomies/service-eligibility/{$testEligibilityTypeTaxonomy->id}", $payload);
+        $response = $this->json('PUT', "/core/v1/taxonomies/service-eligibilities/{$testEligibilityTypeTaxonomy->id}", $payload);
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonFragment($payload);
@@ -404,7 +408,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
 
     public function test_order_is_updated_when_updated_to_beginning()
     {
-        $user = factory(User::class)->create()->makeSuperAdmin();
+        $user = factory(User::class)->create()->makeGlobalAdmin();
         Passport::actingAs($user);
 
         $eligibilityOne = $this->testserviceEligibilityType->children()->create([
@@ -423,7 +427,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
             'depth' => 1,
         ]);
 
-        $response = $this->json('PUT', "/core/v1/taxonomies/service-eligibility/{$eligibilityTwo->id}", [
+        $response = $this->json('PUT', "/core/v1/taxonomies/service-eligibilities/{$eligibilityTwo->id}", [
             'parent_id' => $eligibilityTwo->parent_id,
             'name' => $eligibilityTwo->name,
             'order' => 1,
@@ -437,7 +441,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
 
     public function test_order_is_updated_when_updated_to_middle()
     {
-        $user = factory(User::class)->create()->makeSuperAdmin();
+        $user = factory(User::class)->create()->makeGlobalAdmin();
         Passport::actingAs($user);
 
         $eligibilityOne = $this->testserviceEligibilityType->children()->create([
@@ -456,7 +460,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
             'depth' => 1,
         ]);
 
-        $response = $this->json('PUT', "/core/v1/taxonomies/service-eligibility/{$eligibilityOne->id}", [
+        $response = $this->json('PUT', "/core/v1/taxonomies/service-eligibilities/{$eligibilityOne->id}", [
             'parent_id' => $eligibilityOne->parent_id,
             'name' => $eligibilityOne->name,
             'order' => 2,
@@ -470,7 +474,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
 
     public function test_order_is_updated_when_updated_to_end()
     {
-        $user = factory(User::class)->create()->makeSuperAdmin();
+        $user = factory(User::class)->create()->makeGlobalAdmin();
         Passport::actingAs($user);
 
         $eligibilityOne = $this->testserviceEligibilityType->children()->create([
@@ -489,7 +493,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
             'depth' => 1,
         ]);
 
-        $response = $this->json('PUT', "/core/v1/taxonomies/service-eligibility/{$eligibilityTwo->id}", [
+        $response = $this->json('PUT', "/core/v1/taxonomies/service-eligibilities/{$eligibilityTwo->id}", [
             'parent_id' => $eligibilityTwo->parent_id,
             'name' => $eligibilityTwo->name,
             'order' => 3,
@@ -503,7 +507,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
 
     public function test_order_is_updated_when_updated_to_beginning_of_another_parent()
     {
-        $user = factory(User::class)->create()->makeSuperAdmin();
+        $user = factory(User::class)->create()->makeGlobalAdmin();
         Passport::actingAs($user);
 
         $oldEligibilityOne = $this->testserviceEligibilityType->children()->create([
@@ -544,7 +548,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
             'depth' => 1,
         ]);
 
-        $response = $this->json('PUT', "/core/v1/taxonomies/service-eligibility/{$oldEligibilityTwo->id}", [
+        $response = $this->json('PUT', "/core/v1/taxonomies/service-eligibilities/{$oldEligibilityTwo->id}", [
             'parent_id' => $newParentEligibility->id,
             'name' => $oldEligibilityTwo->name,
             'order' => 1,
@@ -593,7 +597,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
 
     public function test_order_is_updated_when_updated_to_middle_of_another_parent()
     {
-        $user = factory(User::class)->create()->makeSuperAdmin();
+        $user = factory(User::class)->create()->makeGlobalAdmin();
         Passport::actingAs($user);
 
         $oldEligibilityOne = $this->testserviceEligibilityType->children()->create([
@@ -634,7 +638,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
             'depth' => 1,
         ]);
 
-        $response = $this->json('PUT', "/core/v1/taxonomies/service-eligibility/{$oldEligibilityOne->id}", [
+        $response = $this->json('PUT', "/core/v1/taxonomies/service-eligibilities/{$oldEligibilityOne->id}", [
             'parent_id' => $newParentEligibility->id,
             'name' => $oldEligibilityOne->name,
             'order' => 2,
@@ -683,7 +687,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
 
     public function test_order_is_updated_when_updated_to_end_of_another_parent()
     {
-        $user = factory(User::class)->create()->makeSuperAdmin();
+        $user = factory(User::class)->create()->makeGlobalAdmin();
         Passport::actingAs($user);
 
         $oldEligibilityOne = $this->testserviceEligibilityType->children()->create([
@@ -724,7 +728,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
             'depth' => 1,
         ]);
 
-        $response = $this->json('PUT', "/core/v1/taxonomies/service-eligibility/{$oldEligibilityTwo->id}", [
+        $response = $this->json('PUT', "/core/v1/taxonomies/service-eligibilities/{$oldEligibilityTwo->id}", [
             'parent_id' => $newParentEligibility->id,
             'name' => $oldEligibilityTwo->name,
             'order' => 4,
@@ -773,14 +777,14 @@ class TaxonomyServiceEligibilityTest extends TestCase
 
     public function test_order_cannot_be_less_than_1_when_updated()
     {
-        $user = factory(User::class)->create()->makeSuperAdmin();
+        $user = factory(User::class)->create()->makeGlobalAdmin();
         Passport::actingAs($user);
 
         $testEligibilityTypeTaxonomy = factory(Taxonomy::class)->create([
             'parent_id' => $this->testserviceEligibilityType->id,
         ]);
 
-        $response = $this->json('PUT', "/core/v1/taxonomies/service-eligibility/{$testEligibilityTypeTaxonomy->id}", [
+        $response = $this->json('PUT', "/core/v1/taxonomies/service-eligibilities/{$testEligibilityTypeTaxonomy->id}", [
             'parent_id' => $testEligibilityTypeTaxonomy->parent_id,
             'name' => $testEligibilityTypeTaxonomy->name,
             'order' => 0,
@@ -791,14 +795,14 @@ class TaxonomyServiceEligibilityTest extends TestCase
 
     public function test_order_cannot_be_greater_than_count_plus_1_when_updated()
     {
-        $user = factory(User::class)->create()->makeSuperAdmin();
+        $user = factory(User::class)->create()->makeGlobalAdmin();
         Passport::actingAs($user);
 
         $testEligibilityTypeTaxonomies = factory(Taxonomy::class, 5)->create([
             'parent_id' => $this->testserviceEligibilityType->id,
         ]);
 
-        $response = $this->json('PUT', "/core/v1/taxonomies/service-eligibility/{$testEligibilityTypeTaxonomies->get(0)->id}", [
+        $response = $this->json('PUT', "/core/v1/taxonomies/service-eligibilities/{$testEligibilityTypeTaxonomies->get(0)->id}", [
             'parent_id' => $this->testserviceEligibilityType->id,
             'name' => $testEligibilityTypeTaxonomies->get(0)->name,
             'order' => 6,
@@ -811,17 +815,19 @@ class TaxonomyServiceEligibilityTest extends TestCase
     {
         $this->fakeEvents();
 
-        $user = factory(User::class)->create()->makeSuperAdmin();
+        $user = factory(User::class)->create()->makeGlobalAdmin();
         $testEligibilityTypeTaxonomy = factory(Taxonomy::class)->create([
             'parent_id' => $this->testserviceEligibilityType->id,
         ]);
 
         Passport::actingAs($user);
-        $this->json('PUT', "/core/v1/taxonomies/service-eligibility/{$testEligibilityTypeTaxonomy->id}", [
+        $response = $this->json('PUT', "/core/v1/taxonomies/service-eligibilities/{$testEligibilityTypeTaxonomy->id}", [
             'parent_id' => $testEligibilityTypeTaxonomy->parent_id,
             'name' => 'PHPUnit Test Eligibility Type Taxonomy',
-            'order' => $testEligibilityTypeTaxonomy->order,
+            'order' => 1,
         ]);
+
+        $response->assertStatus(Response::HTTP_OK);
 
         Event::assertDispatched(EndpointHit::class, function (EndpointHit $event) use ($user, $testEligibilityTypeTaxonomy) {
             return ($event->getAction() === Audit::ACTION_UPDATE) &&
@@ -840,7 +846,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
             'parent_id' => $this->testserviceEligibilityType->id,
         ]);
 
-        $response = $this->json('DELETE', "/core/v1/taxonomies/service-eligibility/{$testEligibilityTypeTaxonomy->id}");
+        $response = $this->json('DELETE', "/core/v1/taxonomies/service-eligibilities/{$testEligibilityTypeTaxonomy->id}");
 
         $response->assertStatus(Response::HTTP_UNAUTHORIZED);
     }
@@ -854,7 +860,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
         ]);
 
         Passport::actingAs($user);
-        $response = $this->json('DELETE', "/core/v1/taxonomies/service-eligibility/{$testEligibilityTypeTaxonomy->id}");
+        $response = $this->json('DELETE', "/core/v1/taxonomies/service-eligibilities/{$testEligibilityTypeTaxonomy->id}");
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
@@ -868,7 +874,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
         ]);
 
         Passport::actingAs($user);
-        $response = $this->json('DELETE', "/core/v1/taxonomies/service-eligibility/{$testEligibilityTypeTaxonomy->id}");
+        $response = $this->json('DELETE', "/core/v1/taxonomies/service-eligibilities/{$testEligibilityTypeTaxonomy->id}");
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
@@ -882,7 +888,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
         ]);
 
         Passport::actingAs($user);
-        $response = $this->json('DELETE', "/core/v1/taxonomies/service-eligibility/{$testEligibilityTypeTaxonomy->id}");
+        $response = $this->json('DELETE', "/core/v1/taxonomies/service-eligibilities/{$testEligibilityTypeTaxonomy->id}");
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
@@ -896,12 +902,12 @@ class TaxonomyServiceEligibilityTest extends TestCase
                 return Taxonomy::serviceEligibility()->id;
             },
         ]);
-        $childEligibilities = factory(Taxonomy::class)->create([
+        $childEligibilities = factory(Taxonomy::class, 5)->create([
             'parent_id' => $newParentEligibility->id,
         ]);
 
         Passport::actingAs($user);
-        $response = $this->json('DELETE', "/core/v1/taxonomies/service-eligibility/{$newParentEligibility->id}");
+        $response = $this->json('DELETE', "/core/v1/taxonomies/service-eligibilities/{$newParentEligibility->id}");
 
         $response->assertStatus(Response::HTTP_OK);
         $this->assertDatabaseMissing((new Taxonomy())->getTable(), ['id' => $newParentEligibility->id]);
@@ -926,7 +932,7 @@ class TaxonomyServiceEligibilityTest extends TestCase
         ]);
 
         Passport::actingAs($user);
-        $this->json('DELETE', "/core/v1/taxonomies/service-eligibility/{$newParentEligibility->id}");
+        $this->json('DELETE', "/core/v1/taxonomies/service-eligibilities/{$newParentEligibility->id}");
 
         Event::assertDispatched(EndpointHit::class, function (EndpointHit $event) use ($user, $newParentEligibility) {
             return ($event->getAction() === Audit::ACTION_DELETE) &&
@@ -956,9 +962,10 @@ class TaxonomyServiceEligibilityTest extends TestCase
         ]);
 
         Passport::actingAs($user);
-        $response = $this->json('DELETE', "/core/v1/taxonomies/service-eligibility/{$testEligibilityTypeTaxonomy->id}");
+        $response = $this->json('DELETE', "/core/v1/taxonomies/service-eligibilities/{$testEligibilityTypeTaxonomy->id}");
 
         $response->assertStatus(Response::HTTP_OK);
+
         $this->assertDatabaseMissing((new ServiceEligibility())->getTable(), [
             'service_id' => $service->id,
             'taxonomy_id' => $testEligibilityTypeTaxonomy->id,
