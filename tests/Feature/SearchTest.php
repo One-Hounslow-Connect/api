@@ -650,8 +650,8 @@ class SearchTest extends TestCase implements UsesElasticsearch
 
         $data = $this->getResponseContent($response)['data'];
         $this->assertEquals(2, count($data));
-        $this->assertEquals($service2->id, $data[0]['id']);
-        $this->assertEquals($service3->id, $data[1]['id']);
+        $this->assertTrue(in_array($service2->id, [$data[0]['id'], $data[1]['id']]));
+        $this->assertTrue(in_array($service3->id, [$data[0]['id'], $data[1]['id']]));
     }
 
     public function test_order_by_relevance_with_location_return_services_less_than_1_mile_away()
@@ -663,26 +663,26 @@ class SearchTest extends TestCase implements UsesElasticsearch
         $service1->save();
 
         // Relevant < 1 mile
-        $service2 = factory(Service::class)->create(['intro' => 'Test Name']);
+        $service2 = factory(Service::class)->create(['intro' => 'Thisisatest']);
         $serviceLocation2 = factory(ServiceLocation::class)->create(['service_id' => $service2->id]);
         DB::table('locations')->where('id', $serviceLocation2->location->id)->update(['lat' => 51.46813624630186, 'lon' => -0.38543053111827796]);
         $service2->save();
 
         // Relevant < 1 mile
-        $organisation3 = factory(Organisation::class)->create(['name' => 'Test Name']);
+        $organisation3 = factory(Organisation::class)->create(['name' => 'Thisisatest']);
         $service3 = factory(Service::class)->create(['organisation_id' => $organisation3->id]);
         $serviceLocation3 = factory(ServiceLocation::class)->create(['service_id' => $service3->id]);
         DB::table('locations')->where('id', $serviceLocation3->location->id)->update(['lat' => 51.46933926508632, 'lon' => -0.3745729484111921]);
         $service3->save();
 
         // Relevant > 1 mile
-        $service4 = factory(Service::class)->create(['name' => 'Test Name']);
+        $service4 = factory(Service::class)->create(['name' => 'Thisisatest']);
         $serviceLocation4 = factory(ServiceLocation::class)->create(['service_id' => $service4->id]);
         DB::table('locations')->where('id', $serviceLocation4->location->id)->update(['lat' => 51.46741441979822, 'lon' => -0.40152378521657234]);
         $service4->save();
 
         $response = $this->json('POST', '/core/v1/search', [
-            'query' => 'Test Name',
+            'query' => 'Thisisatest',
             'order' => 'relevance',
             'distance' => 1,
             'location' => [
@@ -699,8 +699,8 @@ class SearchTest extends TestCase implements UsesElasticsearch
 
         $data = $this->getResponseContent($response)['data'];
         $this->assertEquals(2, count($data));
-        $this->assertEquals($service2->id, $data[0]['id']);
-        $this->assertEquals($service3->id, $data[1]['id']);
+        $this->assertEquals($service3->id, $data[0]['id']);
+        $this->assertEquals($service2->id, $data[1]['id']);
     }
 
     public function test_services_with_more_taxonomies_in_a_category_collection_are_more_relevant()
@@ -911,6 +911,58 @@ class SearchTest extends TestCase implements UsesElasticsearch
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonFragment(['id' => $service->id]);
+    }
+
+    public function test_query_results_filtered_when_eligibity_filter_applied()
+    {
+        $serviceEligibility1 = Taxonomy::where('name', '12 - 15 years')->firstOrFail();
+        $serviceEligibility2 = Taxonomy::where('name', '16 - 18 years')->firstOrFail();
+        $service1 = factory(Service::class)->create(['name' => 'Thisisatest']);
+        $service2 = factory(Service::class)->create(['intro' => 'Thisisatest']);
+        $service3 = factory(Service::class)->create(['description' => 'Thisisatest']);
+        $service4 = factory(Service::class)->create();
+        $taxonomy = Taxonomy::category()->children()->create([
+            'name' => 'Thisisatest',
+            'order' => 1,
+            'depth' => 1,
+        ]);
+        $service4->serviceTaxonomies()->create(['taxonomy_id' => $taxonomy->id]);
+
+        $service1->serviceEligibilities()->create([
+            'taxonomy_id' => $serviceEligibility1->id,
+        ]);
+        $service4->serviceEligibilities()->create([
+            'taxonomy_id' => $serviceEligibility1->id,
+        ]);
+        $service2->serviceEligibilities()->create([
+            'taxonomy_id' => $serviceEligibility2->id,
+        ]);
+
+        // Reindex
+        $service1->save();
+        $service2->save();
+        $service3->save();
+        $service4->save();
+
+        $response = $this->json('POST', '/core/v1/search', [
+            'query' => 'Thisisatest',
+        ]);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonCount(4, 'data');
+
+        $response = $this->json('POST', '/core/v1/search', [
+            'query' => 'Thisisatest',
+            'eligibilities' => [
+                '12 - 15 years'],
+        ]);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonCount(3, 'data');
+        $response->assertJsonFragment(['id' => $service1->id]);
+        $response->assertJsonFragment(['id' => $service3->id]);
+        $response->assertJsonFragment(['id' => $service4->id]);
+        $response->assertJsonMissing(['id' => $service2->id]);
     }
 
     public function test_service_ranks_higher_if_eligibility_match()
