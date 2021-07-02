@@ -433,6 +433,41 @@ class SearchTest extends TestCase implements UsesElasticsearch
         $response->assertJsonMissing(['id' => $service3->id]);
     }
 
+    public function test_order_by_location_return_services_less_than_1_mile_away()
+    {
+        // > 1 mile
+        $service1 = factory(Service::class)->create();
+        $serviceLocation = factory(ServiceLocation::class)->create(['service_id' => $service1->id]);
+        DB::table('locations')->where('id', $serviceLocation->location->id)->update(['lat' => 51.469954129107016, 'lon' => -0.3973609967291171]);
+        $service1->save();
+
+        // < 1 mile
+        $service2 = factory(Service::class)->create();
+        $serviceLocation2 = factory(ServiceLocation::class)->create(['service_id' => $service2->id]);
+        DB::table('locations')->where('id', $serviceLocation2->location->id)->update(['lat' => 51.46813624630186, 'lon' => -0.38543053111827796]);
+        $service2->save();
+
+        // > 1 mile
+        $service3 = factory(Service::class)->create();
+        $serviceLocation3 = factory(ServiceLocation::class)->create(['service_id' => $service3->id]);
+        DB::table('locations')->where('id', $serviceLocation3->location->id)->update(['lat' => 51.47591520714541, 'lon' => -0.41139431461981674]);
+        $service3->save();
+
+        $response = $this->json('POST', '/core/v1/search', [
+            'order' => 'distance',
+            'distance' => 1,
+            'location' => [
+                'lat' => 51.46843366223185,
+                'lon' => -0.3674811879751439,
+            ],
+        ]);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonFragment(['id' => $service2->id]);
+        $response->assertJsonMissing(['id' => $service1->id]);
+        $response->assertJsonMissing(['id' => $service3->id]);
+    }
+
     public function test_order_by_relevance_with_location_return_services_less_than_15_miles_away()
     {
         $service1 = factory(Service::class)->create();
@@ -462,6 +497,55 @@ class SearchTest extends TestCase implements UsesElasticsearch
             'location' => [
                 'lat' => 45,
                 'lon' => 90,
+            ],
+        ]);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonFragment(['id' => $service2->id]);
+        $response->assertJsonFragment(['id' => $service3->id]);
+        $response->assertJsonMissing(['id' => $service1->id]);
+        $response->assertJsonMissing(['id' => $service4->id]);
+
+        $data = $this->getResponseContent($response)['data'];
+        $this->assertEquals(2, count($data));
+        $this->assertEquals($service2->id, $data[0]['id']);
+        $this->assertEquals($service3->id, $data[1]['id']);
+    }
+
+    public function test_order_by_relevance_with_location_return_services_less_than_1_mile_away()
+    {
+        // Not relevant > 1 mile
+        $service1 = factory(Service::class)->create();
+        $serviceLocation = factory(ServiceLocation::class)->create(['service_id' => $service1->id]);
+        DB::table('locations')->where('id', $serviceLocation->location->id)->update(['lat' => 51.469954129107016, 'lon' => -0.3973609967291171]);
+        $service1->save();
+
+        // Relevant < 1 mile
+        $service2 = factory(Service::class)->create(['intro' => 'Test Name']);
+        $serviceLocation2 = factory(ServiceLocation::class)->create(['service_id' => $service2->id]);
+        DB::table('locations')->where('id', $serviceLocation2->location->id)->update(['lat' => 51.46813624630186, 'lon' => -0.38543053111827796]);
+        $service2->save();
+
+        // Relevant < 1 mile
+        $organisation3 = factory(Organisation::class)->create(['name' => 'Test Name']);
+        $service3 = factory(Service::class)->create(['organisation_id' => $organisation3->id]);
+        $serviceLocation3 = factory(ServiceLocation::class)->create(['service_id' => $service3->id]);
+        DB::table('locations')->where('id', $serviceLocation3->location->id)->update(['lat' => 51.46933926508632, 'lon' => -0.3745729484111921]);
+        $service3->save();
+
+        // Relevant > 1 mile
+        $service4 = factory(Service::class)->create(['name' => 'Test Name']);
+        $serviceLocation4 = factory(ServiceLocation::class)->create(['service_id' => $service4->id]);
+        DB::table('locations')->where('id', $serviceLocation4->location->id)->update(['lat' => 51.46741441979822, 'lon' => -0.40152378521657234]);
+        $service4->save();
+
+        $response = $this->json('POST', '/core/v1/search', [
+            'query' => 'Test Name',
+            'order' => 'relevance',
+            'distance' => 1,
+            'location' => [
+                'lat' => 51.46843366223185,
+                'lon' => -0.3674811879751439,
             ],
         ]);
 
