@@ -194,20 +194,33 @@ class SearchTest extends TestCase implements UsesElasticsearch
         $response->assertJsonFragment(['id' => $service1->id]);
     }
 
-    public function test_query_ranks_service_name_above_organisation_name()
+    public function test_query_ranks_service_name_equivalent_to_organisation_name()
     {
         $organisation = factory(Organisation::class)->create(['name' => 'Thisisatest']);
-        $serviceWithRelevantOrganisationName = factory(Service::class)->create(['organisation_id' => $organisation->id]);
+        $serviceWithRelevantOrganisationName = factory(Service::class)->create(['name' => 'Relevant Organisation', 'organisation_id' => $organisation->id]);
         $serviceWithRelevantServiceName = factory(Service::class)->create(['name' => 'Thisisatest']);
+        $serviceWithRelevantIntro = factory(Service::class)->create(['name' => 'Relevant Intro', 'intro' => 'Thisisatest']);
+        $serviceWithRelevantDescription = factory(Service::class)->create(['name' => 'Relevant Description', 'description' => 'Thisisatest']);
+        $serviceWithRelevantTaxonomy = factory(Service::class)->create(['name' => 'Relevant Taxonomy']);
+        $taxonomy = Taxonomy::category()->children()->create([
+            'name' => 'Thisisatest',
+            'order' => 1,
+            'depth' => 1,
+        ]);
+        $serviceWithRelevantTaxonomy->serviceTaxonomies()->create(['taxonomy_id' => $taxonomy->id]);
 
         $response = $this->json('POST', '/core/v1/search', [
             'query' => 'Thisisatest',
         ]);
 
         $response->assertStatus(Response::HTTP_OK);
-        $results = json_decode($response->getContent(), true)['data'];
-        $this->assertEquals($serviceWithRelevantServiceName->id, $results[0]['id']);
-        $this->assertEquals($serviceWithRelevantOrganisationName->id, $results[1]['id']);
+        $response->assertJsonCount(5, 'data');
+        $data = $this->getResponseContent($response)['data'];
+        $this->assertTrue(in_array($serviceWithRelevantServiceName->id, [$data[0]['id'], $data[1]['id']]));
+        $this->assertTrue(in_array($serviceWithRelevantOrganisationName->id, [$data[0]['id'], $data[1]['id']]));
+        $this->assertTrue(in_array($serviceWithRelevantIntro->id, [$data[2]['id'], $data[3]['id']]));
+        $this->assertTrue(in_array($serviceWithRelevantDescription->id, [$data[2]['id'], $data[3]['id']]));
+        $this->assertEquals($serviceWithRelevantTaxonomy->id, $data[4]['id']);
     }
 
     public function test_query_ranks_perfect_match_above_fuzzy_match()

@@ -71,10 +71,10 @@ class ElasticsearchSearch implements Search
         $should = &$this->query['query']['bool']['must']['bool']['should'];
 
         $should[] = $this->match('name', $term, 4);
+        $should[] = $this->match('organisation_name', $term, 4);
         $should[] = $this->match('intro', $term, 3);
         $should[] = $this->matchPhrase('description', $term, 3);
         $should[] = $this->match('taxonomy_categories', $term, 2);
-        $should[] = $this->match('organisation_name', $term);
 
         return $this;
     }
